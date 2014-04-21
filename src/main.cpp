@@ -1,6 +1,7 @@
 #include "Container.h"
 #include "Combinator.h"
 #include "Discretizer.h"
+#include "Types.h"
 
 void testContainer(Container<int>&);
 void testDiscretizer(Container<int>&);
