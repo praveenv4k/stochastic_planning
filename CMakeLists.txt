@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 2.6)
+set(PROJECTNAME stochastic_planner)
+project(${PROJECTNAME})
+
+# file(GLOB_RECURSE folder_source *.cpp)
+# file(GLOB_RECURSE folder_header *.h)
+# source_group("Source Files" FILES ${folder_source})
+# source_group("Header Files" FILES ${folder_header})
+#add_subdirectory(src)
+include_directories(include)
+# add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
+add_executable(${PROJECTNAME} ./src/main.cpp)
