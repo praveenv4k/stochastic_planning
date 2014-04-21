@@ -7,4 +7,5 @@ Build steps:
 * Open Terminal and change directory to the stochastic_planner directory
 * mkdir build
 * cd build
+* cmake ..
 * make
