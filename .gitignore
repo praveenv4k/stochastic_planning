@@ -1,6 +1,6 @@
 *~
 /build*/
-*kdev*
+/.kdev*/
 *.orig
 tags
 /author-gpl.txt
