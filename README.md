@@ -1,6 +1,15 @@
 Stochastic Planner evaluation project
- 
-Requirements : cmake is needed. At present there are no third party library dependencies
+
+About:
+* The aim of the project is to study the Stochastic planning for the specific iCub grasping
+of a moving object. Markov decision process and Partially Observable MDP planning methods are 
+focused.
+
+Requirements : 
+
+* CMake is required. 
+* YARP (www.yarp.it) and iCub (http://www.icub.org/) modules are necessary to be installed
+* jsoncpp library amalgamation source is included in the project
 
 Build steps:
 
