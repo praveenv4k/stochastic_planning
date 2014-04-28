@@ -5,7 +5,8 @@
 #include <map>
 
 typedef std::map<int,double> RewardMap;
-typedef std::map<std::pair<int,int>,std::vector<int> > TransitionMap;
+//typedef std::map<std::pair<int,int>,std::vector<int> > TransitionMap;
+typedef std::map<int, std::vector<int> > TransitionMap;
 
 
 #endif //__TYPES_H__

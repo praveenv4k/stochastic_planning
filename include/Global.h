@@ -8,8 +8,7 @@
 #include <math.h>
 #include <iCub/ctrl/math.h>
 #include <json/json.h>
-
-#define EPSILON 1e-6
-#define JSON_IS_AMALGAMATION 1
+#include "GraphDefs.h"
+//#define EPSILON 1e-6
 
 #endif //__GLOBAL_H__

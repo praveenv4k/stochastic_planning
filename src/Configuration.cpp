@@ -1,10 +1,49 @@
-#include "Configuration.h"
-
-Config* Config::m_pConfig=NULL;
-
-Config* Config::instance(){
-    if(m_pConfig==0){
-      m_pConfig = new Config();
+#include <Configuration.h>
+bool Config::instanceFlag = false;
+bool Config::isParsed = false;
+int Config::m_version;
+Config* Config::single = NULL;
+Config* Config::instance()
+{
+    if(! instanceFlag)
+    {
+        single = new Config();
+        instanceFlag = true;
     }
-    return m_pConfig;
-  }
+    if(!isParsed)
+    {
+        std::cout<<"Parsing failed!\n";
+    }
+    return single;
+}
+Config* Config::refresh()
+{
+    if(instanceFlag)
+    {
+        delete single;
+    }
+    single = new Config();
+    instanceFlag = true;
+    if(!isParsed)
+    {
+        std::cout<<"Parsing failed!\n";
+    }
+    return single;
+}
+
+int Config::GetVersion()
+{
+    return m_version;
+}
+
+void Config::SetVersion(int version)
+{
+    m_version = version;
+}
+
+bool file_is_empty(std::ifstream& pFile)
+{
+    return pFile.peek() == std::ifstream::traits_type::eof();
+}
+
+

@@ -19,6 +19,7 @@ public:
     void Invalidate(){
     }
   std::vector<double> disc;
+    long int states;
 };
 
 #endif //__STATEACTION_H__
