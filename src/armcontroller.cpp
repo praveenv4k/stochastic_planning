@@ -26,9 +26,9 @@ using namespace yarp::sig;
 bool CtrlThread::threadInit()
 {
     // Set collision
-    m_collision = Config::instance()->root["Robot"]["Collision"].asBool();
-    m_internalCollision = Config::instance()->root["Robot"]["InternalCollision"].asBool();
-    m_delayAfterAct = Config::instance()->root["Robot"]["DelayAfterAct"].asDouble();
+    //m_collision = Config::instance()->root["Robot"]["Collision"].asBool();
+    //m_internalCollision = Config::instance()->root["Robot"]["InternalCollision"].asBool();
+    //m_delayAfterAct = Config::instance()->root["Robot"]["DelayAfterAct"].asDouble();
     //m_shouldMove = false;
 
     // Record init pose
@@ -281,11 +281,11 @@ void CtrlThread::run() //Action &act, State &nxtState, bool &reached, bool &inva
             invalidAct = invalidAct || nowLS.IsInvalidState();
 
             // Does it collide
-            Config::instance()->hasCollided = m_collision &&
-                    detectCollision();
+            //Config::instance()->hasCollided = m_collision &&
+            //        detectCollision();
 
 
-            if(Config::instance()->hasCollided || invalidAct)
+            if(/*Config::instance()->hasCollided ||*/ invalidAct)
             {
                 nowLS.Invalidate();
 
@@ -327,46 +327,46 @@ void CtrlThread::reset()
     yarp::os::Time::delay(0.2);
 }
 
-bool CtrlThread::detectCollision()
-{
-    if(m_collision)
-    {
-        Bottle fromCollisionPort;
-        fromCollisionPort.clear();
-        detectCollisionPort.read(fromCollisionPort);
-
-        int sz = fromCollisionPort.size();
-
-        if(sz > 0 &&
-                !(sz ==1 && fromCollisionPort.get(0).asInt() == 0 ))
-        {
-            if(m_internalCollision)
-                return true;
-            else
-            {
-                for(int i=0; i<sz; ++i)
-                {
-
-    //                    cout << "Received Bottle of size " <<
-    //                            sz << " with " << i <<"th elem as: " <<
-    //                        fromCollisionPort.get(i).asList()->toString() << " \n";
-                    if(fromCollisionPort.get(i).asList()->size() == 5)
-                    {
-                        std::cout << "Collision detected. Press a key\n";
-                        std::cin >> sz;
-                        return true;
-
-                    }
-                }
-                return false;
-            }
-
-        }
-
-    }
-
-    return false;
-}
+// bool CtrlThread::detectCollision()
+// {
+//     if(m_collision)
+//     {
+//         Bottle fromCollisionPort;
+//         fromCollisionPort.clear();
+//         detectCollisionPort.read(fromCollisionPort);
+// 
+//         int sz = fromCollisionPort.size();
+// 
+//         if(sz > 0 &&
+//                 !(sz ==1 && fromCollisionPort.get(0).asInt() == 0 ))
+//         {
+//             if(m_internalCollision)
+//                 return true;
+//             else
+//             {
+//                 for(int i=0; i<sz; ++i)
+//                 {
+// 
+//     //                    cout << "Received Bottle of size " <<
+//     //                            sz << " with " << i <<"th elem as: " <<
+//     //                        fromCollisionPort.get(i).asList()->toString() << " \n";
+//                     if(fromCollisionPort.get(i).asList()->size() == 5)
+//                     {
+//                         std::cout << "Collision detected. Press a key\n";
+//                         std::cin >> sz;
+//                         return true;
+// 
+//                     }
+//                 }
+//                 return false;
+//             }
+// 
+//         }
+// 
+//     }
+// 
+//     return false;
+// }
 
 
 

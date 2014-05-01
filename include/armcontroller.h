@@ -128,9 +128,9 @@ protected:
     yarp::os::Port detectCollisionPort;
     yarp::os::BufferedPort<yarp::os::Bottle > inputPort;
 
-    bool m_collision;       // is aware of obstacle or not
-    bool m_internalCollision;
-    double m_delayAfterAct;
+    //bool m_collision;       // is aware of obstacle or not
+    //bool m_internalCollision;
+    //double m_delayAfterAct;
     std::string m_name;
     yarp::sig::Vector initQd, nowQd;
 
@@ -167,7 +167,7 @@ public:
     void run();
 
 
-    bool detectCollision();
+    //bool detectCollision();
 
     void reset();
 
@@ -228,7 +228,7 @@ public:
                icart->checkMotionDone(&done);
                yarp::os::Time::delay(0.04);   // or any suitable delay
             }
-            yarp::os::Time::delay(m_delayAfterAct);
+            //yarp::os::Time::delay(m_delayAfterAct);
         }
 
         getCtrlState(cs);

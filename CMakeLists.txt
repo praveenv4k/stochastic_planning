@@ -25,7 +25,9 @@ include_directories(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} include jsoncpp-sr
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")      
 
 # add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
-add_executable(${PROJECTNAME} ./jsoncpp-src-0.6.0-rc2/jsoncpp.cpp ./src/Configuration.cpp ./src/armcontroller.cpp ./src/main.cpp)
+add_executable(${PROJECTNAME} ./jsoncpp-src-0.6.0-rc2/jsoncpp.cpp ./src/Configuration.cpp ./src/armcontroller.cpp src/StoachasticPlannerMain.cpp)
+add_executable(ObjectController src/objectcontroller.cpp src/ObjectControllerMain.cpp)
 
 # we now add the YARP and iCub libraries to our project.
+TARGET_LINK_LIBRARIES(ObjectController ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
