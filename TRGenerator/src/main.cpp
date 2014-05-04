@@ -1,5 +1,7 @@
 #include "Global.h"
 #include "Trajectory.h"
+#include <iostream>
+#include <fstream>
 
 void testContainer(Container<int>&);
 void testDiscretizer(Container<int>&);
@@ -43,17 +45,31 @@ void testDiscretizer(Container<int>& state){
   Container<double> min;
   min.resize(3);
   min[0]=-0.25;
-  min[1]=-0.45;
-  min[2]=-0.25;
+  min[1]=0.45;
+  min[2]=0.25;
   
   Container<double> max;
-  min.resize(3);
-  min[0]=-0.25;
-  min[1]=-0.45;
-  min[2]=-0.25;
+  max.resize(3);
+  max[0]=0.25;
+  max[1]=0.85;
+  max[2]=0.55;
+  
   Container<double> step;
-  Discretizer<int> discretizer(state,state,state);
-  std::cout << discretizer() << std::endl;
+  step.resize(3);
+  step[0]=0.02;
+  step[1]=0.02;
+  step[2]=0.02;
+  
+  std::fstream stream;
+  stream.open("/home/praveen/Documents/states.txt",std::fstream::out);
+  Discretizer<double> discretizer(min,max,step);  
+  for(size_t i=0;i<discretizer.size();i++){
+    int id = discretizer();
+    Container<double> val = discretizer.getValueAtIndex(id);
+    stream << val << std::endl;
+  }
+  stream.close();
+  //std::cout << discretizer() << std::endl;
 }
 
 void testCombinator(Container<int>& state1, Container<int>& state2){
