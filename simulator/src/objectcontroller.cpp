@@ -24,7 +24,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 
-ObjectController::ObjectController(int period):RateThread(period)
+ObjectController::ObjectController(const double period):RateThread(int(period*1000))
 {
   // Initializing the private members
   m_VelX = 0.1; // 0.1 m/s
@@ -38,9 +38,9 @@ ObjectController::ObjectController(int period):RateThread(period)
   
   // Set the initial position. 
   // TODO Read from config file
-  m_initPosition[0] = 1;
+  m_initPosition[0] = 0.0;
   m_initPosition[1] = 1;
-  m_initPosition[2] = 1;
+  m_initPosition[2] = 0.4;
   
   m_currPosition = m_initPosition;
 }
@@ -59,7 +59,6 @@ bool ObjectController::threadInit()
     {
         std::cout <<": unable to open port to send states\n";
         return false;  // unable to open; let RFModule know so that it won't run
-
     }
 
     /* Connect to iCub Simulation world */
@@ -69,6 +68,17 @@ bool ObjectController::threadInit()
         std::cout <<": unable to connect to iCub Simulation world.\n";
         return false;  // unable to open; let RFModule know so that it won't run
     }
+    
+//     Bottle& outputState = outputStatePort.prepare();
+//     outputState.clear();
+//     outputState.addString("world del all");
+//     outputStatePort.writeStrict();
+// 	
+//     outputState = outputStatePort.prepare();
+//     outputState.clear();
+//     outputState.addString("world mk ssph 0.02 0.0 1 0.4 1 0 0");
+//     outputStatePort.writeStrict();
+	
     return true;
 }
 
@@ -83,12 +93,12 @@ void ObjectController::afterStart(bool s)
         std::cout << "ObjectCtrl Thread started successfully\n";
 	Bottle& outputState = outputStatePort.prepare();
 	outputState.clear();
-	outputState.addString("world del all");
+	outputState.add("world del all");
 	outputStatePort.writeStrict();
 	
 	outputState = outputStatePort.prepare();
 	outputState.clear();
-	outputState.addString("world mk ssph 0.1 1 1 1 1 0 0");
+	outputState.add("world mk ssph 0.02 0.0 1 0.4 1 0 0");
 	outputStatePort.writeStrict();
     }
     else{
@@ -106,7 +116,7 @@ void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool
     outputState.addDouble(pos[1]);
     outputState.addDouble(pos[2]);
     outputStatePort.writeStrict();
-    std::cout << "Data written to port successfully successfully\n";
+    //std::cout << "Data written to port successfully\n";
 }
 
 yarp::sig::Vector ObjectController::getNextPosition(){

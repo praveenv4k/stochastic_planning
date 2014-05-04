@@ -29,7 +29,7 @@ class ObjectController:public yarp::os::RateThread
 public:
     yarp::os::BufferedPort<yarp::os::Bottle > outputStatePort; 
     
-    ObjectController(int period);
+    ObjectController(const double period);
     virtual ~ObjectController();
     std::string getName() const{
       return "objectCtrl";
