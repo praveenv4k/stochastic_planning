@@ -17,14 +17,7 @@ int main(void){
   std::cout << "Hello world!";
   boost::shared_ptr<TrajectoryDiscretizer> pTrajDisc(new CircleTrajectoryDiscretizer(0,0.65,0.4,0.2));
   boost::shared_ptr<Trajectory> pTraj(new Trajectory(18*M_PI/180,pTrajDisc));
-  
-//   std::cout << "Trajectory Points" << std::endl;
-//   pTraj->getInitPose().print();
-//   for(int i=0; i<20;i++){
-//     Container<double> pose = pTraj->getNextPose();
-//     pose.print();
-//   }
-  
+    
   std::cout << "Trajectory Points" << std::endl;
   std::vector<Container<double> > poses;
   int numPoints=20;

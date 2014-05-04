@@ -3,6 +3,7 @@
 
 #include "Container.h"
 #include <math.h>
+#include "Utils.h"
 
 template <typename T>
 class Discretizer
