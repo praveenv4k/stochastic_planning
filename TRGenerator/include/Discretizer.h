@@ -51,7 +51,7 @@ class Discretizer
 	    m_totalElements=1;
 	    for(size_t i=0;i<dim;i++){
 	      m_indices[i] = 0;
-	      m_numElements[i] = floor((m_max[i]-m_min[i])/m_step[i])+1;
+	      m_numElements[i] = round((m_max[i]-m_min[i])/m_step[i])+1;
 	      m_totalElements*=m_numElements[i];
 	    }
 #if 0

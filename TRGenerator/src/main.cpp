@@ -7,7 +7,7 @@
 void testContainer(Container<int>&);
 void testDiscretizer(Container<int>&);
 void testCombinator(Container<int>&,Container<int>&);
-void writeStateSpace();
+void writeStateSpace(bool writeToFile=false);
 void writeActionSpace();
 
 int main(void){
@@ -17,7 +17,7 @@ int main(void){
   testContainer(state1);
   testDiscretizer(state1);
   testCombinator(state1,state1);
-  //writeStateSpace();
+  writeStateSpace();
   writeActionSpace();
   return 0;
 }
@@ -55,7 +55,7 @@ void testCombinator(Container<int>& state1, Container<int>& state2){
   state3.print();
 }
 
-void writeStateSpace(){
+void writeStateSpace(bool writeToFile){
   Container<double> min;
   min.resize(3);
   min[0]=-0.25;
@@ -87,8 +87,13 @@ void writeStateSpace(){
   }
   
   std::fstream stream;
-  stream.open("states.txt",std::fstream::out);
+  if(writeToFile){
+    stream.open("states.txt",std::fstream::out);
+  }
+  
   Discretizer<double> discretizer(min,max,step);
+  
+  std::cout << "State Space size: " << discretizer.size() << std::endl;
   
   int index=0;
   for(size_t i=0;i<discretizer.size();i++){
@@ -97,7 +102,9 @@ void writeStateSpace(){
     for(int i=0; i<numPoints;i++){
       Container<double> pose = poses[i];
       double norm = Utils::computeL2norm<double>(val,pose);
-      stream << index++ << " " <<  val << " " << pose << " " << 0 << " " << norm << std::endl;
+      if(writeToFile){
+	stream << index++ << " " <<  val << " " << pose << " " << 0 << " " << norm << std::endl;
+      }
     }
   }
   discretizer.reset();
@@ -107,10 +114,14 @@ void writeStateSpace(){
     for(int i=0; i<numPoints;i++){
       Container<double> pose = poses[i];
       double norm = Utils::computeL2norm<double>(val,pose);
-      stream << index++ << " " <<  val << " " << pose << " " << 1 << " " << norm << std::endl;
+      if(writeToFile){
+	stream << index++ << " " <<  val << " " << pose << " " << 1 << " " << norm << std::endl;
+      }
     }
   }
-  stream.close();
+  if(writeToFile){
+    stream.close();
+  }
 }
 
 void writeActionSpace()
