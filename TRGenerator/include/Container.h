@@ -31,10 +31,4 @@ std::ostream& operator <<(std::ostream& stream, const Container<U>& container) {
   return stream;
 }
 
-enum Grasp{
-  GripperOpen =1,
-  GripperClose = 2
-};
-
-
 #endif //__CONTAINER_H__

@@ -37,6 +37,10 @@ class Discretizer
 	  //std::cout << "Index : " << Utils::sub2ind(m_numElements,indices) << std::endl;
 	  return values;
 	}
+	
+	void reset(){
+	  initialize();
+	}
     private:
 	void initialize(){
 	  id = -1;
@@ -63,8 +67,7 @@ class Discretizer
 #endif
 	  }
 	}
-	
-        Container<T> m_min;
+	Container<T> m_min;
 	Container<T> m_max;
 	Container<T> m_step;
 	Container<int> m_numElements;

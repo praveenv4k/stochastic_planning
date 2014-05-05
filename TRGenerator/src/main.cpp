@@ -2,6 +2,7 @@
 #include "Trajectory.h"
 #include <iostream>
 #include <fstream>
+#include "Action.h"
 
 void testContainer(Container<int>&);
 void testDiscretizer(Container<int>&);
@@ -71,25 +72,40 @@ void writeStateSpace(){
   step[1]=0.02;
   step[2]=0.02;
   
+  double distThres = 0.01;
+  
   boost::shared_ptr<TrajectoryDiscretizer> pTrajDisc(new CircleTrajectoryDiscretizer(0,0.65,0.4,0.2));
   boost::shared_ptr<Trajectory> pTraj(new Trajectory(18*M_PI/180,pTrajDisc));
     
-  std::cout << "Trajectory Points" << std::endl;
+  //std::cout << "Trajectory Points" << std::endl;
   std::vector<Container<double> > poses;
   int numPoints=20;
-  if(pTraj->getAllPoses(numPoints,poses)){
-    
+  if(!pTraj->getAllPoses(numPoints,poses)){
+   std::cout << "Cannot get requested number of Points" << std::endl; 
   }
   
   std::fstream stream;
   stream.open("states.txt",std::fstream::out);
-  Discretizer<double> discretizer(min,max,step);  
+  Discretizer<double> discretizer(min,max,step);
+  
+  int index=0;
   for(size_t i=0;i<discretizer.size();i++){
     int id = discretizer();
     Container<double> val = discretizer.getValueAtIndex(id);
     for(int i=0; i<numPoints;i++){
       Container<double> pose = poses[i];
-      stream << val << " " << pose << std::endl;
+      double norm = Utils::computeL2norm<double>(val,pose);
+      stream << index++ << " " <<  val << " " << pose << " " << 0 << " " << norm << std::endl;
+    }
+  }
+  discretizer.reset();
+  for(size_t i=0;i<discretizer.size();i++){
+    int id = discretizer();
+    Container<double> val = discretizer.getValueAtIndex(id);
+    for(int i=0; i<numPoints;i++){
+      Container<double> pose = poses[i];
+      double norm = Utils::computeL2norm<double>(val,pose);
+      stream << index++ << " " <<  val << " " << pose << " " << 1 << " " << norm << std::endl;
     }
   }
   stream.close();
