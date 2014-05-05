@@ -3,6 +3,9 @@
 
 #include <stdexcept>
 #include <math.h>
+
+#define EPSILON 1e-6
+
 //Part of the functions in the Utils class are taken from 
 //https://bitbucket.org/kritisen/utilitiescpp
 class Utils{
@@ -53,6 +56,10 @@ public:
       sum = sum+ temp*temp;
     }
     return sqrt(sum);
+  }
+  
+  static bool isEqual(double a,double b, double threshold=EPSILON){
+    return fabs(a-b)<=threshold;
   }
   
 };

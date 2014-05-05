@@ -5,5 +5,8 @@
 #include "Combinator.h"
 #include "Discretizer.h"
 #include "Types.h"
+#include "States.h"
+#include "Action.h"
+#include "Trajectory.h"
 
 #endif

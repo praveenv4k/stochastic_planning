@@ -8,6 +8,7 @@ void testContainer(Container<int>&);
 void testDiscretizer(Container<int>&);
 void testCombinator(Container<int>&,Container<int>&);
 void writeStateSpace();
+void writeActionSpace();
 
 int main(void){
   Container<int> state1;
@@ -16,12 +17,13 @@ int main(void){
   testContainer(state1);
   testDiscretizer(state1);
   testCombinator(state1,state1);
-  writeStateSpace();
+  //writeStateSpace();
+  writeActionSpace();
   return 0;
 }
 
 void testContainer(Container<int>& state){
-  state.print();
+  std::cout << state;
 }
 
 void testDiscretizer(Container<int>& state){
@@ -109,4 +111,57 @@ void writeStateSpace(){
     }
   }
   stream.close();
+}
+
+void writeActionSpace()
+{
+#if 1
+  Container<double> min;
+  min.resize(4);
+  min[0]=-0.02;
+  min[1]=-0.02;
+  min[2]=-0.02;
+  min[3]=0;
+  
+  Container<double> max;
+  max.resize(4);
+  max[0]=0.02;
+  max[1]=0.02;
+  max[2]=0.02;
+  max[3]=1;
+  
+  Container<double> step;
+  step.resize(4);
+  step[0]=0.02;
+  step[1]=0.02;
+  step[2]=0.02;
+  step[3]=1;
+#else
+  Container<double> min;
+  min.resize(3);
+  min[0]=-0.02;
+  min[1]=-0.02;
+  min[2]=-0.02;
+  
+  Container<double> max;
+  max.resize(3);
+  max[0]=0.02;
+  max[1]=0.02;
+  max[2]=0.02;
+  
+  Container<double> step;
+  step.resize(3);
+  step[0]=0.02;
+  step[1]=0.02;
+  step[2]=0.02;
+#endif
+  
+  Discretizer<double> discretizer(min,max,step);
+  
+  
+  for(size_t i=0;i<discretizer.size();i++){
+    int id = discretizer();
+    Container<double> val = discretizer.getValueAtIndex(id);
+    std::cout << "action" << id << " " << val << std::endl;
+  }
 }
