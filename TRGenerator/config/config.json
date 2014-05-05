@@ -42,6 +42,9 @@
         0.02,
         1
       ]
+    },
+    "grasp": {
+      "distThreshold": 0.01
     }
   },
   "object": {

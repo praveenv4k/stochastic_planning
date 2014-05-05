@@ -5,6 +5,11 @@
 #include <math.h>
 #include <boost/shared_ptr.hpp>
 
+class TrajectoryDiscretizer;
+class Trajectory;
+
+typedef boost::shared_ptr<TrajectoryDiscretizer> TrajectoryDiscretizerPtr;
+typedef boost::shared_ptr<Trajectory> TrajectoryPtr;
 
 class TrajectoryDiscretizer{
 public:
@@ -75,8 +80,6 @@ private:
   double m_radius;
   double m_xc,m_yc,m_zc;
 };
-
-typedef boost::shared_ptr<TrajectoryDiscretizer> TrajectoryDiscretizerPtr;
 
 class Trajectory{
 public:

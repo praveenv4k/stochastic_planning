@@ -12,6 +12,7 @@ void testJson();
 void writeStateSpace(bool writeToFile=false);
 void writeActionSpace();
 
+
 int main(void){
   Container<int> state1;
   state1.push_back(1);
@@ -80,26 +81,12 @@ void testCombinator(Container<int>& state1, Container<int>& state2){
 void writeStateSpace(bool writeToFile){
   Json::Value robot = Config::instance()->root["robot"];
   Json::Value ss = robot["ss"];
-  Container<double> min;
+  Container<double> min,max,step;
   Config::valueToVector(ss["min"],min);
-  min.resize(3);
-  min[0]=-0.25;
-  min[1]=0.45;
-  min[2]=0.25;
+  Config::valueToVector(ss["max"],max);
+  Config::valueToVector(ss["step"],step);
   
-  Container<double> max;
-  max.resize(3);
-  max[0]=0.25;
-  max[1]=0.85;
-  max[2]=0.55;
-  
-  Container<double> step;
-  step.resize(3);
-  step[0]=0.02;
-  step[1]=0.02;
-  step[2]=0.02;
-  
-  double distThres = 0.01;
+  double distThres = robot["grasp"]["distThreshold"].asDouble();
   
   boost::shared_ptr<TrajectoryDiscretizer> pTrajDisc(new CircleTrajectoryDiscretizer(0,0.65,0.4,0.2));
   boost::shared_ptr<Trajectory> pTraj(new Trajectory(18*M_PI/180,pTrajDisc));
