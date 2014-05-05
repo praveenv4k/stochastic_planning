@@ -11,7 +11,7 @@ void testCombinator(Container<int>&,Container<int>&);
 void testJson();
 void writeStateSpace(bool writeToFile=false);
 void writeActionSpace();
-
+TrajectoryDiscretizerPtr GetTrajectoryDiscretizer(Json::Value trajConfig);
 
 int main(void){
   Container<int> state1;
@@ -20,7 +20,7 @@ int main(void){
   testContainer(state1);
   testDiscretizer(state1);
   testCombinator(state1,state1);
-  //writeStateSpace();
+  writeStateSpace();
   //writeActionSpace();
   testJson();
   return 0;
@@ -85,11 +85,12 @@ void writeStateSpace(bool writeToFile){
   Config::valueToVector(ss["min"],min);
   Config::valueToVector(ss["max"],max);
   Config::valueToVector(ss["step"],step);
-  
   double distThres = robot["grasp"]["distThreshold"].asDouble();
   
-  boost::shared_ptr<TrajectoryDiscretizer> pTrajDisc(new CircleTrajectoryDiscretizer(0,0.65,0.4,0.2));
-  boost::shared_ptr<Trajectory> pTraj(new Trajectory(18*M_PI/180,pTrajDisc));
+  TrajectoryDiscretizerPtr pTrajDisc = GetTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);
+  return;
+  //TrajectoryDiscretizerPtr pTrajDisc(new CircleTrajectoryDiscretizer(0,0.65,0.4,0.2));
+  TrajectoryPtr pTraj(new Trajectory(18*M_PI/180,pTrajDisc));
     
   //std::cout << "Trajectory Points" << std::endl;
   std::vector<Container<double> > poses;
@@ -187,4 +188,23 @@ void writeActionSpace()
     Container<double> val = discretizer.getValueAtIndex(id);
     std::cout << "action" << id << " " << val << std::endl;
   }
+}
+
+TrajectoryDiscretizerPtr GetTrajectoryDiscretizer(Json::Value trajConfig){
+  TrajectoryDiscretizerPtr ptr;
+  if(!trajConfig.isNull()){
+    std::string type = trajConfig["type"].asString();
+    if(type == "circular"){
+      Json::Value cirConfig = trajConfig[type.c_str()];
+      if(!cirConfig.isNull()){
+	int numSamples = cirConfig["samples"].asInt();
+	Container<double> center;
+	Config::valueToVector(cirConfig["center"],center);
+	double radius = cirConfig["radius"].asDouble();
+	double step = cirConfig["step"].asDouble();
+	ptr = TrajectoryDiscretizerPtr(new CircleTrajectoryDiscretizer(center[0],center[1],center[2],radius));
+      }
+    }
+  }
+  return ptr;
 }
