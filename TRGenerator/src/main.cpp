@@ -3,10 +3,12 @@
 #include <iostream>
 #include <fstream>
 #include "Action.h"
+#include "Config.h"
 
 void testContainer(Container<int>&);
 void testDiscretizer(Container<int>&);
 void testCombinator(Container<int>&,Container<int>&);
+void testJson();
 void writeStateSpace(bool writeToFile=false);
 void writeActionSpace();
 
@@ -17,9 +19,29 @@ int main(void){
   testContainer(state1);
   testDiscretizer(state1);
   testCombinator(state1,state1);
-  writeStateSpace();
-  writeActionSpace();
+  //writeStateSpace();
+  //writeActionSpace();
+  testJson();
   return 0;
+}
+
+void testJson(){
+  Config* config = Config::instance();
+  Json::Value root = config->root;
+  Json::Value::Members members = root.getMemberNames();
+  for(size_t i=0;i<members.size();i++){
+    std::cout<<members[i] << std::endl;
+  }
+  Json::Value robot = config->root["robot"];
+  std::cout << robot["name"].asString() << std::endl;
+  Json::Value min = robot["ss"]["min"];
+  if(min.isArray()){
+    for(size_t i=0;i<min.size();i++){
+      std::cout << min[i].asDouble() << " ";
+    }
+    std::cout << std::endl;
+  }
+  std::cout << robot["ss"]["dim"] << std::endl;
 }
 
 void testContainer(Container<int>& state){
@@ -56,7 +78,10 @@ void testCombinator(Container<int>& state1, Container<int>& state2){
 }
 
 void writeStateSpace(bool writeToFile){
+  Json::Value robot = Config::instance()->root["robot"];
+  Json::Value ss = robot["ss"];
   Container<double> min;
+  Config::valueToVector(ss["min"],min);
   min.resize(3);
   min[0]=-0.25;
   min[1]=0.45;
