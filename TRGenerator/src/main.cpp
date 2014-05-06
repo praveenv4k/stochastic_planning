@@ -88,13 +88,12 @@ void writeStateSpace(bool writeToFile){
   double distThres = robot["grasp"]["distThreshold"].asDouble();
   
   TrajectoryDiscretizerPtr pTrajDisc = GetTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);
-  return;
-  //TrajectoryDiscretizerPtr pTrajDisc(new CircleTrajectoryDiscretizer(0,0.65,0.4,0.2));
-  TrajectoryPtr pTraj(new Trajectory(18*M_PI/180,pTrajDisc));
+  
+  double delta = Config::instance()->root["object"]["trajectory"]["step"].asDouble();
+  TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
     
-  //std::cout << "Trajectory Points" << std::endl;
   std::vector<Container<double> > poses;
-  int numPoints=20;
+  int numPoints=Config::instance()->root["object"]["trajectory"]["samples"].asInt();
   if(!pTraj->getAllPoses(numPoints,poses)){
    std::cout << "Cannot get requested number of Points" << std::endl; 
   }
@@ -108,7 +107,6 @@ void writeStateSpace(bool writeToFile){
   
   std::cout << "State Space size: " << discretizer.size() << std::endl;
   
-  int index=0;
   for(size_t i=0;i<discretizer.size();i++){
     int id = discretizer();
     Container<double> val = discretizer.getValueAtIndex(id);
@@ -116,77 +114,53 @@ void writeStateSpace(bool writeToFile){
       Container<double> pose = poses[i];
       double norm = Utils::computeL2norm<double>(val,pose);
       if(writeToFile){
-	stream << index++ << " " <<  val << " " << pose << " " << 0 << " " << norm << std::endl;
+	stream << id << " " <<  val << " " << pose  << " " << norm << std::endl;
       }
     }
   }
-  discretizer.reset();
-  for(size_t i=0;i<discretizer.size();i++){
-    int id = discretizer();
-    Container<double> val = discretizer.getValueAtIndex(id);
-    for(int i=0; i<numPoints;i++){
-      Container<double> pose = poses[i];
-      double norm = Utils::computeL2norm<double>(val,pose);
-      if(writeToFile){
-	stream << index++ << " " <<  val << " " << pose << " " << 1 << " " << norm << std::endl;
-      }
-    }
-  }
+//   discretizer.reset();
+//   for(size_t i=0;i<discretizer.size();i++){
+//     int id = discretizer();
+//     Container<double> val = discretizer.getValueAtIndex(id);
+//     for(int i=0; i<numPoints;i++){
+//       Container<double> pose = poses[i];
+//       double norm = Utils::computeL2norm<double>(val,pose);
+//       if(writeToFile){
+// 	stream << index++ << " " <<  val << " " << pose << " " << 1 << " " << norm << std::endl;
+//       }
+//     }
+//   }
   if(writeToFile){
     stream.close();
   }
 }
 
-void writeActionSpace()
+void writeActionSpace(bool writeToFile)
 {
-#if 1
-  Container<double> min;
-  min.resize(4);
-  min[0]=-0.02;
-  min[1]=-0.02;
-  min[2]=-0.02;
-  min[3]=0;
-  
-  Container<double> max;
-  max.resize(4);
-  max[0]=0.02;
-  max[1]=0.02;
-  max[2]=0.02;
-  max[3]=1;
-  
-  Container<double> step;
-  step.resize(4);
-  step[0]=0.02;
-  step[1]=0.02;
-  step[2]=0.02;
-  step[3]=1;
-#else
-  Container<double> min;
-  min.resize(3);
-  min[0]=-0.02;
-  min[1]=-0.02;
-  min[2]=-0.02;
-  
-  Container<double> max;
-  max.resize(3);
-  max[0]=0.02;
-  max[1]=0.02;
-  max[2]=0.02;
-  
-  Container<double> step;
-  step.resize(3);
-  step[0]=0.02;
-  step[1]=0.02;
-  step[2]=0.02;
-#endif
+  Json::Value robot = Config::instance()->root["robot"];
+  Json::Value action = robot["action"];
+  Container<double> min,max,step;
+  Config::valueToVector(action["min"],min);
+  Config::valueToVector(action["max"],max);
+  Config::valueToVector(action["step"],step);
   
   Discretizer<double> discretizer(min,max,step);
   
+  std::fstream stream;
+  if(writeToFile){
+    stream.open("states.txt",std::fstream::out);
+  }
   
   for(size_t i=0;i<discretizer.size();i++){
     int id = discretizer();
     Container<double> val = discretizer.getValueAtIndex(id);
     std::cout << "action" << id << " " << val << std::endl;
+    if(writeToFile){
+	stream << "action" << id << " " << val << std::endl;
+    }
+  }
+  if(writeToFile){
+    stream.close();
   }
 }
 
@@ -197,7 +171,6 @@ TrajectoryDiscretizerPtr GetTrajectoryDiscretizer(Json::Value trajConfig){
     if(type == "circular"){
       Json::Value cirConfig = trajConfig[type.c_str()];
       if(!cirConfig.isNull()){
-	int numSamples = cirConfig["samples"].asInt();
 	Container<double> center;
 	Config::valueToVector(cirConfig["center"],center);
 	double radius = cirConfig["radius"].asDouble();
