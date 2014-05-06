@@ -42,14 +42,3 @@ void Config::SetVersion(int version)
 {
     m_version = version;
 }
-
-bool Config::valueToVector(Json::Value& value,std::vector<double>& vector){
-  if(value.isArray()){
-    vector.resize(value.size());
-    for(size_t i=0;i<value.size();i++){
-      vector[i] = value[i].asDouble();
-    }
-    return true;
-  }
-  return false;
-}

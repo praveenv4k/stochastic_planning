@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <math.h>
+#include "json/json.h"
 
 #define EPSILON 1e-6
 
@@ -62,6 +63,16 @@ public:
     return fabs(a-b)<=threshold;
   }
   
+  static bool valueToVector(Json::Value& value,std::vector<double>& vector){
+    if(value.isArray()){
+      vector.resize(value.size());
+      for(size_t i=0;i<value.size();i++){
+	vector[i] = value[i].asDouble();
+      }
+      return true;
+    }
+    return false;
+  }
 };
 
 #endif

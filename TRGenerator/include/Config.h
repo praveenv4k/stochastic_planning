@@ -23,8 +23,6 @@ public:
     }
     static int GetVersion();
     static void SetVersion(int version);
-    
-    static bool valueToVector(Json::Value& value,std::vector<double>& vector);
 private:
     static bool instanceFlag;
     static bool isParsed;

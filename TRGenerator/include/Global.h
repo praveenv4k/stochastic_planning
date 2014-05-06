@@ -8,5 +8,6 @@
 #include "States.h"
 #include "Action.h"
 #include "Trajectory.h"
+#include "Config.h"
 
 #endif
