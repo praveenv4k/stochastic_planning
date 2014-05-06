@@ -1,9 +1,13 @@
 #ifndef __TRAJECTORY_H__
 #define __TRAJECTORY_H__
 
+#define _USE_MATH_DEFINES
 #include "Container.h"
-#include <math.h>
+#include <cmath>
 #include <boost/shared_ptr.hpp>
+#include <boost/math/constants/constants.hpp>
+
+//#define PI boost::math::constants::pi<float>()
 
 class TrajectoryDiscretizer;
 class Trajectory;

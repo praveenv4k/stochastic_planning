@@ -14,16 +14,16 @@ public:
   static void ind2sub(std::vector<int> siz, int idx, std::vector<int>& sub){
     size_t N = siz.size();
     int *prod = new int [N];
-    for (int i = 0; i < N; i++){
+    for (size_t i = 0; i < N; i++){
       prod[i] = 1;
-      for (int j = N-1; j > i; j--){
+	  for (size_t j = N - 1; j > i; j--){
 	prod[i] *= siz[j];	
       }
     }
     sub.resize(N);
-    for (int i = 0; i < N; i++){
+	for (size_t i = 0; i < N; i++){
       sub[i] = idx ;
-      for (int j = 0; j < i ; j++){
+	  for (size_t j = 0; j < i; j++){
 	sub[i] = sub[i] % prod[j];
       }
       sub[i] = (int)floor( (float)sub[i] / prod[i] );
@@ -34,10 +34,10 @@ public:
   static int sub2ind(std::vector<int> siz, std::vector<int> sub){
     size_t N = siz.size();
     int idx = 0;
-    for (int i = 0; i < N; i++)
+	for (size_t i = 0; i < N; i++)
     {
       int prod = 1;
-      for (int j = N-1; j > i; j--){
+	  for (size_t j = N - 1; j > i; j--){
 	prod *= siz[j];
       }
       idx += sub[i] * prod;
