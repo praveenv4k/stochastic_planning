@@ -16,11 +16,15 @@ public:
   Generator(Json::Value config):m_config(config){
   }
   void generate();
+private:
   void writeStateSpace(std::ostream& stream);
   void writeActionSpace(std::ostream& stream);
-  TrajectoryDiscretizerPtr GetTrajectoryDiscretizer(Json::Value trajConfig);
+  void createStateSpaceMap();
+  TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig);
+  void generateTables();
 private:
   Json::Value m_config;
+  StateIndexMap m_stateIndexMap;
 };
 
 #endif

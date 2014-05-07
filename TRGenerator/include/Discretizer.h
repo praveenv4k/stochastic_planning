@@ -14,23 +14,23 @@ class Discretizer
 	{
 	  initialize();
 	}
+	
 	size_t size() const{
 	  return m_totalElements;
 	}
+        
         int operator() () 
 	{ 
 	  id++;
-	  //Utils::ind2sub(m_numElements,id,m_indices);
-	  //m_indices.print();
 	  return id;
 	}
+
 	Container<T> getValueAtIndex(int id){
 	  Container<int> indices;
 	  Container<T> values;
 	  Utils::ind2sub(m_numElements,id,indices);
 	  size_t dim = m_min.size();
 	  values.resize(dim);
-	  //indices.print();
 	  for(size_t i=0;i<dim;i++){
 	    values[i] = m_min[i] + m_step[i] * indices[i];
 	  }
@@ -38,9 +38,23 @@ class Discretizer
 	  return values;
 	}
 	
+	bool isInLimits(Container<T> value){
+	  bool ret = true;
+	  if(value.size() == m_min.size()){
+	    for(size_t i=0;i<value.size();i++){
+	      if(value[i]-m_min[i] < 0 || m_max[i]-value[i] < 0){
+		ret = false;
+		break;
+	      }
+	    }
+	  }
+	  return ret;
+	}
+	
 	void reset(){
 	  initialize();
 	}
+	
     private:
 	void initialize(){
 	  id = -1;

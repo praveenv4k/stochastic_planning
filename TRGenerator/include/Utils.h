@@ -4,6 +4,10 @@
 #include <stdexcept>
 #include <math.h>
 #include "json/json.h"
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/unordered_map.hpp>
+#include "unordered_map_serialization.h"
 
 #define EPSILON 1e-6
 
@@ -72,6 +76,33 @@ public:
       return true;
     }
     return false;
+  }
+  
+  static std::vector<double> concatenate(std::vector<double>& a,std::vector<double>& b){
+    std::vector<double> ret;
+    for(std::vector<double>::iterator it= a.begin();it!=a.end();it++){
+      ret.push_back(*it);
+    }
+    for(std::vector<double>::iterator it= b.begin();it!=b.end();it++){
+      ret.push_back(*it);
+    }
+    return ret;
+  }
+  
+  template<typename T>
+  static void SaveMap(const std::string& name, T mp)
+  {
+      std::ofstream fl(name.c_str(),std::ios_base::binary);
+      boost::archive::text_oarchive oa(fl);
+      boost::serialization::save(oa,mp,0);
+  }
+
+  template<typename T>
+  static void LoadMap(std::string& name, T mp)
+  {
+      std::ifstream fl(name.c_str(),std::ios_base::binary);
+      boost::archive::text_iarchive oa(fl);
+      boost::serialization::load(oa,mp,0);
   }
 };
 

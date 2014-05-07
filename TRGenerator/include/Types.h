@@ -5,6 +5,7 @@
 #include <map>
 #include <boost/tuple/tuple.hpp>
 #include <boost/unordered_map.hpp>
+#include "Utils.h"
 
 typedef boost::tuples::tuple<int,int> StateActionTuple;
 
@@ -32,9 +33,35 @@ struct StateActionEqualTo
     }
 };
 
-typedef boost::unordered_map<int,double> RewardMap;
+struct StateIndexHash
+    : std::unary_function<std::vector<double>, std::size_t>
+{
+    std::size_t operator()(std::vector<double> const& e) const
+    {
+        std::size_t seed = 0;
+	for(size_t i=0;i<e.size();i++){
+	  boost::hash_combine(seed,e[i]);
+	}
+        return seed;
+    }
+};
+
+struct StateIndexEqualTo
+    : std::binary_function<std::vector<double>, std::vector<double>, bool>
+{
+    bool operator()(std::vector<double> const& x, std::vector<double> const& y) const
+    {
+      bool ret=false;
+      for(size_t i=0;i<x.size();i++){
+	  ret&= Utils::isEqual(x[i],y[i]);
+      }
+      return ret;
+    }
+};
+
+typedef boost::unordered_map<StateActionTuple,double,StateActionHash,StateActionEqualTo> RewardMap;
 //typedef std::map<std::pair<int,int>,std::vector<int> > TransitionMap;
 typedef boost::unordered_map<StateActionTuple, std::vector<int>,StateActionHash,StateActionEqualTo > TransitionMap;
-
+typedef boost::unordered_map<std::vector<double>,int,StateIndexHash,StateIndexEqualTo> StateIndexMap;
 
 #endif //__TYPES_H__
