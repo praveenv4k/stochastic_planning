@@ -25,6 +25,7 @@ private:
 private:
   Json::Value m_config;
   StateIndexMap m_stateIndexMap;
+  TransitionMap m_transitionMap;
 };
 
 #endif

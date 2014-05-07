@@ -31,4 +31,15 @@ std::ostream& operator <<(std::ostream& stream, const Container<U>& container) {
   return stream;
 }
 
+template <typename U>
+std::ostream& operator <<(std::ostream& stream, const std::vector<U>& container) {
+  int i=0;
+  for(typename std::vector<U>::const_iterator it=container.begin();it!=container.end();it++){
+    if(i>0) stream << " ";
+    stream<< *it;
+    i++;
+  }
+  return stream;
+}
+
 #endif //__CONTAINER_H__

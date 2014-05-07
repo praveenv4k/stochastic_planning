@@ -31,7 +31,7 @@ void Generator::writeStateSpace(std::ostream& stream){
   Utils::valueToVector(ss["step"],step);
   double distThres = robot["grasp"]["distThreshold"].asDouble();
   
-  TrajectoryDiscretizerPtr pTrajDisc = GetTrajectoryDiscretizer(m_config["object"]["trajectory"]);
+  TrajectoryDiscretizerPtr pTrajDisc = getTrajectoryDiscretizer(m_config["object"]["trajectory"]);
   
   double delta = m_config["object"]["trajectory"]["step"].asDouble();
   TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
@@ -69,7 +69,7 @@ void Generator::createStateSpaceMap(){
   Utils::valueToVector(ss["step"],step);
   double distThres = robot["grasp"]["distThreshold"].asDouble();
   
-  TrajectoryDiscretizerPtr pTrajDisc = GetTrajectoryDiscretizer(m_config["object"]["trajectory"]);
+  TrajectoryDiscretizerPtr pTrajDisc = getTrajectoryDiscretizer(m_config["object"]["trajectory"]);
   
   double delta = m_config["object"]["trajectory"]["step"].asDouble();
   TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
@@ -122,8 +122,11 @@ void Generator::generateTables(){
 	temp[j]+=val[j];
       }
       temp[val.size()-1]=val[val.size()-1];
+      std::cout << temp << std::endl;
       if(m_stateIndexMap.find(temp)!=m_stateIndexMap.end()){
-
+	std::vector<int> nextState;
+	nextState.push_back(m_stateIndexMap[temp]);
+	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
       }
     }
     discretizer.reset();
