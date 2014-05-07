@@ -69,7 +69,7 @@ public:
   }
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
     poses.resize(numPoints);
-    double step = M_PI/numPoints;
+    double step = (2*M_PI)/numPoints;
     for(int i=0;i<numPoints;i++){
       Container<double> pose;
       pose.resize(3);
@@ -83,6 +83,34 @@ public:
 private:
   double m_radius;
   double m_xc,m_yc,m_zc;
+};
+
+class Circle2DTrajectoryDiscretizer:public TrajectoryDiscretizer{
+public:
+  Circle2DTrajectoryDiscretizer(double xc,double yc, double radius)
+      :m_radius(radius*100),m_xc(xc*100),m_yc(yc*100){
+  }
+  virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose){
+    pose.resize(2);
+    pose[0] = (round(m_xc + m_radius*cos(currentStep))/100); 
+    pose[1] = (round(m_yc + m_radius*sin(currentStep))/100);
+    return true;
+  }
+  virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
+    poses.resize(numPoints);
+    double step = (2*M_PI)/numPoints;
+    for(int i=0;i<numPoints;i++){
+      Container<double> pose;
+      pose.resize(2);
+      pose[0] = (round(m_xc + m_radius*cos(i*step))/100); 
+      pose[1] = (round(m_yc + m_radius*sin(i*step))/100);
+      poses[i] = pose;
+    }
+    return true;
+  }
+private:
+  double m_radius;
+  double m_xc,m_yc;
 };
 
 class Trajectory{

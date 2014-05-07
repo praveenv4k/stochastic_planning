@@ -84,9 +84,19 @@ TrajectoryDiscretizerPtr Generator::GetTrajectoryDiscretizer(Json::Value trajCon
 	Container<double> center;
 	Utils::valueToVector(cirConfig["center"],center);
 	double radius = cirConfig["radius"].asDouble();
-	double step = cirConfig["step"].asDouble();
 	ptr = TrajectoryDiscretizerPtr(new CircleTrajectoryDiscretizer(center[0],center[1],center[2],radius));
       }
+    }
+    else if(type== "circular2d"){
+      Json::Value cirConfig = trajConfig[type.c_str()];
+      if(!cirConfig.isNull()){
+	Container<double> center;
+	Utils::valueToVector(cirConfig["center"],center);
+	double radius = cirConfig["radius"].asDouble();
+	ptr = TrajectoryDiscretizerPtr(new Circle2DTrajectoryDiscretizer(center[0],center[1],radius));
+      }
+    }
+    else{
     }
   }
   return ptr;

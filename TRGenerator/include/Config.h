@@ -5,7 +5,7 @@
 #include <json/json.h>
 
 #define JINDEX (Json::Value::ArrayIndex)
-#define PATH2CONFIG "config.json"
+#define PATH2CONFIG "config2d.json"
 
 class Config
 {
