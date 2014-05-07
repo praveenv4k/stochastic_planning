@@ -5,7 +5,7 @@
 #include <json/json.h>
 
 #define JINDEX (Json::Value::ArrayIndex)
-#define PATH2CONFIG ".\\config.json"
+#define PATH2CONFIG "config.json"
 
 class Config
 {
@@ -32,9 +32,8 @@ private:
     Config()
     {
         Json::Reader rd;
-		//std::ifstream tst(PATH2CONFIG, std::ifstream::binary);
-		std::ifstream tst("config.json", std::ifstream::binary);
-        //std::ifstream tst("C:\\Learn\\GP\\stochastic_planner\\TRGenerator\\build\\Debug\\config.json", std::ifstream::binary);
+	std::ifstream tst(PATH2CONFIG, std::ifstream::binary);
+	//std::ifstream tst("config.json", std::ifstream::binary);
         isParsed = rd.parse(tst,root,false);
         m_version = 0;
         hasCollided = false;
