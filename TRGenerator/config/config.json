@@ -65,6 +65,10 @@
       "type": "circular",
       "step": 0.3141592,
       "samples": 20,
+      "noise" : {
+        "mean" : 0,
+        "sigma": 0.01
+      },
       "circular": {
         "center": [
           0,
