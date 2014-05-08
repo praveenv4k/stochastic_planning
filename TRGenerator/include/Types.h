@@ -56,7 +56,8 @@ struct StateIndexEqualTo
     }
 };
 
-typedef boost::unordered_map<StateActionTuple,double,StateActionHash,StateActionEqualTo> RewardMap;
+//typedef boost::unordered_map<StateActionTuple,double,StateActionHash,StateActionEqualTo> RewardMap;
+typedef boost::unordered_map<int,double> RewardMap;
 //typedef std::map<std::pair<int,int>,std::vector<int> > TransitionMap;
 typedef boost::unordered_map<StateActionTuple, std::vector<int>,StateActionHash,StateActionEqualTo > TransitionMap;
 typedef boost::unordered_map<std::vector<double>,int,StateIndexHash,StateIndexEqualTo> StateIndexMap;

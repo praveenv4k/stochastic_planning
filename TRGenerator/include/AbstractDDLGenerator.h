@@ -6,8 +6,8 @@
 class AbstractDDLGenerator{
   // Protected constructor since it is an abstract class
 protected:
-  AbstractDDLGenerator(StateIndexMap& indexMap, StateIndexMap& actionMap,TransitionMap& transitionMap, RewardMap& rewardMap)
-    :m_indexMap(indexMap),m_transitionMap(transitionMap),m_rewardMap(rewardMap),m_actionMap(actionMap){
+  AbstractDDLGenerator(StateIndexMap& stateMap, StateIndexMap& actionMap,TransitionMap& transitionMap, RewardMap& rewardMap)
+    :m_stateMap(stateMap),m_transitionMap(transitionMap),m_rewardMap(rewardMap),m_actionMap(actionMap){
   }
   virtual void writeHeader(std::ofstream& fs){
   }
@@ -16,12 +16,12 @@ protected:
   virtual void writeFooter(std::ofstream& fs){
   }
 public:
-  virtual bool generate(std::string& fileName)=0;
+  virtual bool generate(std::string& filePath);
   virtual std::string getName() const {
     return m_name;
   }
 protected:
-  StateIndexMap m_indexMap;
+  StateIndexMap m_stateMap;
   TransitionMap m_transitionMap;
   RewardMap m_rewardMap;
   StateIndexMap m_actionMap;

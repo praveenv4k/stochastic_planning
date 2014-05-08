@@ -14,7 +14,7 @@ add_definitions(-DJSON_IS_AMALGAMATION)
 # add include directories
 include_directories(include jsoncpp-src-0.6.0-rc2)
 
-add_executable(trgenerator jsoncpp-src-0.6.0-rc2/jsoncpp.cpp src/Config.cpp src/Generator.cpp src/main.cpp)
+add_executable(trgenerator jsoncpp-src-0.6.0-rc2/jsoncpp.cpp src/Config.cpp src/AbstractDDLGenerator.cpp src/POMDPFileGenerator.cpp src/Generator.cpp src/main.cpp)
 
 # Copy the config files to the binary directory
 file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml
@@ -30,4 +30,3 @@ endforeach()
 # add_custom_command(TARGET trgenerator POST_BUILD
 #                    COMMAND ${CMAKE_COMMAND} -E copy_directory
 #                        ${CMAKE_SOURCE_DIR}/config $<TARGET_FILE_DIR:trgenerator>)
-

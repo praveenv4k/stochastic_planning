@@ -55,7 +55,7 @@
       0
     ],
     "trajectory": {
-      "dim": 3,
+      "dim": 2,
       "type": "circular2d",
       "step": 0.3141592,
       "samples": 20,

@@ -104,6 +104,13 @@ public:
       boost::archive::text_iarchive oa(fl);
       boost::serialization::load(oa,mp,0);
   }
+  
+//   static std::string getFileNameFromPath(const std::string& pathname)
+//   {
+//       return{std::find_if(pathname.rbegin(), pathname.rend(),
+// 			  [](char c) { return c == '/'; }).base(),
+// 	      pathname.end()};
+//   }
 };
 
 #endif

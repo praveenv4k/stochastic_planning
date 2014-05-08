@@ -23,6 +23,7 @@ private:
   void createActionSpaceMap();
   TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig);
   void generateTables();
+  void generateDDLFile(std::string& filePath);
   double computeReward(std::vector<double> state);
 private:
   Json::Value m_config;

@@ -1,4 +1,5 @@
 #include "Generator.h"
+#include "POMDPFileGenerator.h"
 
 void Generator::generate(){
 #if 0
@@ -24,14 +25,25 @@ void Generator::generate(){
   Json::Value robotSpace = m_config["robot"]["ss"]["min"];
   m_agentDim = robotSpace.size();
   
-  Json::Value objectSpace = m_config["object"]["ss"]["min"];
-  m_agentDim = objectSpace.size();  
+  Json::Value objectSpace = m_config["object"]["trajectory"]["dim"];
+  m_objectDim = objectSpace.asUInt();  
   
+  std::cout << "Generating StateSpace Map" << std::endl;
   createStateSpaceMap();
+  std::cout << "Generating ActionSpace Map" << std::endl;
   createActionSpaceMap();
+  std::cout << "Generating Transition and Reward Tables" << std::endl;
   generateTables();
+  std::cout << "Generating DDL File" << std::endl;
+  std::string ddlFile("domain.pomdp");
+  generateDDLFile(ddlFile);
 #endif
 #endif
+}
+
+void Generator::generateDDLFile(std::string& filePath){
+  POMDPFileGenerator gen(m_stateIndexMap,m_actionIndexMap,m_transitionMap,m_rewardMap);
+  gen.generate(filePath);
 }
   
 void Generator::writeStateSpace(std::ostream& stream){
@@ -133,6 +145,7 @@ void Generator::generateTables(){
   }
     
   for(StateIndexMap::iterator it=m_stateIndexMap.begin();it!=m_stateIndexMap.end();it++){
+    m_rewardMap[it->second] = computeReward(it->first);
     for(StateIndexMap::iterator ait=m_actionIndexMap.begin();ait!=m_actionIndexMap.end();ait++){
       int id = ait->second;
       std::vector<double> val = ait->first;
@@ -142,18 +155,18 @@ void Generator::generateTables(){
 	temp[j]+=val[j];
       }
       temp[val.size()-1]=val[val.size()-1];
-      std::cout << temp << std::endl;
+      //std::cout << temp << std::endl;
       if(m_stateIndexMap.find(temp)!=m_stateIndexMap.end()){
 	std::vector<int> nextState;
 	nextState.push_back(m_stateIndexMap[temp]);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
-	m_rewardMap[StateActionTuple(it->second,id)] = computeReward(temp);
+	//m_rewardMap[StateActionTuple(it->second,id)] = computeReward(temp);
       }
       else{
 	std::vector<int> nextState;
 	nextState.push_back(m_stateIndexMap[state]);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
-	m_rewardMap[StateActionTuple(it->second,id)] = computeReward(state);
+	//m_rewardMap[StateActionTuple(it->second,id)] = computeReward(state);
       }
     }
   }
@@ -183,6 +196,7 @@ double Generator::computeReward(std::vector<double> state){
   else{
     reward = -norm;
   }
+  return reward;
 }
 
 void Generator::writeActionSpace(std::ostream& stream)

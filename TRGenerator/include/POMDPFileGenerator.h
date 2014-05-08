@@ -5,11 +5,15 @@
 
 class POMDPFileGenerator: public AbstractDDLGenerator{
 public:
-    POMDPFileGenerator(StateIndexMap& indexMap, StateIndexMap& actionMap, TransitionMap& transitionMap, RewardMap& rewardMap)
-      :AbstractDDLGenerator(indexMap,actionMap,transitionMap,rewardMap){
+    POMDPFileGenerator(StateIndexMap& stateMap, StateIndexMap& actionMap, TransitionMap& transitionMap, RewardMap& rewardMap)
+      :AbstractDDLGenerator(stateMap,actionMap,transitionMap,rewardMap){
 	m_name = "POMDPFileGenerator";
     }
-    virtual bool generate(std::string& fileName);
+    //virtual bool generate(std::string& filePath);
+protected:
+    virtual void writeBody(std::ofstream& fs);
+    virtual void writeHeader(std::ofstream& fs);
+    virtual void writeFooter(std::ofstream& fs);
 };
 
 #endif
