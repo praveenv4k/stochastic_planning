@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <boost/tuple/tuple.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/unordered_map.hpp>
 #include "Utils.h"
 
@@ -38,11 +39,7 @@ struct StateIndexHash
 {
     std::size_t operator()(std::vector<double> const& e) const
     {
-        std::size_t seed = 0;
-	for(size_t i=0;i<e.size();i++){
-	  boost::hash_combine(seed,e[i]);
-	}
-        return seed;
+	return boost::hash_range(e.begin(),e.end());
     }
 };
 
@@ -51,7 +48,7 @@ struct StateIndexEqualTo
 {
     bool operator()(std::vector<double> const& x, std::vector<double> const& y) const
     {
-      bool ret=false;
+      bool ret=true;
       for(size_t i=0;i<x.size();i++){
 	  ret&= Utils::isEqual(x[i],y[i]);
       }

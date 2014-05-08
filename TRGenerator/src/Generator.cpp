@@ -16,6 +16,17 @@ void Generator::generate(){
   writeActionSpace(actionStream);
   actionStream.close();
 #else
+//   std::fstream stateStream;
+//   stateStream.open("states.txt",std::fstream::out);
+//   writeStateSpace(stateStream);
+//   stateStream.close();
+
+  Json::Value robotSpace = m_config["robot"]["ss"]["min"];
+  m_agentDim = robotSpace.size();
+  
+  Json::Value objectSpace = m_config["object"]["ss"]["min"];
+  m_agentDim = objectSpace.size();  
+  
   createStateSpaceMap();
   generateTables();
 #endif
@@ -127,9 +138,42 @@ void Generator::generateTables(){
 	std::vector<int> nextState;
 	nextState.push_back(m_stateIndexMap[temp]);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	m_rewardMap[StateActionTuple(it->second,id)] = computeReward(temp);
+      }
+      else{
+	std::vector<int> nextState;
+	nextState.push_back(m_stateIndexMap[state]);
+	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	m_rewardMap[StateActionTuple(it->second,id)] = computeReward(state);
       }
     }
     discretizer.reset();
+  }
+}
+
+double Generator::computeReward(std::vector<double> state){
+  std::vector<double> robotPos;
+  std::vector<double> objectPos;
+  double reward = -1;
+  //Extract Robot position
+  for(size_t i=0;i<m_agentDim-1;i++){
+    robotPos.push_back(state[i]);
+  }
+  //Extract Object Position
+  for(size_t i=m_agentDim;i<m_agentDim+m_objectDim;i++){
+    objectPos.push_back(state[i]);
+  }
+  double norm = Utils::computeL2norm(robotPos,objectPos);
+  double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
+  if(norm <= distThres){
+    if(Utils::isEqual(state[m_agentDim-1],1)){
+      reward = 100;
+    }else{
+      reward = 50;
+    }
+  }
+  else{
+    reward = -norm;
   }
 }
 

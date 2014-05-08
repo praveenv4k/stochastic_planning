@@ -22,10 +22,14 @@ private:
   void createStateSpaceMap();
   TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig);
   void generateTables();
+  double computeReward(std::vector<double> state);
 private:
   Json::Value m_config;
   StateIndexMap m_stateIndexMap;
   TransitionMap m_transitionMap;
+  RewardMap m_rewardMap;
+  size_t m_agentDim;
+  size_t m_objectDim;
 };
 
 #endif
