@@ -156,9 +156,11 @@ void Generator::generateTables(){
       }
       temp[val.size()-1]=val[val.size()-1];
       //std::cout << temp << std::endl;
-      if(m_stateIndexMap.find(temp)!=m_stateIndexMap.end()){
+      StateIndexMap::iterator found = m_stateIndexMap.find(temp);
+      if(found!=m_stateIndexMap.end()){
 	std::vector<int> nextState;
-	nextState.push_back(m_stateIndexMap[temp]);
+	//nextState.push_back(m_stateIndexMap[temp]);
+	nextState.push_back(found->second);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
 	//m_rewardMap[StateActionTuple(it->second,id)] = computeReward(temp);
       }

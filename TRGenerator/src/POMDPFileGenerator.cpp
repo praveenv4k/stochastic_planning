@@ -10,7 +10,8 @@ void POMDPFileGenerator::writeBody(std::ofstream& fs){
   fs << "states: " << m_stateMap.size() << std::endl;
   fs << "actions: " << m_actionMap.size() << std::endl;
   fs << "observations: 1" << std::endl << std::endl;  
-    
+  fs << "start: uniform" << std::endl << std::endl;
+  
   // Writing Transition Table
   fs << "### TRANSITION TABLE ###" <<std::endl;
   for(TransitionMap::iterator it=m_transitionMap.begin();it!=m_transitionMap.end();it++){
