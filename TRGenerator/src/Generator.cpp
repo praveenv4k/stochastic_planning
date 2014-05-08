@@ -28,6 +28,7 @@ void Generator::generate(){
   m_agentDim = objectSpace.size();  
   
   createStateSpaceMap();
+  createActionSpaceMap();
   generateTables();
 #endif
 #endif
@@ -109,10 +110,7 @@ void Generator::createStateSpaceMap(){
   //Utils::SaveMap("statesmap.txt",m_stateIndexMap);
 }
 
-void Generator::generateTables(){
-  if(m_stateIndexMap.size()==0){
-    std::cout << "State map empty. call createStateSpaceMap" << std::endl;
-  }
+void Generator::createActionSpaceMap(){
   Json::Value robot = m_config["robot"];
   Json::Value action = robot["action"];
   Container<double> min,max,step;
@@ -121,12 +119,23 @@ void Generator::generateTables(){
   Utils::valueToVector(action["step"],step);
   
   Discretizer<double> discretizer(min,max,step);
-  std::cout << "Action Space size: " << discretizer.size() << std::endl;
+    
+  for(size_t i=0;i<discretizer.size();i++){
+    int id = discretizer();
+    Container<double> val = discretizer.getValueAtIndex(id);
+    m_actionIndexMap[val]=id;
+  }
+}
+
+void Generator::generateTables(){
+  if(m_stateIndexMap.size()==0 || m_actionIndexMap.size()==0){
+    std::cout << "State/Action map empty. call createStateSpaceMap" << std::endl;
+  }
     
   for(StateIndexMap::iterator it=m_stateIndexMap.begin();it!=m_stateIndexMap.end();it++){
-    for(size_t i=0;i<discretizer.size();i++){
-      int id = discretizer();
-      Container<double> val = discretizer.getValueAtIndex(id);
+    for(StateIndexMap::iterator ait=m_actionIndexMap.begin();ait!=m_actionIndexMap.end();ait++){
+      int id = ait->second;
+      std::vector<double> val = ait->first;
       std::vector<double> state = it->first;
       std::vector<double> temp = state;
       for(size_t j=0;j<val.size()-1;j++){
@@ -147,7 +156,6 @@ void Generator::generateTables(){
 	m_rewardMap[StateActionTuple(it->second,id)] = computeReward(state);
       }
     }
-    discretizer.reset();
   }
 }
 

@@ -20,12 +20,14 @@ private:
   void writeStateSpace(std::ostream& stream);
   void writeActionSpace(std::ostream& stream);
   void createStateSpaceMap();
+  void createActionSpaceMap();
   TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig);
   void generateTables();
   double computeReward(std::vector<double> state);
 private:
   Json::Value m_config;
   StateIndexMap m_stateIndexMap;
+  StateIndexMap m_actionIndexMap;
   TransitionMap m_transitionMap;
   RewardMap m_rewardMap;
   size_t m_agentDim;
