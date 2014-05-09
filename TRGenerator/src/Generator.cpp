@@ -188,9 +188,9 @@ double Generator::computeReward(std::vector<double> state){
   }
   double norm = Utils::computeL2norm(robotPos,objectPos);
   double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
-  if(norm <= distThres){
+  if(Utils::isEqual(norm,distThres)){
     if(Utils::isEqual(state[m_agentDim-1],1)){
-      reward = 100;
+      reward = 500;
     }else{
       reward = 50;
     }
