@@ -17,10 +17,15 @@ void Generator::generate(){
   writeActionSpace(actionStream);
   actionStream.close();
 #else
-//   std::fstream stateStream;
-//   stateStream.open("states.txt",std::fstream::out);
-//   writeStateSpace(stateStream);
-//   stateStream.close();
+  std::fstream stateStream;
+  stateStream.open("states.txt",std::fstream::out);
+  writeStateSpace(stateStream);
+  stateStream.close();
+  
+  std::fstream actionStream;
+  actionStream.open("action.txt",std::fstream::out);
+  writeActionSpace(actionStream);
+  actionStream.close();
 
   Json::Value robotSpace = m_config["robot"]["ss"]["min"];
   m_agentDim = robotSpace.size();
