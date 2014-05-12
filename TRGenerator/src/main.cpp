@@ -5,15 +5,15 @@
 #include "Action.h"
 #include "Config.h"
 #include "Test.h"
-#include "Generator.h"
+#include "DomainExtractor.h"
 
 int main(void){
   // Test the implemented datastructures
   Test::testAll();
   
   // Generator
-  Generator generator(Config::instance()->root);
-  generator.generate();
+  DomainExtractor extractor(Config::instance()->root);
+  extractor.generate();
   
   return 0;
 }

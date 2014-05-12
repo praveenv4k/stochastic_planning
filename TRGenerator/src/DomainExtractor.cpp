@@ -1,7 +1,7 @@
-#include "Generator.h"
+#include "DomainExtractor.h"
 #include "POMDPFileGenerator.h"
 
-void Generator::generate(){
+void DomainExtractor::generate(){
 #if 0
   writeStateSpace(std::cout);
   writeActionSpace(std::cout);
@@ -46,12 +46,12 @@ void Generator::generate(){
 #endif
 }
 
-void Generator::generateDDLFile(std::string& filePath){
+void DomainExtractor::generateDDLFile(std::string& filePath){
   POMDPFileGenerator gen(m_stateIndexMap,m_actionIndexMap,m_transitionMap,m_rewardMap);
   gen.generate(filePath);
 }
   
-void Generator::writeStateSpace(std::ostream& stream){
+void DomainExtractor::writeStateSpace(std::ostream& stream){
   Json::Value robot = m_config["robot"];
   Json::Value ss = robot["ss"];
   Container<double> min,max,step;
@@ -89,7 +89,7 @@ void Generator::writeStateSpace(std::ostream& stream){
   }
 }
 
-void Generator::createStateSpaceMap(){
+void DomainExtractor::createStateSpaceMap(){
   Json::Value robot = m_config["robot"];
   Json::Value ss = robot["ss"];
   Container<double> min,max,step;
@@ -127,7 +127,7 @@ void Generator::createStateSpaceMap(){
   //Utils::SaveMap("statesmap.txt",m_stateIndexMap);
 }
 
-void Generator::createActionSpaceMap(){
+void DomainExtractor::createActionSpaceMap(){
   Json::Value robot = m_config["robot"];
   Json::Value action = robot["action"];
   Container<double> min,max,step;
@@ -144,7 +144,7 @@ void Generator::createActionSpaceMap(){
   }
 }
 
-void Generator::generateTables(){
+void DomainExtractor::generateTables(){
   if(m_stateIndexMap.size()==0 || m_actionIndexMap.size()==0){
     std::cout << "State/Action map empty. call createStateSpaceMap" << std::endl;
   }
@@ -179,7 +179,7 @@ void Generator::generateTables(){
   }
 }
 
-double Generator::computeReward(std::vector<double> state){
+double DomainExtractor::computeReward(std::vector<double> state){
   std::vector<double> robotPos;
   std::vector<double> objectPos;
   double reward = -1;
@@ -206,7 +206,7 @@ double Generator::computeReward(std::vector<double> state){
   return reward;
 }
 
-void Generator::writeActionSpace(std::ostream& stream)
+void DomainExtractor::writeActionSpace(std::ostream& stream)
 {
   Json::Value robot = m_config["robot"];
   Json::Value action = robot["action"];
@@ -221,11 +221,11 @@ void Generator::writeActionSpace(std::ostream& stream)
   for(size_t i=0;i<discretizer.size();i++){
     int id = discretizer();
     Container<double> val = discretizer.getValueAtIndex(id);
-    stream << "action" << id << " " << val << std::endl;
+    stream << id << " " << val << std::endl;
   }
 }
 
-TrajectoryDiscretizerPtr Generator::getTrajectoryDiscretizer(Json::Value trajConfig){
+TrajectoryDiscretizerPtr DomainExtractor::getTrajectoryDiscretizer(Json::Value trajConfig){
   TrajectoryDiscretizerPtr ptr;
   if(!trajConfig.isNull()){
     std::string type = trajConfig["type"].asString();

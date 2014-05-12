@@ -1,5 +1,5 @@
-#ifndef __GENERATOR_H__
-#define __GENERATOR_H__
+#ifndef __DOMAINEXTRACTOR_H__
+#define __DOMAINEXTRACTOR_H__
 
 #include <fstream>
 #include "Container.h"
@@ -11,9 +11,9 @@
 #include "Trajectory.h"
 #include "json/json.h"
 
-class Generator{
+class DomainExtractor{
 public:
-  Generator(Json::Value config):m_config(config){
+  DomainExtractor(Json::Value config):m_config(config){
   }
   void generate();
 private:
