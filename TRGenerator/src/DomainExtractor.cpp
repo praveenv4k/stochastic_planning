@@ -193,7 +193,8 @@ double DomainExtractor::computeReward(std::vector<double> state){
   }
   double norm = Utils::computeL2norm(robotPos,objectPos);
   double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
-  if(Utils::isEqual(norm,distThres)){
+  //if(Utils::isEqual(norm,distThres)){
+  if(norm <= distThres){
     if(Utils::isEqual(state[m_agentDim-1],1)){
       reward = 500;
     }else{
