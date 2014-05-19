@@ -21,6 +21,7 @@
 #include <stdio.h>
 
 #include "grasp.h"
+#include "armcontrol.h"
 
 #define CTRL_THREAD_PER     0.02    // [s]
 #define PRINT_STATUS_PER    1.0     // [s]
@@ -287,6 +288,56 @@ private:
     //double period;
 };
 
+class ArmControlModule: public RFModule
+{
+   ArmControl* armControl;
+
+public:
+
+    ArmControlModule()
+    {
+        //period = 1.0;
+        armControl = new ArmControl();
+    }
+
+    ~ArmControlModule()
+    {
+        delete armControl;        
+    }
+
+
+    bool configure(ResourceFinder &rf)
+    {
+        //period = rf.check("period", Value(5.0)).asDouble();
+        return armControl->open();
+    }
+
+    double getPeriod( )
+    {
+        return 0.1;        
+    }
+    
+    bool updateModule()
+    { 
+        armControl->loop();
+        return true; 
+    }
+
+    bool interruptModule()
+    {
+        fprintf(stderr, "Interrupting\n");
+        armControl->interrupt();
+        return true;
+    }
+
+    bool close()
+    {
+        fprintf(stderr, "Calling close\n");
+        armControl->close();
+        return true;
+    }
+};
+
 class CtrlModule: public RFModule
 {
 protected:
@@ -333,8 +384,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    GraspModule module;
     ResourceFinder rf;
+#ifdef GRASP
+    GraspModule module;
     rf.setVerbose();
     rf.setDefaultConfigFile("grasp_object.ini");
     rf.setDefaultContext("graspObject/conf");
@@ -346,7 +398,9 @@ int main(int argc, char *argv[])
         return -1;
     }
     //CtrlModule module;
-
+#else
+   ArmControlModule module;
+#endif
     module.runModule(rf);
     return 0;
 }

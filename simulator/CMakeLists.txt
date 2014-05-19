@@ -27,7 +27,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")
 # add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 # add_executable(${PROJECTNAME} ./jsoncpp-src-0.6.0-rc2/jsoncpp.cpp ./src/Configuration.cpp ./src/armcontroller.cpp src/StoachasticPlannerMain.cpp)
 add_executable(ObjectController src/objectcontroller.cpp src/ObjectControllerMain.cpp)
-add_executable(CartesianControl src/CartesianControl.cpp src/grasp.cpp)
+add_executable(CartesianControl src/CartesianControl.cpp src/grasp.cpp src/armcontrol.cpp)
 add_executable(StochasicPlanner src/StoachasticPlannerMain.cpp src/planner.cpp)
 
 # we now add the YARP and iCub libraries to our project.

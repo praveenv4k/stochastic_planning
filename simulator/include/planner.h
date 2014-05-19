@@ -20,6 +20,7 @@ public:
 
     Planner()
     {
+      first = true;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -31,6 +32,11 @@ public:
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
+    
+    double t;
+    double t0;
+    double t1;
+    bool first;
 };
 
    

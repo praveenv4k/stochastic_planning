@@ -11,25 +11,36 @@ using namespace yarp::math;
 
 void Planner::loop()
 {
+
    Bottle* cmd = plannerCmdPort.read(false);
-   if(cmd)
+   if(cmd || first)
    {
-     double command = cmd->get(0).asDouble();
-       if(command < 5)
-       {
-	 Bottle &status = plannerStatusPort.prepare();
-	 status.clear();
-         status.addString("release");
-         plannerStatusPort.write();  
-         printf("Release request sent\n");
+     bool send = true;
+     if(first==false){
+       double command = cmd->get(0).asDouble();
+       if(command != 1){
+	 send = false;
+       }else{
+	 printf("Received response :\n",command);
        }
-       else if(command >5)
+     }
+     first = false;
+
+       if(send)
        {
+	 t=Time::now();
+	 double x=-0.3;
+         double y=-0.1+0.1*cos(2.0*M_PI*0.1*(t-t0));
+         double z=+0.1+0.1*sin(2.0*M_PI*0.1*(t-t0));  
+	 double trigger=1;
 	 Bottle &status = plannerStatusPort.prepare();
 	 status.clear();
-	 status.addString("grasp");
-	 plannerStatusPort.write();  
-	 printf("Grasp Request Sent\n");
+         status.addDouble(x);
+	 status.addDouble(y);
+	 status.addDouble(z);
+	 status.addDouble(trigger);
+         plannerStatusPort.write();  
+         printf("Move request sent\n");
        }
    }
 }
@@ -52,20 +63,33 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
 //         return false;  // unable to open; let RFModule know so that it won't run
 //     }
     
-    Port port; 
-    Bottle reply;
-    port.open("/move_ball"); 
+//     if(! Network::connect("/armcontrol/status/out","/planner/cmd/in"))
+//     {
+//         std::cout <<": unable to connect to arm control output port.\n";
+//         return false;  // unable to open; let RFModule know so that it won't run
+//     }
+//     
+//     if(! Network::connect("/planner/status/out","/armcontrol/cmd/in"))
+//     {
+//         std::cout <<": unable to connect to arm control input port.\n";
+//         return false;  // unable to open; let RFModule know so that it won't run
+//     }
     
-    if(! Network::connect("/move_ball","/icubSim/world"))
-    {
-        std::cout <<": unable to connect ball object to world.\n";
-        return false;  // unable to open; let RFModule know so that it won't run
-    }
-    Bottle del_all("world del all"); 
-    port.write(del_all,reply); 
-    Bottle create_obj("world mk ssph 0.02 0.0 0.8 0.4 0 1 0");
-    port.write(create_obj,reply);
+//     Port port; 
+//     Bottle reply;
+//     port.open("/move_ball"); 
+//     
+//     if(! Network::connect("/move_ball","/icubSim/world"))
+//     {
+//         std::cout <<": unable to connect ball object to world.\n";
+//         return false;  // unable to open; let RFModule know so that it won't run
+//     }
+//     Bottle del_all("world del all"); 
+//     port.write(del_all,reply); 
+//     Bottle create_obj("world mk ssph 0.02 0.0 0.8 0.4 0 1 0");
+//     port.write(create_obj,reply);
     
+    t=t1=t0 = Time::now();
     return ret;
 }
 
