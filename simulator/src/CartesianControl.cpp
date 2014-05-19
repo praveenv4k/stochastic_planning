@@ -20,6 +20,8 @@
 
 #include <stdio.h>
 
+#include "grasp.h"
+
 #define CTRL_THREAD_PER     0.02    // [s]
 #define PRINT_STATUS_PER    1.0     // [s]
 #define MAX_TORSO_PITCH     30.0    // [deg]
@@ -230,6 +232,60 @@ public:
 };
 
 
+class GraspModule: public RFModule
+{
+   Grasp* grasp;
+
+public:
+
+    GraspModule()
+    {
+        //period = 1.0;
+        grasp = new Grasp();
+    }
+
+    ~GraspModule()
+    {
+        delete grasp;        
+    }
+
+
+    bool configure(ResourceFinder &rf)
+    {
+        //period = rf.check("period", Value(5.0)).asDouble();
+        return grasp->open(rf);
+    }
+
+    double getPeriod( )
+    {
+        return 0.1;        
+    }
+    
+    bool updateModule()
+    { 
+        grasp->loop();
+        return true; 
+    }
+
+    bool interruptModule()
+    {
+        fprintf(stderr, "Interrupting\n");
+        grasp->interrupt();
+        return true;
+    }
+
+    bool close()
+    {
+        fprintf(stderr, "Calling close\n");
+        grasp->close();
+        return true;
+    }
+
+    //void respond();
+
+private: 
+    //double period;
+};
 
 class CtrlModule: public RFModule
 {
@@ -265,7 +321,7 @@ public:
 
 
 
-int main()
+int main(int argc, char *argv[])
 {   
     // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
@@ -277,10 +333,22 @@ int main()
         return -1;
     }
 
-    CtrlModule mod;
-
+    GraspModule module;
     ResourceFinder rf;
-    return mod.runModule(rf);
+    rf.setVerbose();
+    rf.setDefaultConfigFile("grasp_object.ini");
+    rf.setDefaultContext("graspObject/conf");
+    rf.configure("ICUB_ROOT", argc, argv);
+
+    if (!module.configure(rf))
+    {
+        fprintf(stderr, "Error configuring module returning\n");
+        return -1;
+    }
+    //CtrlModule module;
+
+    module.runModule(rf);
+    return 0;
 }
 
 

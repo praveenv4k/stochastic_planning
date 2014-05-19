@@ -77,6 +77,22 @@ int main() {
 		clock.delay(0.1);
 	} 
 	return 0; 
+//         yarp::os::Network yarp; 
+// 	yarp::os::Bottle reply; 
+// 	yarp::os::SystemClock clock;
+// 	Port port; 
+// 	port.open("/move_arm"); 
+// 	if(!yarp.connect("/move_arm","/actionPrimitivesMod/in")){
+// 	  std::cout << "Cannot connect to actionPrimitivesMod" << std::endl;
+// 	  return -1;
+// 	}
+// 	
+// 	Bottle target;
+// 	target.addDouble(0.0);
+// 	target.addDouble(0.75);
+// 	target.addDouble(0.4);
+// 	port.write(target,reply);
+// 	return 0; 
 } 
 
 #endif

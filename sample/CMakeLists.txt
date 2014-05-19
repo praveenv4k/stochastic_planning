@@ -25,7 +25,7 @@ ADD_EXECUTABLE(firstproject FirstProject.cpp)
 
 ADD_EXECUTABLE(sampling Sampling.cpp)
 
-ADD_EXECUTABLE(cgalmesh cgalmesh.cpp)
+#ADD_EXECUTABLE(cgalmesh cgalmesh.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(firstproject ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
