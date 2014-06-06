@@ -13,45 +13,65 @@ using namespace yarp::math;
 void ArmControl::loop()
 {
    Bottle* cmd = armCmdPort.read(false);
-   if(cmd && (status != MOVING))
-   {
-     if(cmd->size() == 4){
-       if(cmd->get(4).asDouble() == 1)
-       {
-	 std::cout << "Received new position" << std::endl;
-            Vector handPos,handOrient;
-	    handPos[0] = cmd->get(0).asDouble();
-	    handPos[1] = cmd->get(1).asDouble();
-	    handPos[2] = cmd->get(2).asDouble();
-            iArm->getPose(handPos, handOrient);
+   if(status==MOVING){
+      bool done=false;
+      while (!done) {
+	  iArm->checkMotionDone(&done);
+	  yarp::os::Time::delay(0.04);   // or any suitable delay
+      }
+      status = REACHED;
+   }else{
+    if(cmd)
+    {
+      if(cmd->size() == 4){
+	if(cmd->get(4).asDouble() == 1)
+	{
+	  std::cout << "Received new position" << std::endl;
+	  Vector handPos,handOrient;
+	  handPos.resize(3);
+	  handPos[0] = cmd->get(0).asDouble();
+	  handPos[1] = cmd->get(1).asDouble();
+	  handPos[2] = cmd->get(2).asDouble();
+	  //iArm->getPose(handPos, handOrient);
 
-	    yarp::os::Time::delay(1.5);
-            action = REACHED;
-       }
-       status = MOVING;
-       actionTime = yarp::os::Time::now();
-     }
+	  iArm->goToPositionSync(handPos);
+	  
+	  //yarp::os::Time::delay(1.5);
+	  //action = REACHED;
+	}
+	status = MOVING;
+	actionTime = yarp::os::Time::now();
+      }
+    }
    }
 
-
-    bool motionDone;   
+   // TODO Should be checked for Grasping
+    /*bool motionDone;   
     if(iHand->checkMotionDone(&motionDone))
     {
 	if(motionDone && 
 	    (yarp::os::Time::now() - actionTime) >= 3.0 )
 	    status = action;
-    }        
+    }*/        
 
-    if(status == REACHED || first)
-    {
+    if(status == REACHED){
       status = IDLE;
       Bottle &portStatus = armStatusPort.prepare();
       portStatus.clear();
       portStatus.addDouble(1.0);
       armStatusPort.write();  
-      printf("Reached\n");
-      first = false;
-    }
+      //printf("Reached\n");
+    }else if(status == IDLE){
+      Bottle &portStatus = armStatusPort.prepare();
+      portStatus.clear();
+      portStatus.addDouble(10.0);
+      armStatusPort.write();  
+    }else if(status == MOVING){
+      Bottle &portStatus = armStatusPort.prepare();
+      portStatus.clear();
+      portStatus.addDouble(100.0);
+      armStatusPort.write();
+    }  
 }
 
 // bool ArmControl::open(yarp::os::ResourceFinder &rf)
@@ -133,7 +153,28 @@ bool ArmControl::open()
 
     action = status = IDLE;
 
-
+    Vector handPos,handOrient;
+    iArm->getPose(handPos,handOrient);
+    std::cout << "Current Position: " << handPos.toString() << std::endl;
+    std::cout << "Current Orientation: " << handOrient.toString() << std::endl;
+    // Move to some initial position
+    Vector targetPos;
+    targetPos.resize(3);
+    targetPos[0] = -0.3;
+    targetPos[1] = -0.1;
+    targetPos[2] = 0.1;
+    std::cout << "Moving to initial position" << std::endl;
+    if(iArm->goToPositionSync(targetPos)){
+      std::cout << "Moved to initial position" << std::endl;
+      bool done=false;
+      while (!done) {
+	  iArm->checkMotionDone(&done);
+	  yarp::os::Time::delay(0.04);   // or any suitable delay
+      }
+    }else{
+      std::cout << "Cannot move to initial position" << std::endl;
+    }  
+    
     bool ret=true;   
     ret = armCmdPort.open("/armcontrol/cmd/in");
     ret &= armStatusPort.open("/armcontrol/status/out");   

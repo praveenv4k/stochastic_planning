@@ -11,37 +11,36 @@ using namespace yarp::math;
 
 void Planner::loop()
 {
-
    Bottle* cmd = plannerCmdPort.read(false);
-   if(cmd || first)
+   if(cmd)
    {
-     bool send = true;
-     if(first==false){
-       double command = cmd->get(0).asDouble();
-       if(command != 1){
-	 send = false;
-       }else{
-	 printf("Received response :\n",command);
-       }
+     bool send = false;
+     double command = cmd->get(0).asDouble();
+     if(command == 1){
+       printf("Received response %lf:\n",command);
+       send = false;
+     }else if(command == 10){
+       send = true;
+	//printf("Received response %lf:\n",command);
+     }else if(command == 100){
+	printf("Arm is Moving : %lf\n",command);
      }
-     first = false;
 
-       if(send)
-       {
-	 t=Time::now();
-	 double x=-0.3;
-         double y=-0.1+0.1*cos(2.0*M_PI*0.1*(t-t0));
-         double z=+0.1+0.1*sin(2.0*M_PI*0.1*(t-t0));  
-	 double trigger=1;
-	 Bottle &status = plannerStatusPort.prepare();
-	 status.clear();
-         status.addDouble(x);
-	 status.addDouble(y);
-	 status.addDouble(z);
-	 status.addDouble(trigger);
-         plannerStatusPort.write();  
-         printf("Move request sent\n");
-       }
+     if(send){
+      t=Time::now();
+      double x=-0.3;
+      double y=-0.1+0.1*cos(2.0*M_PI*0.1*(t-t0));
+      double z=+0.1+0.1*sin(2.0*M_PI*0.1*(t-t0));  
+      double trigger=1;
+      Bottle &status = plannerStatusPort.prepare();
+      status.clear();
+      status.addDouble(x);
+      status.addDouble(y);
+      status.addDouble(z);
+      status.addDouble(trigger);
+      plannerStatusPort.write();  
+      printf("Move request sent\n");
+     }
    }
 }
 

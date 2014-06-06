@@ -77,8 +77,22 @@ public:
 
     bool configure(ResourceFinder &rf)
     {
+      bool ret=false;
         //period = rf.check("period", Value(5.0)).asDouble();
-        return planner->open(rf);
+      if(planner->open(rf)){
+	Network yarp;
+	if(! Network::connect("/armcontrol/status/out","/planner/cmd/in")){
+	  std::cout <<": unable to connect to arm control output port.\n";
+	}
+	else{
+         if(! Network::connect("/planner/status/out","/armcontrol/cmd/in")){
+          std::cout <<": unable to connect to arm control input port.\n";
+         }else{
+	   ret=true;
+	 }   
+       }
+      }
+      return ret;
     }
 
     double getPeriod( )
