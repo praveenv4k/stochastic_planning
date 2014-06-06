@@ -18,3 +18,13 @@ Build steps:
 * cd build
 * cmake ..
 * make
+
+Running the application
+
+1. kick up yarpserver
+2. start iCub_SIM
+3. start simCartesianSolver
+4. start iKinCartSolver
+5. start CartesianControl
+6. start StochasticPlanner
+7. start ObjectController
