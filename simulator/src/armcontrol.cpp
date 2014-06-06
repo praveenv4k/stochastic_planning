@@ -23,8 +23,12 @@ void ArmControl::loop()
    }else{
     if(cmd)
     {
+//       std::cout << "Got something from someone: " << cmd->get(0).asDouble()
+//       << " " << cmd->get(1).asDouble() << " " << cmd->get(2).asDouble() << " " << cmd->get(3).asDouble()
+//        << std::endl;
       if(cmd->size() == 4){
-	if(cmd->get(4).asDouble() == 1)
+	double trigger = cmd->get(3).asDouble();
+	if(trigger > 0)
 	{
 	  std::cout << "Received new position" << std::endl;
 	  Vector handPos,handOrient;

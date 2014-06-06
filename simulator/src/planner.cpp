@@ -21,7 +21,7 @@ void Planner::loop()
        send = false;
      }else if(command == 10){
        send = true;
-	//printf("Received response %lf:\n",command);
+	printf("Arm is Idle response %lf:\n",command);
      }else if(command == 100){
 	printf("Arm is Moving : %lf\n",command);
      }
@@ -39,7 +39,7 @@ void Planner::loop()
       status.addDouble(z);
       status.addDouble(trigger);
       plannerStatusPort.write();  
-      printf("Move request sent\n");
+      //printf("Move request sent\n");
      }
    }
 }
