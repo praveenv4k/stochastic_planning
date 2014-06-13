@@ -51,7 +51,7 @@ public:
     std::cout << robot["name"].asString() << std::endl;
     Json::Value min = robot["ss"]["min"];
     if(min.isArray()){
-      for(size_t i=0;i<min.size();i++){
+      for(Json::ArrayIndex i=0;i<min.size();i++){
 	std::cout << min[i].asDouble() << " ";
       }
       std::cout << std::endl;
