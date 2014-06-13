@@ -34,4 +34,15 @@ add_executable(StochasicPlanner src/StoachasticPlannerMain.cpp src/planner.cpp)
 TARGET_LINK_LIBRARIES(StochasicPlanner ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 TARGET_LINK_LIBRARIES(CartesianControl ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 TARGET_LINK_LIBRARIES(ObjectController ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
+
+# Copy the config files to the binary directory
+file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml
+                      ${CMAKE_SOURCE_DIR}/config/*.conf
+                      ${CMAKE_SOURCE_DIR}/config/*.json)
+                   
+foreach(ConfigFile ${ConfigFiles})
+  add_custom_command(TARGET trgenerator POST_BUILD
+                     COMMAND ${CMAKE_COMMAND} -E
+                         copy ${ConfigFile} $<TARGET_FILE_DIR:trgenerator>)
+endforeach()
 #TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
