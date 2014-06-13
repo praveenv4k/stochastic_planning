@@ -8,6 +8,7 @@ focused.
 
 * CMake is required. 
 * YARP (www.yarp.it) and iCub (http://www.icub.org/) modules are necessary to be installed
+* PCL is required to build the sample project.(for evaluation purpose)
 * jsoncpp library amalgamation source is included in the project
 
 **Build steps**
