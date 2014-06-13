@@ -90,7 +90,6 @@ bool ArmControl::open()
 
     // get params from the RF    
     partName = "right";
- 
     // opening hand controller
     robotName = "icubSim";
     remoteName = string("/")+robotName+string("/")+partName+string("_arm");
@@ -106,7 +105,7 @@ bool ArmControl::open()
     }
     // open the view
     driver.view(iHand);
-
+    
     // opening arm controller
     remoteName=string("/")+robotName+"/cartesianController/"+partName+string("_arm");
     localName=string("/armcontrol/")+partName+string("_arm");
@@ -200,4 +199,11 @@ bool ArmControl::interrupt()
     return true;
 }
 
-
+void ArmControl::initialize(){
+  Json::Value robot = Config::instance()->root["robot"];
+  std::cout << robot["name"] << std::endl;
+  
+  Json::Value right_arm = robot["parts"]["right_arm"];
+  
+  Json::Value left_arm = robot["parts"]["left_arm"];
+}

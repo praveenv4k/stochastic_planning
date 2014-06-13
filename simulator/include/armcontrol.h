@@ -12,6 +12,8 @@
 #include <yarp/math/Rand.h>
 #include <yarp/os/Time.h>
 
+#include "Config.h"
+
 enum armstatus_t {
     IDLE,
     REACHED,
@@ -20,34 +22,26 @@ enum armstatus_t {
 
 class ArmControl
 {
-   
 public:
-
-    ArmControl()
-    {
-      first = true;
-       // constructor
-    }
-
-//     bool open(yarp::os::ResourceFinder &rf);
-    bool open();
-    bool close();
-    void loop(); 
-    bool interrupt();
-
+  ArmControl(){
+  }
+  bool open();
+  bool close();
+  void loop(); 
+  bool interrupt();
 private:
-    yarp::os::BufferedPort<yarp::os::Bottle> armCmdPort;
-    yarp::os::BufferedPort<yarp::os::Bottle> armStatusPort;
-    yarp::dev::PolyDriver driver;
-    yarp::dev::IPositionControl *iHand;
-    yarp::dev::PolyDriver armDriver;
-    yarp::dev::ICartesianControl *iArm;
-
-    armstatus_t status;
-    armstatus_t action;     
-    double actionTime;
-    std::string partName;
-    bool first;
+  void initialize();
+private:
+  yarp::os::BufferedPort<yarp::os::Bottle> armCmdPort;
+  yarp::os::BufferedPort<yarp::os::Bottle> armStatusPort;
+  yarp::dev::PolyDriver driver;
+  yarp::dev::IPositionControl *iHand;
+  yarp::dev::PolyDriver armDriver;
+  yarp::dev::ICartesianControl *iArm;
+  armstatus_t status;
+  armstatus_t action;     
+  double actionTime;
+  std::string partName;
 };
 
    

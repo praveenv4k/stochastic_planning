@@ -27,8 +27,8 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")
 # add_executable(${PROJECTNAME} ${folder_source} ${folder_header})
 # add_executable(${PROJECTNAME} ./jsoncpp-src-0.6.0-rc2/jsoncpp.cpp ./src/Configuration.cpp ./src/armcontroller.cpp src/StoachasticPlannerMain.cpp)
 add_executable(ObjectController src/objectcontroller.cpp src/ObjectControllerMain.cpp)
-add_executable(CartesianControl src/CartesianControl.cpp src/grasp.cpp src/armcontrol.cpp)
-add_executable(StochasicPlanner src/StoachasticPlannerMain.cpp src/planner.cpp)
+add_executable(CartesianControl jsoncpp-src-0.6.0-rc2/jsoncpp.cpp src/Config.cpp src/CartesianControl.cpp src/grasp.cpp src/armcontrol.cpp)
+add_executable(StochasicPlanner src/StochasticPlannerMain.cpp src/planner.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(StochasicPlanner ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
@@ -41,8 +41,8 @@ file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml
                       ${CMAKE_SOURCE_DIR}/config/*.json)
                    
 foreach(ConfigFile ${ConfigFiles})
-  add_custom_command(TARGET trgenerator POST_BUILD
+  add_custom_command(TARGET CartesianControl POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E
-                         copy ${ConfigFile} $<TARGET_FILE_DIR:trgenerator>)
+                         copy ${ConfigFile} $<TARGET_FILE_DIR:CartesianControl>)
 endforeach()
 #TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
