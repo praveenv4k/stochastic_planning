@@ -81,6 +81,7 @@ void ArmControl::loop()
 // bool ArmControl::open(yarp::os::ResourceFinder &rf)
 bool ArmControl::open()
 {   
+  initialize();
     string ctrlName;
     string robotName;
     string remoteName;
@@ -204,6 +205,8 @@ void ArmControl::initialize(){
   std::cout << robot["name"] << std::endl;
   
   Json::Value right_arm = robot["parts"]["right_arm"];
+  std::cout << right_arm["enabled"] << std::endl;
   
   Json::Value left_arm = robot["parts"]["left_arm"];
+  std::cout << left_arm["enabled"] << std::endl;
 }
