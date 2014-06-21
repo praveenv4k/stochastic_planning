@@ -1,26 +1,33 @@
 {
+  "armcontrol":{
+    "arm" : "left"
+  }, 
+  "objectcontrol":{
+  },
+  "planner":{
+  },
   "robot": {
-    "name": "icub",
-    "unit":{
-      "angle": "deg",
-      "distance": "mm" 
-    },
-    "parts": {
-    "right_arm":{
-          "enabled": true,
-          "init_pose": [10,15,0,26,0,0,0,60,20,20,20,10,10,10,10,10]
+      "name": "icubSim",
+      "unit":{
+	"angle": "deg",
+	"distance": "mm" 
+      },
+      "parts": {
+	"right_arm":{
+	    "enabled": true,
+	    "init_pose": [10,15,0,26,0,0,0,60,20,20,20,10,10,10,10,10]
 	},
-        "left_arm":{
-          "enabled": true,
-          "init_pose": [10,15,0,26,0,0,0,60,20,20,20,10,10,10,10,10]
-	},
-	"torso":{
-          "enabled": true,
-          "init_pose": [0,0,0]
-	}
-    },
-    "grasp": {
-      "orientation": [0,0,0]
+	  "left_arm":{
+	    "enabled": true,
+	    "init_pose": [10,15,0,26,0,0,0,60,20,20,20,10,10,10,10,10]
+	  },
+	  "torso":{
+	    "enabled": true,
+	    "init_pose": [0,0,0]
+	  }
+      },
+      "grasp": {
+	"orientation": [0,0,0]
+      }
     }
-  }
 }
