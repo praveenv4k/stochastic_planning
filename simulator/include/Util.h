@@ -10,6 +10,8 @@
 
 #define EPSILON 1e-6
 
+#include <yarp/sig/Vector.h>
+
 //Part of the functions in the Utils class are taken from 
 //https://bitbucket.org/kritisen/utilitiescpp
 class Utils{
@@ -66,7 +68,19 @@ public:
     return fabs(a-b)<=threshold;
   }
   
-  static bool valueToVector(Json::Value& value,std::vector<double>& vector){
+//   static bool valueToVector(Json::Value& value,std::vector<double>& vector){
+//     if(value.isArray()){
+//       vector.resize(value.size());
+//       for(Json::ArrayIndex i=0;i<value.size();i++){
+// 	vector[i] = value[i].asDouble();
+//       }
+//       return true;
+//     }
+//     return false;
+//   }
+  
+  template <typename T>
+  static bool valueToVector(Json::Value& value,T& vector){
     if(value.isArray()){
       vector.resize(value.size());
       for(Json::ArrayIndex i=0;i<value.size();i++){
@@ -75,6 +89,16 @@ public:
       return true;
     }
     return false;
+  }
+  
+  template <typename T>
+  static bool deg2Radian(T& vector){
+    if(vector.size() >0){
+      for(size_t i=0;i<vector.size();i++){
+	vector[i] = vector[i]*M_PI/180.0;
+      }
+    }
+    return true;
   }
   
   static std::vector<double> concatenate(std::vector<double>& a,std::vector<double>& b){

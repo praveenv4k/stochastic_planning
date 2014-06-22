@@ -9,6 +9,7 @@ using namespace yarp::sig;
 using namespace yarp::math;
 
 #include <math.h>
+#include <CGAL/Plane_3.h>
 #include "Util.h"
 
 void ArmControl::loop()
@@ -17,7 +18,7 @@ void ArmControl::loop()
    if(status==MOVING){
       bool done=false;
       while (!done) {
-	yarp::dev::ICartesianControl* iArm=iArmMap["right"];
+	yarp::dev::ICartesianControl* iArm=iCartCtrlMap["right"];
 	iArm->checkMotionDone(&done);
 	yarp::os::Time::delay(0.04);   // or any suitable delay
       }
@@ -38,7 +39,7 @@ void ArmControl::loop()
 	  handPos[2] = cmd->get(2).asDouble();
 	  //iArm->getPose(handPos, handOrient);
 
-	  yarp::dev::ICartesianControl* iArm=iArmMap["right"];
+	  yarp::dev::ICartesianControl* iArm=iCartCtrlMap["right"];
 	  iArm->goToPositionSync(handPos);
 	  
 	  //yarp::os::Time::delay(1.5);
@@ -79,10 +80,8 @@ void ArmControl::loop()
     }  
 }
 
-// bool ArmControl::open(yarp::os::ResourceFinder &rf)
 bool ArmControl::open()
 {   
-    //string ctrlName;
     string robotName="icubSim";
     string remoteName;
     string localName;
@@ -119,72 +118,6 @@ bool ArmControl::open()
     }
     
     //Time::turboBoost();
-
-    // get params from the RF    
-//     partName = "right";
-//     // opening hand controller
-//     robotName = "icubSim";
-//     remoteName = string("/")+robotName+string("/")+partName+string("_arm");
-//     localName = string("/armcontrol/")+partName+string("_hand");
-//  
-//     // open the client
-//     Property option("(device remote_controlboard)");
-//     option.put("remote",remoteName.c_str());
-//     option.put("local",localName.c_str());
-//     if (!driver.open(option)){
-//       std::cout << "Remote control board cannot be opened"<<std::endl;
-//         return false;
-//     }
-//     // open the view
-//     driver.view(iHand);
-//     
-//     // opening arm controller
-//     remoteName=string("/")+robotName+"/cartesianController/"+partName+string("_arm");
-//     localName=string("/armcontrol/")+partName+string("_arm");
-//     // open the client
-//     Property armOption("(device cartesiancontrollerclient)");
-//     armOption.put("remote",remoteName.c_str());
-//     armOption.put("local",localName.c_str());
-//     if (!armDriver.open(armOption))
-//         return false;
-// 
-//     // open the view
-//     armDriver.view(iArm);
-//     // set trajectory time
-//     iArm->setTrajTime(1.0);
-// 
-//     // get the torso dofs
-//     Vector newDof, curDof;
-//     iArm->getDOF(curDof);
-//     newDof=curDof;
-// 
-//     // enable the torso yaw and pitch
-//     // disable the torso roll
-//     newDof[0]=1;
-//     newDof[1]=1;
-//     newDof[2]=1;
-// 
-//     // send the request for dofs reconfiguration
-//     iArm->setDOF(newDof,curDof);
-// 
-//     // Dont bend more than 15 degrees
-//     double min, max;
-//     iArm->getLimits(0,&min,&max);
-//     iArm->setLimits(0,min,15);
-// 
-//     // Dont turn more than 15
-//     iArm->setLimits(2,-15,15);
-//     iArm->setLimits(1,-15,15);
-// 
-// 
-//     // print out some info about the controller
-//     Bottle info;
-//     iArm->getInfo(info);
-//     std::cout << "info = " << info.toString() << "\n";
-//     std::cout << "DOFs = " << curDof.toString() << " and new: "
-//          << newDof.toString() << " \n";
-//     iArm->setTrackingMode(false);
-
 
     action = status = IDLE;
     
@@ -236,8 +169,8 @@ bool ArmControl::configure_arm(std::string& robotName, std::string& partName){
   IPositionControl* iHand;
   driver->view(iHand);
   
-  driverMap.insert(std::pair<std::string,boost::shared_ptr<PolyDriver> >(partName,driver));
-  iHandMap.insert(std::pair<std::string,IPositionControl*>(partName,iHand));
+  ddArmMap.insert(std::pair<std::string,boost::shared_ptr<PolyDriver> >(partName+string("_arm"),driver));
+  iPosCtrlMap.insert(std::pair<std::string,IPositionControl*>(partName+string("_arm"),iHand));
   
   // opening arm controller
   remoteName=string("/")+robotName+"/cartesianController/"+partName+string("_arm");
@@ -255,8 +188,8 @@ bool ArmControl::configure_arm(std::string& robotName, std::string& partName){
   ICartesianControl* iArm;
   armDriver->view(iArm);
   
-  armDriverMap.insert(std::pair<std::string,boost::shared_ptr<PolyDriver> >(partName,armDriver));
-  iArmMap.insert(std::pair<std::string,ICartesianControl*>(partName,iArm));
+  ddCartMap.insert(std::pair<std::string,boost::shared_ptr<PolyDriver> >(partName+string("_arm"),armDriver));
+  iCartCtrlMap.insert(std::pair<std::string,ICartesianControl*>(partName+string("_arm"),iArm));
   
   // set trajectory time
   iArm->setTrajTime(1.0);
@@ -297,20 +230,15 @@ bool ArmControl::configure_arm(std::string& robotName, std::string& partName){
 
 bool ArmControl::close()
 {
-//     driver.close();
-//     armDriver.close();
-    
-    for (std::map<std::string,boost::shared_ptr<PolyDriver> >::iterator it=driverMap.begin(); it!=driverMap.end(); ++it){
-      it->second->close();
-    }
-    
-    for (std::map<std::string,boost::shared_ptr<PolyDriver> >::iterator it=armDriverMap.begin(); it!=armDriverMap.end(); ++it){
-      it->second->close();
-    }
-    
-    armCmdPort.close();
-    armStatusPort.close();
-    return true;
+  for (std::map<std::string,boost::shared_ptr<PolyDriver> >::iterator it=ddArmMap.begin(); it!=ddArmMap.end(); ++it){
+    it->second->close();
+  }
+  for (std::map<std::string,boost::shared_ptr<PolyDriver> >::iterator it=ddCartMap.begin(); it!=ddCartMap.end(); ++it){
+    it->second->close();
+  }
+  armCmdPort.close();
+  armStatusPort.close();
+  return true;
 }
 
 bool ArmControl::interrupt()
@@ -322,22 +250,35 @@ bool ArmControl::interrupt()
 void ArmControl::initialize_robot(){
   Json::Value robot = Config::instance()->root["robot"];
   if(!robot.isNull()){
-    for (std::map<std::string,ICartesianControl* >::iterator it=iArmMap.begin(); it!=iArmMap.end(); ++it){
-      ICartesianControl* iArm = it->second;
+    for (std::map<std::string,IPositionControl* >::iterator it=iPosCtrlMap.begin(); it!=iPosCtrlMap.end(); ++it){
+      IPositionControl* posCtrl = it->second;
       std::string partName = it->first;
+      int axes;
+      std::cout << "Moving " << partName <<  " to initial pose, Axes : ";
+      if(posCtrl->getAxes(&axes)){
+	std::cout << axes  << std::endl;
+      }
       if(!partName.empty()){
 	Json::Value armConfig = robot["parts"][it->first];
 	if(!armConfig.isNull()){
 	  Json::Value init = armConfig["init_pose"];
 	  if(init.isArray()){
-	    std::vector<double> vec;
-	    if(Utils::valueToVector(init,vec)){
-	      
+	    yarp::sig::Vector qinit;
+	    if(Utils::valueToVector(init,qinit)){
+	      if(!move_joints(posCtrl,qinit)){
+		if(robot["unit"]["angle"].asString() == "deg"){
+		  Utils::deg2Radian(qinit);
+		}
+		std::cout << "Moving " << partName <<  " to initial pose failed!"  << std::endl;
+	      }
 	    }
 	  }
 	}
       }
     }
+  }
+  
+      
 //     Vector handPos,handOrient;
 //     iArm->getPose(handPos,handOrient);
 //     std::cout << "Current Position: " << handPos.toString() << std::endl;
@@ -359,12 +300,7 @@ void ArmControl::initialize_robot(){
 //     }else{
 //       std::cout << "Cannot move to initial position" << std::endl;
 //     }  
-  }
-  Json::Value right_arm = robot["parts"]["right_arm"];
-  std::cout << right_arm["enabled"] << std::endl;
-  
-  Json::Value left_arm = robot["parts"]["left_arm"];
-  std::cout << left_arm["enabled"] << std::endl;
+
 }
 
 bool ArmControl::configure_torso(std::string& robotName){
@@ -387,14 +323,25 @@ bool ArmControl::configure_torso(std::string& robotName){
   IPositionControl* iTorso;
   ddTorso->view(iTorso);
   
-  driverMap.insert(std::pair<std::string,boost::shared_ptr<PolyDriver> >(partName,ddTorso));
-  iHandMap.insert(std::pair<std::string,IPositionControl*>(partName,iTorso));
+  ddArmMap.insert(std::pair<std::string,boost::shared_ptr<PolyDriver> >(partName,ddTorso));
+  iPosCtrlMap.insert(std::pair<std::string,IPositionControl*>(partName,iTorso));
   
   return true;
 }
 
-void ArmControl::move_joints(yarp::sig::Vector &qd)
+bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd)
 {
+  std::cout << "Move joints : " << qd.toString() << std::endl;
+    bool done = false;
+    if(qd.size()>0){
+      posCtrl->positionMove(qd.data());
+      do{
+        posCtrl->checkMotionDone(&done);
+        yarp::os::Time::delay(.01);
+      }while(!done);
+    }
+    return done;
+
 //     bool done = false;
 //     yarp::sig::Vector torsoPos;
 //     torsoPos.resize(3);

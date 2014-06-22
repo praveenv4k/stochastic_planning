@@ -370,7 +370,7 @@ public:
     virtual bool   updateModule() { return true; }
 };
 
-
+//#define GRASP
 
 int main(int argc, char *argv[])
 {   

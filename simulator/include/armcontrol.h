@@ -35,20 +35,15 @@ private:
   void initialize_robot();
   bool configure_arm(std::string& robotName,std::string& armName);
   bool configure_torso(std::string& robotName);
-  void move_joints(yarp::sig::Vector &qd);
+  bool move_joints(yarp::dev::IPositionControl* posCtrl, yarp::sig::Vector &qd);
 private:
   yarp::os::BufferedPort<yarp::os::Bottle> armCmdPort;
   yarp::os::BufferedPort<yarp::os::Bottle> armStatusPort;
   
-//   yarp::dev::PolyDriver driver;
-//   yarp::dev::IPositionControl *iHand;
-//   yarp::dev::PolyDriver armDriver;
-//   yarp::dev::ICartesianControl *iArm;
-
-  std::map<std::string,yarp::dev::ICartesianControl*> iArmMap;
-  std::map<std::string,yarp::dev::IPositionControl*> iHandMap;
-  std::map<std::string,boost::shared_ptr<yarp::dev::PolyDriver> > driverMap;
-  std::map<std::string,boost::shared_ptr<yarp::dev::PolyDriver> > armDriverMap;
+  std::map<std::string,yarp::dev::ICartesianControl*> iCartCtrlMap;
+  std::map<std::string,yarp::dev::IPositionControl*> iPosCtrlMap;
+  std::map<std::string,boost::shared_ptr<yarp::dev::PolyDriver> > ddArmMap;
+  std::map<std::string,boost::shared_ptr<yarp::dev::PolyDriver> > ddCartMap;
   
   armstatus_t status;
   armstatus_t action;     

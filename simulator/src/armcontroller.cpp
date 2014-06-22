@@ -219,7 +219,6 @@ void CtrlThread::threadRelease()
     outputSigPort.close();
     outputStatePort.close();
     detectCollisionPort.close();
-
 }
 
 void CtrlThread::afterStart(bool s)
