@@ -17,7 +17,7 @@ enum armstatus_t {
 enum gstatus_t {
   RELEASED,
   GRASPED,
-  BUSY
+  GRASPING
 };
 
 #endif //__TYPES_H__

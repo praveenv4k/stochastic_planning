@@ -17,7 +17,7 @@ const int CLOSE_POSES[8] = {90, 45, 45, 30, 45, 30, 60, 90};
 void Grasp::loop()
 {
    Bottle* cmd = graspCmdPort.read(false);
-   if(cmd && (status != BUSY))
+   if(cmd && (status != GRASPING))
    {
        if(cmd->toString() == ConstString(GRASP_CMD))
        {
@@ -37,7 +37,7 @@ void Grasp::loop()
             openHand();
             action = RELEASED;
        }
-       status = BUSY;
+       status = GRASPING;
        actionTime = yarp::os::Time::now();
    }
 

@@ -314,7 +314,7 @@ public:
 
     double getPeriod( )
     {
-        return 0.1;        
+        return 3;        
     }
     
     bool updateModule()

@@ -81,7 +81,7 @@ public:
   
   template <typename T>
   static bool valueToVector(Json::Value& value,T& vector){
-    if(value.isArray()){
+    if(!value.isNull() && value.isArray()){
       vector.resize(value.size());
       for(Json::ArrayIndex i=0;i<value.size();i++){
 	vector[i] = value[i].asDouble();
