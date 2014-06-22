@@ -329,6 +329,46 @@ bool ArmControl::configure_torso(std::string& robotName){
   return true;
 }
 
+bool ArmControl::close_hand(string hand)
+{
+  bool bret=false;
+  IPositionControl* posCtrl = get_pos_ctrl(hand);
+  if(posCtrl!=NULL){
+    Json::Value close_pose = Config::instance()->root["robot"][hand]["close_hand"];
+    if(!close_pose.isNull() && close_pose.isArray()){
+      for(Json::ArrayIndex i=0; (i<close_pose.size()) && (i<8); i++)
+      {        
+	  posCtrl->setRefSpeed(i+8, 80);
+	  posCtrl->positionMove(i+8, close_pose[i].asDouble());
+      }        
+      bret = true;
+    }
+  }
+  return bret;
+}
+
+
+bool ArmControl::open_hand(string hand)
+{
+  bool bret=false;
+  IPositionControl* posCtrl = get_pos_ctrl(hand);
+  if(posCtrl!=NULL){
+    Json::Value open_pose = Config::instance()->root["robot"][hand]["open_hand"];
+    if(!open_pose.isNull() && open_pose.isArray()){
+      for(Json::ArrayIndex i=1; (i<open_pose.size()) && (i<8); i++)
+      {        
+	  posCtrl->setRefSpeed(i+8, 80);
+	  posCtrl->positionMove(i+8, open_pose[i].asDouble());
+      }
+      yarp::os::Time::delay(1.0);
+      posCtrl->setRefSpeed(8, 30);
+      posCtrl->positionMove(8, open_pose[0].asDouble());
+      bret = true;
+    }
+  }
+  return bret;
+}
+
 bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd)
 {
   std::cout << "Move joints : " << qd.toString() << std::endl;

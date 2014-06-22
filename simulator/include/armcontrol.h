@@ -36,6 +36,27 @@ private:
   bool configure_arm(std::string& robotName,std::string& armName);
   bool configure_torso(std::string& robotName);
   bool move_joints(yarp::dev::IPositionControl* posCtrl, yarp::sig::Vector &qd);
+  bool open_hand(std::string hand);
+  bool close_hand(std::string hand);
+  
+  inline yarp::dev::IPositionControl* get_pos_ctrl(std::string partName){
+    yarp::dev::IPositionControl* pos_ctrl = NULL;
+    std::map<std::string,yarp::dev::IPositionControl*>::iterator it = iPosCtrlMap.find(partName);
+    if(it != iPosCtrlMap.end()){
+      pos_ctrl = it->second;
+    }
+    return pos_ctrl;
+  }
+  
+  inline yarp::dev::ICartesianControl* get_cart_ctrl(std::string partName){
+    yarp::dev::ICartesianControl* cart_ctrl = NULL;
+    std::map<std::string,yarp::dev::ICartesianControl*>::iterator it = iCartCtrlMap.find(partName);
+    if(it != iCartCtrlMap.end()){
+      cart_ctrl = it->second;
+    }
+    return cart_ctrl;
+  }
+  
 private:
   yarp::os::BufferedPort<yarp::os::Bottle> armCmdPort;
   yarp::os::BufferedPort<yarp::os::Bottle> armStatusPort;
