@@ -9,7 +9,6 @@ using namespace yarp::sig;
 using namespace yarp::math;
 
 #include <math.h>
-#include <CGAL/Plane_3.h>
 #include "Util.h"
 
 void ArmControl::loop()

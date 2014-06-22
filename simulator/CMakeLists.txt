@@ -18,8 +18,6 @@ FIND_PACKAGE(YARP)
 # Find the iCub Packages
 FIND_PACKAGE(ICUB)
 
-find_library(CGAL_LIBRARY CGAL /usr/local)
-
 # add include directories
 include_directories(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} include jsoncpp-src-0.6.0-rc2)
 
@@ -35,7 +33,7 @@ add_executable(StochasicPlanner src/StochasticPlannerMain.cpp src/planner.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(StochasicPlanner ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
-TARGET_LINK_LIBRARIES(CartesianControl ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${CGAL_LIBRARY})
+TARGET_LINK_LIBRARIES(CartesianControl ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 TARGET_LINK_LIBRARIES(ObjectController ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 
 # Copy the config files to the binary directory

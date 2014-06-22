@@ -13,6 +13,10 @@ find_package(PCL 1.2 REQUIRED)
 # add_executable (octree_search octree_search.cpp)
 # target_link_libraries (octree_search ${PCL_LIBRARIES})
 
+# CGAL sample linking
+# find_library(CGAL_LIBRARY CGAL /usr/local)
+# TARGET_LINK_LIBRARIES(cgalmesh ${CGAL_LIBRARY})
+
 # add include directories
 INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
