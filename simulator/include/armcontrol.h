@@ -15,12 +15,29 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Config.h"
+#include "Types.h"
 
-enum armstatus_t {
-    IDLE,
-    REACHED,
-    MOVING
-    };
+struct ArmContext{
+  yarp::dev::ICartesianControl* iCart;
+  yarp::dev::IPositionControl* iPosCtrl;
+  boost::shared_ptr<yarp::dev::PolyDriver> ddArm;
+  boost::shared_ptr<yarp::dev::PolyDriver> ddCart;
+  
+  yarp::sig::Vector init_pose;
+  yarp::sig::Vector open_pose;
+  yarp::sig::Vector close_pose;
+
+  gstatus_t graspStatus;
+  bool enabled;
+};
+
+struct TorsoContext{
+  yarp::dev::IPositionControl* iPosCtrl;
+  boost::shared_ptr<yarp::dev::PolyDriver> ddArm;
+  
+  yarp::sig::Vector init_pose;
+  bool enabled;
+};
 
 class ArmControl
 {

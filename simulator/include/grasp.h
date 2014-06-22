@@ -16,11 +16,7 @@
 #define GRASP_CMD       "grasp"
 #define RELEASE_CMD     "release"
 
-enum gstatus_t {
-    GRASPED,
-    RELEASED,
-    BUSY
-    };
+#include "Types.h"
 
 class Grasp
 {
