@@ -27,7 +27,8 @@ using namespace yarp::os;
 class ObjectController:public yarp::os::RateThread
 {
 public:
-    yarp::os::BufferedPort<yarp::os::Bottle > outputStatePort; 
+    //yarp::os::BufferedPort<yarp::os::Bottle > outputStatePort; 
+    yarp::os::RpcClient outputStatePort;
     
     ObjectController(const double period);
     virtual ~ObjectController();
@@ -54,6 +55,10 @@ private:
     
     yarp::sig::Vector m_currPosition;
     yarp::sig::Vector m_initPosition;
+    
+    yarp::os::Bottle outputState;
+    yarp::os::Bottle reply;
+    
     double m_VelX;
     double m_Mean;
     double m_Sigma;

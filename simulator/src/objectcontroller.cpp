@@ -91,15 +91,19 @@ void ObjectController::afterStart(bool s)
 {
     if (s){
         std::cout << "ObjectCtrl Thread started successfully\n";
-	Bottle& outputState = outputStatePort.prepare();
+// 	Bottle& outputState = outputStatePort.prepare();
 	outputState.clear();
 	outputState.add("world del all");
-	outputStatePort.writeStrict();
+	outputStatePort.write(outputState,reply);
+	std::cout << outputState.toString() <<std::endl;
+// 	outputStatePort.write();
 	
-	outputState = outputStatePort.prepare();
+// 	outputState = outputStatePort.prepare();
 	outputState.clear();
 	outputState.add("world mk ssph 0.02 0.0 1 0.4 1 0 0");
-	outputStatePort.writeStrict();
+	outputStatePort.write(outputState,reply);
+	std::cout << outputState.toString() <<std::endl;
+// 	outputStatePort.write();
     }
     else{
         std::cout << "ObjectCtrl Thread did not start\n";
@@ -108,15 +112,20 @@ void ObjectController::afterStart(bool s)
 
 void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool &invalidAct)
 {
-    Bottle& outputState = outputStatePort.prepare();
-    outputState.clear();
-    outputState.addString("world set ssph 1");
+    //Bottle& outputState = outputStatePort.prepare();
+    
+    Bottle outputState1("world set ssph 1");
+    //outputState.clear();
+    //outputState.addString("world set ssph 1");
     yarp::sig::Vector pos = getNextPosition();
-    outputState.addDouble(pos[0]);
-    outputState.addDouble(pos[1]);
-    outputState.addDouble(pos[2]);
-    outputStatePort.writeStrict();
-    //std::cout << "Data written to port successfully\n";
+    outputState1.addDouble(pos[0]);
+    outputState1.addDouble(pos[1]);
+    outputState1.addDouble(pos[2]);
+    outputStatePort.write(outputState1,reply);
+    std::cout << outputState1.toString() <<std::endl;
+    
+//     outputStatePort.write();
+//     std::cout << "Data written to port successfully\n";
 }
 
 yarp::sig::Vector ObjectController::getNextPosition(){
