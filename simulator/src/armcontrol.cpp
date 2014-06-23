@@ -35,21 +35,23 @@ void ArmControl::loop()
         Bottle* cmd = armCmdPort.read(false);
 	yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
 	if(arm_ctx->status==MOVING){
+#if 0
 	  bool reached;
 	  bool done=false;
 	  if(iArm->checkMotionDone(&done)){
 	    reached = done;
 	  }
-	  if(arm_ctx->iPosCtrl->checkMotionDone(&done)){
-	    reached&=done;
-	  }
-// 	  while (!done) {
-// 	    iArm->checkMotionDone(&done);
-// 	    yarp::os::Time::delay(0.04);   // or any suitable delay
+// 	  if(arm_ctx->iPosCtrl->checkMotionDone(&done)){
+// 	    reached&=done;
 // 	  }
+	  //std::cout << "Reached Target: " << reached << std::endl;
 	  if(reached){
+	    std::cout << "Reached Target: " << std::endl;
 	    arm_ctx->status = REACHED;
 	  }
+#else
+      arm_ctx->status = arm_ctx->action;
+#endif
 	}
 	else{
 	  if(cmd){
@@ -58,9 +60,11 @@ void ArmControl::loop()
 	      double trigger = cmd->get(3).asDouble();
 	      if(trigger > 0){
 		if(trigger == 10){
+		  std::cout << "Closing Hand: " << cmd->toString() << std::endl;
 		  close_hand(arm_ctx);
 		}
 		else if(trigger == 100){
+		  std::cout << "Opening Hand: " << cmd->toString() << std::endl;
 		  open_hand(arm_ctx);
 		}
 	        else{
@@ -95,6 +99,7 @@ void ArmControl::loop()
 		  }
 		}
 		arm_ctx->status = MOVING;
+		arm_ctx->status = REACHED;
 	        actionTime = yarp::os::Time::now();
 	      }
 	    }
@@ -378,10 +383,10 @@ void ArmControl::initialize_robot(){
 	    std::cout << "Moved " << partName <<  " to initial pose!"  << std::endl;
 	    open_hand(arm_ctx);
 	    bool done = false;
-	    do{
-	      arm_ctx->iPosCtrl->checkMotionDone(&done);
-	      yarp::os::Time::delay(.01);
-	    }while(!done);
+// 	    do{
+// 	      arm_ctx->iPosCtrl->checkMotionDone(&done);
+// 	      yarp::os::Time::delay(.01);
+// 	    }while(!done);
 	    yarp::os::Time::delay(2);
 	    arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
 	    std::cout << "Initial Position: " << arm_ctx->init_position.toString() << std::endl;
@@ -428,7 +433,7 @@ bool ArmControl::configure_torso(std::string& robotName,boost::shared_ptr<TorsoC
   return true;
 }
 
-bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx)
+bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 {
   bool bret = false;
   if(ctx!=NULL && ctx->iPosCtrl!=NULL && ctx->configured){
@@ -440,11 +445,13 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx)
 	  ctx->iPosCtrl->setRefSpeed(i+8, 80);
 	  ctx->iPosCtrl->positionMove(i+8, close_pose[i]);
       }
-//       bool done=false;
-//       while (!done) {
-// 	ctx->iPosCtrl->checkMotionDone(&done);
-// 	yarp::os::Time::delay(0.04);   // or any suitable delay
-//       }
+      if(bSync){
+	bool done=false;
+	while (!done) {
+	  ctx->iPosCtrl->checkMotionDone(&done);
+	  yarp::os::Time::delay(0.01);   // or any suitable delay
+	}
+      }
       ctx->graspStatus = GRASPED;
       bret = true;
     }
@@ -453,7 +460,7 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx)
 }
 
 
-bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx)
+bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 {
   bool bret = false;
   if(ctx!=NULL && ctx->iPosCtrl!=NULL && ctx->configured){
@@ -468,11 +475,13 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx)
       yarp::os::Time::delay(1.0);
       ctx->iPosCtrl->setRefSpeed(8, 30);
       ctx->iPosCtrl->positionMove(8, open_pose[0]);
-//       bool done=false;
-//       while (!done) {
-// 	ctx->iPosCtrl->checkMotionDone(&done);
-// 	yarp::os::Time::delay(0.04);   // or any suitable delay
-//       }
+      if(bSync){
+	bool done=false;
+	while (!done) {
+	  ctx->iPosCtrl->checkMotionDone(&done);
+	  yarp::os::Time::delay(0.01);   // or any suitable delay
+	}
+      }      
       ctx->graspStatus = RELEASED;
       bret = true;
     }

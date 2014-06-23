@@ -167,8 +167,8 @@ private:
   bool configure_arm(std::string& robotName, boost::shared_ptr<ArmContext>& ctx);
   bool configure_torso(std::string& robotName,boost::shared_ptr<TorsoContext>& ctx);
   bool move_joints(yarp::dev::IPositionControl* posCtrl, yarp::sig::Vector &qd,bool bSync=true);
-  bool open_hand(boost::shared_ptr<ArmContext>& ctx);
-  bool close_hand(boost::shared_ptr<ArmContext>& ctx);
+  bool open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync=true);
+  bool close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync=true);
   bool robot_to_world(const yarp::sig::Vector& robot,yarp::sig::Vector& world);
   bool world_to_robot(const yarp::sig::Vector& world,yarp::sig::Vector& robot);
 //   inline boost::shared_ptr<PartContext>& get_context(std::string partName){

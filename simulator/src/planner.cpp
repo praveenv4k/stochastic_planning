@@ -17,14 +17,18 @@ void Planner::loop()
      bool send = false;
      double command = cmd->get(0).asDouble();
      if(command == 1){
-       printf("Received response %lf:\n",command);
+       //printf("Received response %lf:\n",command);
        send = false;
-       posQueue.pop();
+//        posQueue.pop();
      }else if(command == 10){
-       send = true;
-	printf("Arm is Idle response %lf:\n",command);
+       if(sent==true){
+	 posQueue.pop();
+	 sent = false;
+       }
+        send = true;
+	//printf("Arm is Idle response %lf:\n",command);
      }else if(command == 100){
-	printf("Arm is Moving : %lf\n",command);
+	//printf("Arm is Moving : %lf\n",command);
      }
 
      if(send){
@@ -43,6 +47,7 @@ void Planner::loop()
 	 status.addDouble(z);
 	 status.addDouble(trigger);
 	 plannerStatusPort.write();  
+	 std::cout << "Target : " << v.toString() << std::endl;
 	 printf("Move request sent\n");
 	 sent=true;
        }
@@ -112,24 +117,24 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     Vector v1;
     v1.resize(4);
     v1[0]= 0.0;
-    v1[1]= 0.5;
+    v1[1]= 0.6;
     v1[2]=0.25;
-    v1[4]=1;
+    v1[3]=1;
     posQueue.push(v1);
     v1[0]= 0.0;
-    v1[1]= 0.5;
+    v1[1]= 0.6;
     v1[2]=0.25;
-    v1[4]=10;
-    posQueue.push(v1);
-    v1[0]= 0.0;
-    v1[1]= 0.7;
-    v1[2]=0.25;
-    v1[4]=1;
+    v1[3]=10;
     posQueue.push(v1);
     v1[0]= 0.0;
     v1[1]= 0.7;
     v1[2]=0.25;
-    v1[4]=100;
+    v1[3]=1;
+    posQueue.push(v1);
+    v1[0]= 0.0;
+    v1[1]= 0.7;
+    v1[2]=0.25;
+    v1[3]=100;
     posQueue.push(v1);
     
     printf("Targets count: %d\n",posQueue.size());
