@@ -28,7 +28,9 @@ class ObjectController:public yarp::os::RateThread
 {
 public:
     //yarp::os::BufferedPort<yarp::os::Bottle > outputStatePort; 
-    yarp::os::RpcClient outputStatePort;
+    
+//     yarp::os::RpcClient outputStatePort;
+    Port outputStatePort;
     
     ObjectController(const double period);
     virtual ~ObjectController();
@@ -59,10 +61,20 @@ private:
     yarp::os::Bottle outputState;
     yarp::os::Bottle reply;
     
+    yarp::os::Network yarp; 
+    
     double m_VelX;
     double m_Mean;
     double m_Sigma;
     int m_Period;
+    
+    double startTime;
+    double xc,yc,zc,radius;
+    
+    yarp::sig::Vector boxPos;
+    yarp::sig::Vector boxSize;
+    yarp::sig::Vector ballPos;
+    double ball_radius;
 };
 
 #endif // OBJECTCONTROLLER_H
