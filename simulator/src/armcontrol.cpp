@@ -17,7 +17,7 @@ void ArmControl::loop()
   for (std::map<std::string,boost::shared_ptr<PartContext> >::iterator it=partCtxMap.begin(); it!=partCtxMap.end(); ++it){
     boost::shared_ptr<PartContext> ctx = it->second;
     if(ctx!=NULL && ctx->configured){
-      boost::shared_ptr<ArmContext> arm_ctx = boost::static_pointer_cast<ArmContext>(ctx);
+      boost::shared_ptr<ArmContext> arm_ctx = boost::static_pointer_cast<ArmContext,PartContext>(ctx);
       if(arm_ctx!=NULL){
 	if(arm_ctx->graspStatus == GRASPED)
 	  open_hand(arm_ctx);
@@ -30,7 +30,7 @@ void ArmControl::loop()
    std::map<std::string,boost::shared_ptr<PartContext> >::iterator it;
    it=partCtxMap.find(Config::instance()->root["armcontrol"]["arm"].asString());
    if(it!=partCtxMap.end()){
-     boost::shared_ptr<ArmContext> arm_ctx = boost::static_pointer_cast<ArmContext>(it->second);
+     boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
      if(arm_ctx!=NULL){
         Bottle* cmd = armCmdPort.read(false);
 	yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
@@ -65,14 +65,34 @@ void ArmControl::loop()
 		}
 	        else{
 		  std::cout << "Received new position" << std::endl;
-		  Vector handPos,handOrient;
-		  handPos.resize(3);
-		  handPos[0] = cmd->get(0).asDouble();
-		  handPos[1] = cmd->get(1).asDouble();
-		  handPos[2] = cmd->get(2).asDouble();
-		  //iArm->getPose(handPos, handOrient);
-		  yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
-		  iArm->goToPositionSync(handPos);
+		  Vector robotPos,handOrient;
+		  Vector worldPos;
+		  worldPos.resize(3);
+		  worldPos[0] = cmd->get(0).asDouble();
+		  worldPos[1] = cmd->get(1).asDouble();
+		  worldPos[2] = cmd->get(2).asDouble();
+		  if(world_to_robot(worldPos,robotPos)){
+#if 1
+		    yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
+		    iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
+#else
+		    yarp::sig::Vector tmpQ, tmpX, tmpO;
+		    tmpQ.resize(10);
+		    tmpX.resize(3);
+		    tmpO.resize(4);
+		    const yarp::sig::Vector postn = robotPos;
+		    const yarp::sig::Vector orntn = arm_ctx->init_orient;
+		    if(! arm_ctx->iCartCtrl->askForPosition(arm_ctx->current_pose,postn,tmpX,tmpO,tmpQ))
+			std::cout << " Inversion failed!!!\n ";
+
+		    move_joints(arm_ctx->iPosCtrl,tmpQ,false);
+
+		    // Update
+// 		    cs.posn = tmpX;
+// 		    cs.ortn = tmpO;
+		    arm_ctx->current_pose = tmpQ;
+#endif
+		  }
 		}
 		arm_ctx->status = MOVING;
 	        actionTime = yarp::os::Time::now();
@@ -112,6 +132,34 @@ void ArmControl::loop()
      }
    }
 #endif
+}
+
+bool ArmControl::robot_to_world(const yarp::sig::Vector& robot,yarp::sig::Vector& world){
+  if(robot.size()==3){
+    Vector4d v1;
+    v1 << robot[0],robot[1],robot[2],1;
+    Vector4d v2 = tf1* v1;
+    world.resize(3);
+    world[0]=v2[0];
+    world[1]=v2[1];
+    world[2]=v2[2];
+    return true;
+  }
+  return false;
+}
+
+bool ArmControl::world_to_robot(const yarp::sig::Vector& world,yarp::sig::Vector& robot){
+  if(world.size()==3){
+    Vector4d v1;
+    v1 << world[0],world[1],world[2],1;
+    Vector4d v2 = tf2* v1;
+    robot.resize(3);
+    robot[0]=v2[0];
+    robot[1]=v2[1];
+    robot[2]=v2[2];
+    return true;
+  }
+  return false;
 }
 
 bool ArmControl::open()
@@ -161,8 +209,8 @@ bool ArmControl::open()
 	left_ctx->enabled = true;
 	left_ctx->status = IDLE;
 	config &= Utils::valueToVector(left_arm["init_pose"],left_ctx->init_pose);
-	config &= Utils::valueToVector(left_arm["open_hand"],left_ctx->close_pose);
-	config &= Utils::valueToVector(left_arm["close_hand"],left_ctx->open_pose);
+	config &= Utils::valueToVector(left_arm["open_hand"],left_ctx->open_pose);
+	config &= Utils::valueToVector(left_arm["close_hand"],left_ctx->close_pose);
 	
 	if(config){
 	  if(!configure_arm(robotName, left_ctx)){
@@ -294,7 +342,7 @@ bool ArmControl::close()
 {
   for (std::map<std::string,boost::shared_ptr<PartContext> >::iterator it=partCtxMap.begin(); it!=partCtxMap.end(); ++it){
     it->second->ddArm->close();
-    boost::shared_ptr<ArmContext> arm_ctx = boost::static_pointer_cast<ArmContext>(it->second);
+    boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
     if(arm_ctx!=NULL){
       arm_ctx->ddCart->close();
     }
@@ -324,18 +372,27 @@ void ArmControl::initialize_robot(){
 	if(!move_joints(ctx->iPosCtrl,ctx->init_pose)){
 	  std::cout << "Moving " << partName <<  " to initial pose failed!"  << std::endl;
 	}else{
-	  std::cout << "Moved " << partName <<  " to initial pose!"  << std::endl;
-	  boost::shared_ptr<ArmContext> arm_ctx = boost::static_pointer_cast<ArmContext>(ctx);
+	  ctx->current_pose = ctx->init_pose;
+	  boost::shared_ptr<ArmContext> arm_ctx(boost::dynamic_pointer_cast<ArmContext>(ctx));
 	  if(arm_ctx!=NULL){
+	    std::cout << "Moved " << partName <<  " to initial pose!"  << std::endl;
 	    open_hand(arm_ctx);
 	    bool done = false;
 	    do{
 	      arm_ctx->iPosCtrl->checkMotionDone(&done);
 	      yarp::os::Time::delay(.01);
 	    }while(!done);
+	    yarp::os::Time::delay(2);
 	    arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
 	    std::cout << "Initial Position: " << arm_ctx->init_position.toString() << std::endl;
 	    std::cout << "Initial Orientation: " << arm_ctx->init_orient.toString() << std::endl;
+// 	    for(size_t i=arm_ctx->init_pose.size()-arm_ctx->open_pose.size();i<arm_ctx->init_pose.size();i++){
+// 	      ctx->current_pose[i]=arm_ctx->open_pose[arm_ctx->open_pose.size()-i];
+// 	    }
+	    for(size_t i=8;i<16;i++){
+	      ctx->current_pose[i]=arm_ctx->open_pose[i-8];
+	    }
+	    std::cout << "Current Pose: " << ctx->current_pose.toString()<< std::endl;
 	  }
 	}
       }
@@ -423,16 +480,20 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx)
   return bret;
 }
 
-bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd)
+bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd,bool bSync)
 {
   std::cout << "Move joints : " << qd.toString() << std::endl;
     bool done = false;
     if(qd.size()>0){
       posCtrl->positionMove(qd.data());
-      do{
-        posCtrl->checkMotionDone(&done);
-        yarp::os::Time::delay(.01);
-      }while(!done);
+      if(bSync){
+	do{
+	  posCtrl->checkMotionDone(&done);
+	  yarp::os::Time::delay(.01);
+	}while(!done);
+      }else{
+	done = true;
+      }
     }
     return done;
 }

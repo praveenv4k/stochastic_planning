@@ -20,14 +20,27 @@
 
 #include <iCub/ctrl/math.h>
 
+#include <eigen3/Eigen/Geometry>
+#include <eigen3/Eigen/Dense>
+#include <eigen3/Eigen/src/Geometry/Transform.h>
 
-struct PartContext{
+//using namespace Eigen::Matrix4d;
+using namespace Eigen;
+//using Eigen::
+
+class PartContext{
+public:
+  PartContext(){
+  }
+  virtual ~PartContext(){
+  }
   std::string name;
   
   yarp::dev::IPositionControl* iPosCtrl;
   boost::shared_ptr<yarp::dev::PolyDriver> ddArm;
   
   yarp::sig::Vector init_pose;
+  yarp::sig::Vector current_pose;
   
   armstatus_t status;
   armstatus_t action;
@@ -37,10 +50,11 @@ struct PartContext{
   bool initialized;  
 };
 
-struct TorsoContext:public PartContext{
+class TorsoContext:public PartContext{
 };
 
-struct ArmContext:public PartContext{
+class ArmContext:public PartContext{
+public:
   yarp::dev::ICartesianControl* iCartCtrl;
   boost::shared_ptr<yarp::dev::PolyDriver> ddCart;
 
@@ -56,7 +70,10 @@ struct ArmContext:public PartContext{
 class ArmControl
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   ArmControl(){
+    
+#if 0
     mat.resize(4,4);
     
     yarp::sig::Vector r1;r1.resize(4);r1[0]=0;r1[1]=-1;r1[2]=0;r1[3]=0;
@@ -90,6 +107,29 @@ public:
     mat2.setRow(3,r41);
     
     std::cout << mat.toString() << std::endl;
+#else
+  tf1 << 0,-1.0000,0,0,
+	  0,0,1.0000,0.5976,
+         -1.0000,0,0,-0.0260,
+	  0,0,0,1.0000;
+  tf2 << 0,0,-1.0000,-0.0260,
+	 -1.0000,0,0,0,
+         0,1.0000,0,-0.5976,
+         0,0,0,1.0000;
+	
+  std::cout << tf1 << std::endl;
+  std::cout << tf2 << std::endl;
+  
+  Vector4d v1;
+  v1 << -0.283779,-0.182074,-0.011660,1;
+  Vector4d v2 = tf1* v1;
+  Vector4d v3 = tf2* v2;
+  
+  std::cout << v1 << std::endl;
+  std::cout << v2 << std::endl;
+  std::cout << v3 << std::endl;
+//   transform.matrix() = mat1;
+#endif
     
     //-0.283779 -0.182074 -0.011660 1
     
@@ -126,10 +166,11 @@ private:
   void initialize_robot();
   bool configure_arm(std::string& robotName, boost::shared_ptr<ArmContext>& ctx);
   bool configure_torso(std::string& robotName,boost::shared_ptr<TorsoContext>& ctx);
-  bool move_joints(yarp::dev::IPositionControl* posCtrl, yarp::sig::Vector &qd);
+  bool move_joints(yarp::dev::IPositionControl* posCtrl, yarp::sig::Vector &qd,bool bSync=true);
   bool open_hand(boost::shared_ptr<ArmContext>& ctx);
   bool close_hand(boost::shared_ptr<ArmContext>& ctx);
-  
+  bool robot_to_world(const yarp::sig::Vector& robot,yarp::sig::Vector& world);
+  bool world_to_robot(const yarp::sig::Vector& world,yarp::sig::Vector& robot);
 //   inline boost::shared_ptr<PartContext>& get_context(std::string partName){
 //     std::map<std::string,boost::shared_ptr<PartContext> >::iterator it = partCtxMap.find(partName);
 //     if(it != partCtxMap.end()){
@@ -144,6 +185,10 @@ private:
   double actionTime;
   yarp::sig::Matrix mat;
   yarp::sig::Matrix mat2;
+  
+  Matrix4d tf1;
+  Matrix4d tf2;
+//   Transform<double,4,Affine> transform;
 };
 
    
