@@ -69,6 +69,8 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
   ballPos[0] = 0;
   ballPos[1] = boxPos[1]+boxSize[1]/2+ball_radius;
   ballPos[2] = 0.25;
+  
+  //ball top (0,0.5,0.25)
 }
 
 ObjectController::~ObjectController()

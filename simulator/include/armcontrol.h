@@ -18,6 +18,8 @@
 #include "Config.h"
 #include "Types.h"
 
+#include <iCub/ctrl/math.h>
+
 
 struct PartContext{
   std::string name;
@@ -32,7 +34,7 @@ struct PartContext{
   
   bool enabled;
   bool configured;
-  bool initialized;
+  bool initialized;  
 };
 
 struct TorsoContext:public PartContext{
@@ -45,6 +47,9 @@ struct ArmContext:public PartContext{
   yarp::sig::Vector open_pose;
   yarp::sig::Vector close_pose;
 
+  yarp::sig::Vector init_position;
+  yarp::sig::Vector init_orient;
+
   gstatus_t graspStatus;
 };
 
@@ -52,6 +57,66 @@ class ArmControl
 {
 public:
   ArmControl(){
+    mat.resize(4,4);
+    
+    yarp::sig::Vector r1;r1.resize(4);r1[0]=0;r1[1]=-1;r1[2]=0;r1[3]=0;
+    yarp::sig::Vector r2;r2.resize(4);r2[0]=0;r2[1]=0;r2[2]=1;r2[3]=0.5976;
+    yarp::sig::Vector r3;r3.resize(4);r3[0]=-1;r3[1]=0;r3[2]=0;r3[3]=-0.0260;
+    yarp::sig::Vector r4;r4.resize(4);r4[0]=0;r4[1]=0;r4[2]=0;r4[3]=1;
+    
+    mat.setRow(0,r1);
+    mat.setRow(1,r2);
+    mat.setRow(2,r3);
+    mat.setRow(3,r4);
+    
+    std::cout << mat.toString() << std::endl;
+    
+    mat2.resize(4,4);
+    
+    //     /*inv T =
+//          0         0   -1.0000   -0.0260
+//    -1.0000         0         0         0
+//          0    1.0000         0   -0.5976
+//          0         0         0    1.0000*/
+    
+    yarp::sig::Vector r11;r11.resize(4);r11[0]=0;r11[1]=0;r11[2]=-1;r11[3]=-0.0260;
+    yarp::sig::Vector r21;r21.resize(4);r21[0]=-1;r21[1]=0;r21[2]=0;r21[3]=0;
+    yarp::sig::Vector r31;r31.resize(4);r31[0]=0;r31[1]=1;r31[2]=0;r31[3]=-0.5976;
+    yarp::sig::Vector r41;r41.resize(4);r41[0]=0;r41[1]=0;r41[2]=0;r41[3]=1;
+    
+    mat2.setRow(0,r11);
+    mat2.setRow(1,r21);
+    mat2.setRow(2,r31);
+    mat2.setRow(3,r41);
+    
+    std::cout << mat.toString() << std::endl;
+    
+    //-0.283779 -0.182074 -0.011660 1
+    
+//     yarp::sig::Vector p1;p1.resize(4);p1[0]=-0.283779;p1[1]=-0.182074;p1[2]=-0.011660;p1[3]=1;
+//     yarp::sig::Vector p2;p2.resize(4);
+//     p2[0]=iCub::ctrl::dot(mat.getRow(0),p1);
+//     p2[1]=iCub::ctrl::dot(mat.getRow(1),p1);
+//     p2[2]=iCub::ctrl::dot(mat.getRow(2),p1);
+//     p2[3]=iCub::ctrl::dot(mat.getRow(3),p1);
+//     
+//     yarp::sig::Vector p3;p3.resize(4);
+//     p3[0]=iCub::ctrl::dot(mat2.getRow(0),p2);
+//     p3[1]=iCub::ctrl::dot(mat2.getRow(1),p2);
+//     p3[2]=iCub::ctrl::dot(mat2.getRow(2),p2);
+//     p3[3]=iCub::ctrl::dot(mat2.getRow(3),p2);
+    
+//     T =
+// 
+//          0   -1.0000         0         0
+//          0         0    1.0000    0.5976
+//    -1.0000         0         0   -0.0260
+//          0         0         0    1.0000
+//     /*inv T =
+//          0         0   -1.0000   -0.0260
+//    -1.0000         0         0         0
+//          0    1.0000         0   -0.5976
+//          0         0         0    1.0000*/
   }
   bool open();
   bool close();
@@ -77,6 +142,8 @@ private:
   yarp::os::BufferedPort<yarp::os::Bottle> armStatusPort;
   std::map<std::string,boost::shared_ptr<PartContext> > partCtxMap;
   double actionTime;
+  yarp::sig::Matrix mat;
+  yarp::sig::Matrix mat2;
 };
 
    

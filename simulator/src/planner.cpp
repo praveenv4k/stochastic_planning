@@ -19,6 +19,7 @@ void Planner::loop()
      if(command == 1){
        printf("Received response %lf:\n",command);
        send = false;
+       posQueue.pop();
      }else if(command == 10){
        send = true;
 	printf("Arm is Idle response %lf:\n",command);
@@ -27,6 +28,25 @@ void Planner::loop()
      }
 
      if(send){
+#if 1
+       if(posQueue.size()>0){
+	 Vector& v = posQueue.front();
+	 double x=v[0];
+	 double y=v[1];
+	 double z=v[2];  
+	 double trigger=v[3];
+	 
+	 Bottle &status = plannerStatusPort.prepare();
+	 status.clear();
+	 status.addDouble(x);
+	 status.addDouble(y);
+	 status.addDouble(z);
+	 status.addDouble(trigger);
+	 plannerStatusPort.write();  
+	 printf("Move request sent\n");
+	 sent=true;
+       }
+#else
       t=Time::now();
       double x=-0.3;
       double y=-0.1+0.1*cos(2.0*M_PI*0.1*(t-t0));
@@ -38,7 +58,8 @@ void Planner::loop()
       status.addDouble(y);
       status.addDouble(z);
       status.addDouble(trigger);
-      plannerStatusPort.write();  
+      plannerStatusPort.write();
+#endif      
       //printf("Move request sent\n");
      }
    }
@@ -88,6 +109,30 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
 //     Bottle create_obj("world mk ssph 0.02 0.0 0.8 0.4 0 1 0");
 //     port.write(create_obj,reply);
     
+    Vector v1;
+    v1.resize(4);
+    v1[0]= 0.0;
+    v1[1]= 0.5;
+    v1[2]=0.25;
+    v1[4]=1;
+    posQueue.push(v1);
+    v1[0]= 0.0;
+    v1[1]= 0.5;
+    v1[2]=0.25;
+    v1[4]=10;
+    posQueue.push(v1);
+    v1[0]= 0.0;
+    v1[1]= 0.7;
+    v1[2]=0.25;
+    v1[4]=1;
+    posQueue.push(v1);
+    v1[0]= 0.0;
+    v1[1]= 0.7;
+    v1[2]=0.25;
+    v1[4]=100;
+    posQueue.push(v1);
+    
+    printf("Targets count: %d\n",posQueue.size());
     t=t1=t0 = Time::now();
     return ret;
 }

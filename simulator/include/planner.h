@@ -12,6 +12,7 @@
 #include <yarp/math/Rand.h>
 #include <yarp/os/Time.h>
 
+#include <queue>
 
 class Planner
 {
@@ -21,6 +22,7 @@ public:
     Planner()
     {
       first = true;
+      sent=false;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -32,11 +34,12 @@ public:
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
-    
+    std::queue<yarp::sig::Vector> posQueue;
     double t;
     double t0;
     double t1;
     bool first;
+    bool sent;
 };
 
    
