@@ -15,6 +15,7 @@ enum armstatus_t {
 };
 
 enum gstatus_t {
+  RELEASING,
   RELEASED,
   GRASPED,
   GRASPING

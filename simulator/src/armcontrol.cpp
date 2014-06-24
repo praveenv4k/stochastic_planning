@@ -13,16 +13,33 @@ using namespace yarp::math;
 
 void ArmControl::loop()
 {  
-#if 0
+#if 0 // GRASP CHECK
   for (std::map<std::string,boost::shared_ptr<PartContext> >::iterator it=partCtxMap.begin(); it!=partCtxMap.end(); ++it){
     boost::shared_ptr<PartContext> ctx = it->second;
     if(ctx!=NULL && ctx->configured){
-      boost::shared_ptr<ArmContext> arm_ctx = boost::static_pointer_cast<ArmContext,PartContext>(ctx);
+      boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(ctx);
       if(arm_ctx!=NULL){
-	if(arm_ctx->graspStatus == GRASPED)
-	  open_hand(arm_ctx);
-	else if(arm_ctx->graspStatus == RELEASED)
-	  close_hand(arm_ctx);
+	if(arm_ctx->graspStatus == GRASPING || arm_ctx->graspStatus==RELEASING){
+	  bool done;
+	  if(arm_ctx->iPosCtrl->checkMotionDone(&done)){
+	    if(done){
+	      if(arm_ctx->graspStatus==GRASPING){
+		std::cout << "Grasp Complete! " << std::endl;
+		arm_ctx->graspStatus= GRASPED;
+	      }
+	      else if(arm_ctx->graspStatus==RELEASING){
+		std::cout << "Open Complete! " << std::endl;
+		arm_ctx->graspStatus= RELEASED;
+	      }
+	    }
+	  }
+	}
+	else{
+	  if(arm_ctx->graspStatus == GRASPED)
+	    open_hand(arm_ctx,false);
+	  else if(arm_ctx->graspStatus == RELEASED)
+	    close_hand(arm_ctx,false);
+	}
       }
     }
   }
@@ -50,7 +67,23 @@ void ArmControl::loop()
 	    arm_ctx->status = REACHED;
 	  }
 #else
-      arm_ctx->status = arm_ctx->action;
+	if(arm_ctx->graspStatus == GRASPING || arm_ctx->graspStatus==RELEASING){
+	  bool done;
+	  if(arm_ctx->iPosCtrl->checkMotionDone(&done)){
+	    if(done){
+	      if(arm_ctx->graspStatus==GRASPING){
+		std::cout << "Grasp Complete! " << std::endl;
+		arm_ctx->graspStatus= GRASPED;
+	      }
+	      else if(arm_ctx->graspStatus==RELEASING){
+		std::cout << "Open Complete! " << std::endl;
+		arm_ctx->graspStatus= RELEASED;
+	      }
+	    }
+	  }
+	}else{
+	  arm_ctx->status = arm_ctx->action;
+	}
 #endif
 	}
 	else{
@@ -61,11 +94,15 @@ void ArmControl::loop()
 	      if(trigger > 0){
 		if(trigger == 10){
 		  std::cout << "Closing Hand: " << cmd->toString() << std::endl;
-		  close_hand(arm_ctx);
+		  if(arm_ctx->graspStatus == RELEASED)
+		    close_hand(arm_ctx,false);
+		  //close_hand(arm_ctx);
 		}
 		else if(trigger == 100){
 		  std::cout << "Opening Hand: " << cmd->toString() << std::endl;
-		  open_hand(arm_ctx);
+		  if(arm_ctx->graspStatus == GRASPED)
+		    open_hand(arm_ctx,false);
+		  //open_hand(arm_ctx);
 		}
 	        else{
 		  std::cout << "Received new position" << std::endl;
@@ -322,6 +359,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   // send the request for dofs reconfiguration
   iArm->setDOF(newDof,curDof);
 
+#if 0
   // Dont bend more than 15 degrees
   double min, max;
   iArm->getLimits(0,&min,&max);
@@ -330,7 +368,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   // Dont turn more than 15
   iArm->setLimits(2,-15,15);
   iArm->setLimits(1,-15,15);
-
+#endif
 
   // print out some info about the controller
   Bottle info;
@@ -382,18 +420,18 @@ void ArmControl::initialize_robot(){
 	  if(arm_ctx!=NULL){
 	    std::cout << "Moved " << partName <<  " to initial pose!"  << std::endl;
 	    open_hand(arm_ctx);
-	    bool done = false;
+	    
+// 	    bool done = false;
 // 	    do{
 // 	      arm_ctx->iPosCtrl->checkMotionDone(&done);
 // 	      yarp::os::Time::delay(.01);
 // 	    }while(!done);
-	    yarp::os::Time::delay(2);
+// 	    yarp::os::Time::delay(2);
+	    
 	    arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
 	    std::cout << "Initial Position: " << arm_ctx->init_position.toString() << std::endl;
 	    std::cout << "Initial Orientation: " << arm_ctx->init_orient.toString() << std::endl;
-// 	    for(size_t i=arm_ctx->init_pose.size()-arm_ctx->open_pose.size();i<arm_ctx->init_pose.size();i++){
-// 	      ctx->current_pose[i]=arm_ctx->open_pose[arm_ctx->open_pose.size()-i];
-// 	    }
+
 	    for(size_t i=8;i<16;i++){
 	      ctx->current_pose[i]=arm_ctx->open_pose[i-8];
 	    }
@@ -451,8 +489,8 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 	  ctx->iPosCtrl->checkMotionDone(&done);
 	  yarp::os::Time::delay(0.01);   // or any suitable delay
 	}
+	ctx->graspStatus = GRASPED;
       }
-      ctx->graspStatus = GRASPED;
       bret = true;
     }
   }
@@ -465,7 +503,7 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
   bool bret = false;
   if(ctx!=NULL && ctx->iPosCtrl!=NULL && ctx->configured){
     if(ctx->graspStatus == GRASPED){
-      ctx->graspStatus = GRASPING;
+      ctx->graspStatus = RELEASING;
       yarp::sig::Vector open_pose = ctx->open_pose;
       for(size_t i=1; (i<open_pose.size()) && (i<8); i++)
       {        
@@ -481,8 +519,8 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 	  ctx->iPosCtrl->checkMotionDone(&done);
 	  yarp::os::Time::delay(0.01);   // or any suitable delay
 	}
+	ctx->graspStatus = RELEASED;
       }      
-      ctx->graspStatus = RELEASED;
       bret = true;
     }
   }

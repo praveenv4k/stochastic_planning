@@ -43,12 +43,7 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
   m_initPosition[2] = 0.4;
   
   m_currPosition = m_initPosition;
-  
-  radius=20;
-  xc=0;
-  yc=65;
-  zc=40;
-  
+    
   // Y- UP
   // X - Left/Right of Robot
   // Z - In front of the robot
@@ -66,10 +61,27 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
 
   ball_radius = 0.02;
   ballPos.resize(3);
+  
+#if MYBOX
+  radius=20;
+  xc=0;
+  yc=65;
+  zc=40;
+
   ballPos[0] = 0;
   ballPos[1] = boxPos[1]+boxSize[1]/2+ball_radius;
   ballPos[2] = 0.25;
+#else
   
+  radius=10;
+  xc=0;
+  yc=53.3951;
+  zc=40;
+
+  ballPos[0] = 0;
+  ballPos[1] = 0.533951;
+  ballPos[2] = 0.35;
+#endif
   //ball top (0,0.5,0.25)
 }
 
@@ -109,7 +121,9 @@ void ObjectController::afterStart(bool s)
     Bottle del_all("world del all"); 
     outputStatePort.write(del_all,reply); 
     
-    std::string str = "world mk sbox ";
+    std::string str;
+#if BOX
+    str = "world mk sbox ";
     str = str + boxSize.toString(-1,1).c_str();
     str = str + " " + boxPos.toString(-1,1).c_str();
     str = str + " 0.8 0.8 0.8";
@@ -117,6 +131,7 @@ void ObjectController::afterStart(bool s)
 //     Bottle create_box("world mk sbox 1 0.1 0.5 0.0 0.4 0.6 0.8 0.8 0.8");
     Bottle create_box(ConstString(str.c_str()));
     outputStatePort.write(create_box,reply);
+#endif
 
 #if STATIC
     Bottle create_obj("world mk ssph 0.02 0.0 1 0.2 0 1 0");
@@ -134,6 +149,7 @@ void ObjectController::afterStart(bool s)
 #endif
     startTime = Time::now(); 
     //world mk sbox (three params for size) (three params for pos) (three params for colour) 
+    
   }else{
         std::cout << "ObjectCtrl Thread did not start\n";
   }
@@ -141,23 +157,34 @@ void ObjectController::afterStart(bool s)
 
 void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool &invalidAct)
 {
+//     Bottle ball_pos("world get sph 1");
+//     outputStatePort.write(ball_pos,reply);
+//     std::cout << reply.toString() <<std::endl;
 #if STATIC
   Bottle move_obj("world set ssph 1"); 
+#else
+  Bottle move_obj("world set sph 1"); 
+#endif
   yarp::sig::Vector vec = getNextPosition();
   move_obj.addDouble(vec[0]); 
   move_obj.addDouble(vec[1]); 
   move_obj.addDouble(vec[2]);
   outputStatePort.write(move_obj,reply); 
-#endif
 }
 
 yarp::sig::Vector ObjectController::getNextPosition(){
   //double x = m_currPosition[0] + m_VelX * m_Period;
   //double y = 
   double t = Time::now() - startTime;   
+#if MYBOX
   double dx = (round(xc + radius*cos(t))/100); 
   double dy = (round(yc + radius*sin(t))/100); 
   double dz = round(zc)/100;
+#else
+  double dx = (round(xc + radius*cos(t))/100); 
+  double dz = (round(zc + radius*sin(t))/100); 
+  double dy = round(yc)/100;
+#endif
   m_currPosition[0] = dx;
   m_currPosition[1] = dy;
   m_currPosition[2] = dz;

@@ -126,16 +126,16 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     v1[2]=0.25;
     v1[3]=10;
     posQueue.push(v1);
-    v1[0]= 0.0;
-    v1[1]= 0.7;
-    v1[2]=0.25;
-    v1[3]=1;
-    posQueue.push(v1);
-    v1[0]= 0.0;
-    v1[1]= 0.7;
-    v1[2]=0.25;
-    v1[3]=100;
-    posQueue.push(v1);
+//     v1[0]= 0.0;
+//     v1[1]= 0.7;
+//     v1[2]=0.25;
+//     v1[3]=1;
+//     posQueue.push(v1);
+//     v1[0]= 0.0;
+//     v1[1]= 0.7;
+//     v1[2]=0.25;
+//     v1[3]=100;
+//     posQueue.push(v1);
     
     printf("Targets count: %d\n",posQueue.size());
     t=t1=t0 = Time::now();
