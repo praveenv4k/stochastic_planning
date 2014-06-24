@@ -8,6 +8,7 @@ using namespace yarp::sig;
 using namespace yarp::math;
 
 #include <math.h>
+#include <fstream>
 
 void Planner::loop()
 {
@@ -106,6 +107,52 @@ bool Planner::interrupt()
 {
     plannerCmdPort.interrupt();
     return true;
+}
+
+bool Planner::read_states(std::string states_file){
+  bool bret = false;
+  if(!states_file.empty()){
+    std::ifstream fs(states_file.c_str(),std::ifstream::in);
+    string str;
+    while(std::getline(fs,str)){
+      std::vector<double> vec;
+      if(!str.empty()){
+	if(parse_state_action(str,vec)){
+	  VectorPtr ptr(new std::vector<double>());
+	  for(size_t i=1;i<vec.size()-1;i++){
+	    ptr->push_back(vec[i]);
+	  }
+	  m_States->insert(std::pair<int,VectorPtr>((int)vec[0],ptr));
+	}
+      }
+    }
+    bret = true;
+  }
+  std::cout << "Number of states: " << m_States->size() <<std::endl;
+  return bret;
+}
+
+bool Planner::read_actions(std::string actions_file){
+  bool bret = false;
+  if(!actions_file.empty()){
+    std::ifstream fs(actions_file.c_str(),std::ifstream::in);
+    string str;
+    while(std::getline(fs,str)){
+      std::vector<double> vec;
+      if(!str.empty()){
+	if(parse_state_action(str,vec)){
+	  VectorPtr ptr(new std::vector<double>());
+	  for(size_t i=1;i<vec.size();i++){
+	    ptr->push_back(vec[i]);
+	  }
+	  m_Actions->insert(std::pair<int,VectorPtr>((int)vec[0],ptr));
+	}
+      }
+    }
+    bret = true;
+  }
+  std::cout << "Number of Actions: " << m_Actions->size() <<std::endl;
+  return bret;
 }
 
 

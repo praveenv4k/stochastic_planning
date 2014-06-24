@@ -77,6 +77,10 @@ public:
 
     bool configure(ResourceFinder &rf)
     {
+#if 1
+      planner->read_actions("action.txt");
+      return planner->read_states("states.txt");
+#else
       bool ret=false;
         //period = rf.check("period", Value(5.0)).asDouble();
       if(planner->open(rf)){
@@ -93,6 +97,7 @@ public:
        }
       }
       return ret;
+#endif
     }
 
     double getPeriod( )
@@ -102,7 +107,7 @@ public:
     
     bool updateModule()
     { 
-        planner->loop();
+//         planner->loop();
         return true; 
     }
 
@@ -123,7 +128,8 @@ public:
 
 int main(int argc, char *argv[])
 {   
-    // we need to initialize the drivers list 
+#if 0
+  // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 
     Network yarp;
@@ -137,7 +143,7 @@ int main(int argc, char *argv[])
     std::string domainFile;
     std::string statesFile;
     std::string actionFile;
-
+#endif
     PlannerModule module;
     ResourceFinder rf;
     return module.runModule(rf);
