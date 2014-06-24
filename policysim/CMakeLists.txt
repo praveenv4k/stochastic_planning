@@ -36,6 +36,7 @@ FIND_PACKAGE(ICUB)
 
 # add include directories
 include_directories(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} 
+		     include
                     include/appl-0.96/Utils
                     include/appl-0.96/PolicyGraph
                     include/appl-0.96/OfflineSolver
@@ -59,18 +60,21 @@ include_directories(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS}
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")      
 
 add_executable(policysim src/Simulator.cpp src/SimulationEngine.cpp)
+add_executable(StochasticPlanner src/Simulator.cpp src/SimulationEngine.cpp)
 
 # we now add the YARP and iCub libraries to our project.
 TARGET_LINK_LIBRARIES(policysim ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${CMAKE_SOURCE_DIR}/lib/libappl.a)
+TARGET_LINK_LIBRARIES(StochasticPlanner ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${CMAKE_SOURCE_DIR}/lib/libappl.a)
 
 # Copy the config files to the binary directory
 file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml
                       ${CMAKE_SOURCE_DIR}/config/*.conf
-                      ${CMAKE_SOURCE_DIR}/config/*.json)
+                      ${CMAKE_SOURCE_DIR}/config/*.json
+                      ${CMAKE_SOURCE_DIR}/test/*.*)
                    
 foreach(ConfigFile ${ConfigFiles})
-  add_custom_command(TARGET CartesianControl POST_BUILD
+  add_custom_command(TARGET StochasticPlanner POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E
-                         copy ${ConfigFile} $<TARGET_FILE_DIR:CartesianControl>)
+                         copy ${ConfigFile} $<TARGET_FILE_DIR:StochasticPlanner>)
 endforeach()
 #TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
