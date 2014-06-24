@@ -73,9 +73,12 @@ public:
     for(int i=0;i<numPoints;i++){
       Container<double> pose;
       pose.resize(3);
+//       pose[0] = (round(m_xc + m_radius*cos(i*step))/100); 
+//       pose[1] = (round(m_yc + m_radius*sin(i*step))/100); 
+//       pose[2] = round(m_zc)/100;
       pose[0] = (round(m_xc + m_radius*cos(i*step))/100); 
-      pose[1] = (round(m_yc + m_radius*sin(i*step))/100); 
-      pose[2] = round(m_zc)/100;
+      pose[1] = round(m_yc)/100; 
+      pose[2] = (round(m_zc+ m_radius*sin(i*step))/100); 
       poses[i] = pose;
     }
     return true;

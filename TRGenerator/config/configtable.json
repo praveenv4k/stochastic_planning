@@ -5,7 +5,7 @@
       "dim": 4,
       "min": [
         -13,
-        56,
+        58,
         22,
         0
       ],
@@ -44,7 +44,7 @@
       ]
     },
     "grasp": {
-      "distThreshold": 1
+      "distThreshold": 2
     }
   },
   "object": {
@@ -52,7 +52,7 @@
     "radius": 3,
     "initialPos": [
       0,
-      53,
+      54.39,
       35
     ],
     "color": [
@@ -64,7 +64,7 @@
       "dim": 3,
       "type": "circular",
       "step": 0.3141592,
-      "samples": 20,
+      "samples": 1,
       "noise" : {
         "mean" : 0,
         "sigma": 1
@@ -72,7 +72,7 @@
       "circular": {
         "center": [
           0,
-          53,
+          54.39,
           35
         ],
         "radius": 10

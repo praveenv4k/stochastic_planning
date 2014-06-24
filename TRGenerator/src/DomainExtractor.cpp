@@ -191,6 +191,8 @@ double DomainExtractor::computeReward(std::vector<double> state){
   for(size_t i=m_agentDim;i<m_agentDim+m_objectDim;i++){
     objectPos.push_back(state[i]);
   }
+  double radius = m_config["object"]["radius"].asDouble();
+  objectPos[1] = objectPos[1]+ radius;
   double norm = Utils::computeL2norm(robotPos,objectPos);
   double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
   //if(Utils::isEqual(norm,distThres)){
