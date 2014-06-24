@@ -13,6 +13,9 @@
 #include <yarp/os/Time.h>
 
 #include <queue>
+#include <map>
+
+// std::map<int,yarp::sig::Vector> states
 
 class Planner
 {

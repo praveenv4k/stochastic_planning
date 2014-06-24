@@ -25,6 +25,7 @@ private:
   void generateTables();
   void generateDDLFile(std::string& filePath);
   double computeReward(std::vector<double> state);
+  double computeNorm(std::vector<double> state,bool& graspable);
 private:
   Json::Value m_config;
   StateIndexMap m_stateIndexMap;

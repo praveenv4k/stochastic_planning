@@ -17,6 +17,12 @@ void DomainExtractor::generate(){
   writeActionSpace(actionStream);
   actionStream.close();
 #else
+  Json::Value robotSpace = m_config["robot"]["ss"]["min"];
+  m_agentDim = robotSpace.size();
+  
+  Json::Value objectSpace = m_config["object"]["trajectory"]["dim"];
+  m_objectDim = objectSpace.asUInt();  
+  
   std::fstream stateStream;
   stateStream.open("states.txt",std::fstream::out);
   writeStateSpace(stateStream);
@@ -27,11 +33,6 @@ void DomainExtractor::generate(){
   writeActionSpace(actionStream);
   actionStream.close();
 
-  Json::Value robotSpace = m_config["robot"]["ss"]["min"];
-  m_agentDim = robotSpace.size();
-  
-  Json::Value objectSpace = m_config["object"]["trajectory"]["dim"];
-  m_objectDim = objectSpace.asUInt();  
   
   std::cout << "Generating StateSpace Map" << std::endl;
   createStateSpaceMap();
@@ -83,8 +84,23 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
       Container<double> pose = poses[i];
       std::vector<double> robotPos = val;
       robotPos.pop_back();
-      double norm = Utils::computeL2norm<double>(robotPos,pose);
-      stream << index++ << " " <<  val << " " << pose  << " " << norm << std::endl;
+      
+      bool graspable=false;
+      std::vector<double> ss = Utils::concatenate(val,pose);
+      double norm = computeNorm(ss,graspable);      
+      bool write=false;
+      if(val[m_agentDim-1]>0){
+	if(graspable){
+	  write = true;
+	}
+      }else{
+	write=true;
+      }
+      //write=true;
+      if(write){
+	index++;
+	stream << index << " " <<  val << " " << pose  << " " << norm << std::endl;
+      }
     }
   }
 }
@@ -119,8 +135,26 @@ void DomainExtractor::createStateSpaceMap(){
     Container<double> val = discretizer.getValueAtIndex(id);
     for(int i=0; i<numPoints;i++){
       Container<double> pose = poses[i];
+      
+      std::vector<double> robotPos;
+      //Extract Robot position
+      for(size_t i=0;i<m_agentDim-1;i++){
+	robotPos.push_back(val[i]);
+      }
+      
+      bool graspable=false;
       std::vector<double> ss = Utils::concatenate(val,pose);
-      m_stateIndexMap[ss]=index++;
+      double norm = computeNorm(ss,graspable);
+      //double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
+      if(val[m_agentDim-1]>0){
+	if(graspable){
+	  //std::vector<double> ss = Utils::concatenate(val,pose);
+	  m_stateIndexMap[ss]=index++;
+	}
+      }else{
+	//std::vector<double> ss = Utils::concatenate(val,pose);
+	m_stateIndexMap[ss]=index++;
+      }
     }
   }
   std::cout << m_stateIndexMap.size() <<std::endl;
@@ -179,11 +213,9 @@ void DomainExtractor::generateTables(){
   }
 }
 
-double DomainExtractor::computeReward(std::vector<double> state){
+double DomainExtractor::computeNorm(std::vector<double> state,bool& graspable){
   std::vector<double> robotPos;
   std::vector<double> objectPos;
-  double reward = -1;
-  //Extract Robot position
   for(size_t i=0;i<m_agentDim-1;i++){
     robotPos.push_back(state[i]);
   }
@@ -195,8 +227,21 @@ double DomainExtractor::computeReward(std::vector<double> state){
   objectPos[1] = objectPos[1]+ radius;
   double norm = Utils::computeL2norm(robotPos,objectPos);
   double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
+  graspable = (norm <= distThres);
+  return norm;
+}
+
+
+double DomainExtractor::computeReward(std::vector<double> state){
+  std::vector<double> robotPos;
+  std::vector<double> objectPos;
+  double reward = -1;
+  //Extract Robot position
+  bool graspable=false;
+  double norm = computeNorm(state,graspable);
+//   double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
   //if(Utils::isEqual(norm,distThres)){
-  if(norm <= distThres){
+  if(graspable){
     if(Utils::isEqual(state[m_agentDim-1],1)){
       reward = 500;
     }else{
