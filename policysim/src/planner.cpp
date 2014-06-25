@@ -160,126 +160,65 @@ bool Planner::read_actions(std::string actions_file){
 bool Planner::read_policy(std::string domain_file, std::string policy_file){
   try
     {
-        SolverParams* p = &GlobalResource::getInstance()->solverParams;
+      SolverParams* p = &GlobalResource::getInstance()->solverParams;
 
-	p->policyFile=policy_file;
-	p->problemName = domain_file;
-	p->simLen = 1;
-	p->simNum=100;
+      p->policyFile=policy_file;
+      p->problemName = domain_file;
+      p->simLen = 1;
+      p->simNum=100;
 
-        //check validity of options
-        if (p->policyFile == "" || p->simLen == -1 || p->simNum == -1) 
-        {
-            return false;
-        }
+      //check validity of options
+      if (p->policyFile == "" || p->simLen == -1 || p->simNum == -1) 
+      {
+	  return false;
+      }
 
-	cout << "\nLoading the model ..." << endl << "  ";
-        problem = ParserSelector::loadProblem(p->problemName, *p);
+      cout << "\nLoading the model ..." << endl << "  ";
+      problem = ParserSelector::loadProblem(p->problemName, *p);
 
-        if(p->stateMapFile.length() > 0 )
-        {
-            // generate unobserved state to variable value map
-            ofstream mapFile(p->stateMapFile.c_str());
-            for(int i = 0 ; i < problem->YStates->size() ; i ++)
-            {
-                mapFile << "State : " << i <<  endl;
-                map<string, string> obsState = problem->getFactoredUnobservedStatesSymbols(i);
-                for(map<string, string>::iterator iter = obsState.begin() ; iter != obsState.end() ; iter ++)
-                {
-                    mapFile << iter->first << " : " << iter->second << endl ;
-                }
-            }
-            mapFile.close();
-        }
+      if(p->stateMapFile.length() > 0 )
+      {
+	  // generate unobserved state to variable value map
+	  ofstream mapFile(p->stateMapFile.c_str());
+	  for(int i = 0 ; i < problem->YStates->size() ; i ++)
+	  {
+	      mapFile << "State : " << i <<  endl;
+	      map<string, string> obsState = problem->getFactoredUnobservedStatesSymbols(i);
+	      for(map<string, string>::iterator iter = obsState.begin() ; iter != obsState.end() ; iter ++)
+	      {
+		  mapFile << iter->first << " : " << iter->second << endl ;
+	      }
+	  }
+	  mapFile.close();
+      }
 
-        policy = new AlphaVectorPolicy(problem);
+      policy = new AlphaVectorPolicy(problem);
 
-	cout << "\nLoading the policy ..." << endl;
-	cout << "  input file   : " << p->policyFile << endl;
-        bool policyRead = policy->readFromFile(p->policyFile);
-        if(!policyRead)
-        {
-            return 0;
-        }
+      cout << "\nLoading the policy ..." << endl;
+      cout << "  input file   : " << p->policyFile << endl;
+      bool policyRead = policy->readFromFile(p->policyFile);
+      if(!policyRead)
+      {
+	  return 0;
+      }
 
-	cout << "\nSimulating ..." << endl;
-	
-        if(p->useLookahead)
-        {
-            cout << "  action selection :  one-step look ahead" << endl;
-        }
-        else
-        {
-        }
+      cout << "\nSimulating ..." << endl;
+      
+      if(p->useLookahead)
+      {
+	  cout << "  action selection :  one-step look ahead" << endl;
+      }
+      else
+      {
+      }
 
-        SimulationRewardCollector rewardCollector;
-        rewardCollector.setup(*p);
+      rewardCollector->setup(*p);
 
-        srand(p->seed);
-	
-	ofstream* foutStream=NULL;
-	
-	this->policy = policy;
-        this->problem = problem;
-        this->solverParams = p;
-
-        for (int currSim = 0; currSim < p->simNum; currSim++) 
-        {
-            SimulationEngine engine;
-            engine.setup(problem, policy, p);
-	    
-	    ////////////////// Test Code //////////////////
-#if 0
-	    SharedPointer<BeliefWithState> actStateCompl (new BeliefWithState());
-	    if(problem->initialBeliefStval->sval!=-1){
-	      std::cout << "Fixed Initial State: " <<  problem->initialBeliefStval->sval << std::endl;
-	      actStateCompl->sval = problem->initialBeliefStval->sval;
-	    }else{
-	      // random starting state for X
-	      const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
-	      actStateCompl->sval = problem->initialBeliefStval->sval;
-	      std::cout << "Random Initial State: " <<  chooseFromDistribution(*startBeliefX) << std::endl;
-	    }
-	    
-	    SharedPointer<SparseVector> startBeliefVec;
-	    if (problem->initialBeliefStval->bvec)
-	      startBeliefVec = problem->initialBeliefStval->bvec;
-	    else
-	      startBeliefVec = problem->initialBeliefYByX[actStateCompl->sval];
-	    int currUnobsState = chooseFromDistribution(*startBeliefVec);
-	    int belSize = startBeliefVec->size();
-
-	    actStateCompl->bvec->resize(belSize);
-	    actStateCompl->bvec->push_back(currUnobsState, 1.0);
-
-	    DEBUG_TRACE( cout << "actStateCompl sval " << actStateCompl->sval << endl; );
-	    DEBUG_TRACE( actStateCompl->bvec->write(cout) << endl; );
-
-	    currBelSt->sval = actStateCompl->sval;
-	    copy(*currBelSt->bvec, *startBeliefVec);
-
-	    DEBUG_TRACE( cout << "currBelSt sval " << currBelSt->sval << endl; );
-	    DEBUG_TRACE( currBelSt->bvec->write(cout) << endl; );
-#endif
-	    //////////////////////////////
-
-            double reward = 0, expReward = 0;
-
-            int firstAction = engine.runFor(p->simLen, foutStream, reward, expReward);
-            if(firstAction < 0)
-            {
-                // something wrong happend, exit
-                return 0;
-            }
-	    std::cout << "Action : " << firstAction << std::endl;
-            rewardCollector.addEntry(currSim, reward, expReward);
-            rewardCollector.printReward(currSim);
-
-        }
-
-        rewardCollector.printFinalReward();
-        DEBUG_LOG( generateSimLog(*p, rewardCollector.globalExpRew, rewardCollector.confInterval); );
-
+      srand(p->seed);
+      
+      this->policy = policy;
+      this->problem = problem;
+      this->solverParams = p;
     }
     catch(bad_alloc &e)
     {
@@ -300,76 +239,72 @@ bool Planner::read_policy(std::string domain_file, std::string policy_file){
     return 0;
 }
 
+bool Planner::initialize_plan(){
+  engine->setup(problem,policy,solverParams);
+  DEBUG_TRACE(cout << "runFor" << endl; );
+  DEBUG_TRACE(cout << "iters " << iters << endl; );
+  DEBUG_TRACE(cout << "startBeliefX" << endl; );
+  DEBUG_TRACE(startBeliefX.write(cout) << endl;);
+  
+  // get starting actStateCompl, the complete state (X and Y values)
+  if (problem->initialBeliefStval->sval == -1) // check if the initial starting state for X is fixed
+  {
+    // random starting state for X
+    const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
+    actStateCompl->sval = chooseFromDistribution(*startBeliefX);
+    copy(currBelX, *startBeliefX);
+  }
+  else
+  {
+    // initial starting state for X is fixed
+    actStateCompl->sval = problem->initialBeliefStval->sval;
+  }
+
+  // now choose a starting unobserved state for the actual system
+  SharedPointer<SparseVector> startBeliefVec;
+  if (problem->initialBeliefStval->bvec)
+    startBeliefVec = problem->initialBeliefStval->bvec;
+  else
+    startBeliefVec = problem->initialBeliefYByX[actStateCompl->sval];
+  
+  currUnobsState = chooseFromDistribution(*startBeliefVec);
+  belSize = startBeliefVec->size();
+
+  actStateCompl->bvec->resize(belSize);
+  actStateCompl->bvec->push_back(currUnobsState, 1.0);
+
+  DEBUG_TRACE( cout << "actStateCompl sval " << actStateCompl->sval << endl; );
+  DEBUG_TRACE( actStateCompl->bvec->write(cout) << endl; );
+
+  currBelSt->sval = actStateCompl->sval;
+  copy(*currBelSt->bvec, *startBeliefVec);
+
+  DEBUG_TRACE( cout << "currBelSt sval " << currBelSt->sval << endl; );
+  DEBUG_TRACE( currBelSt->bvec->write(cout) << endl; );
+  
+  double reward,expReward;
+  for(int i=0;i<1;i++){
+    runFor(1,NULL,reward,expReward);
+  }
+  cout << "Reward: " << reward << " Expected Reward: " << expReward << std::endl;
+  return true;
+}
+
 int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expReward)
 { 
-    DEBUG_TRACE(cout << "runFor" << endl; );
-    DEBUG_TRACE(cout << "iters " << iters << endl; );
-    DEBUG_TRACE(cout << "startBeliefX" << endl; );
-    DEBUG_TRACE(startBeliefX.write(cout) << endl;);
-    
-    // get starting actStateCompl, the complete state (X and Y values)
-    if (problem->initialBeliefStval->sval == -1) // check if the initial starting state for X is fixed
-    {
-      // random starting state for X
-      const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
-      actStateCompl->sval = chooseFromDistribution(*startBeliefX);
-      copy(currBelX, *startBeliefX);
-    }
-    else
-    {
-      // initial starting state for X is fixed
-      actStateCompl->sval = problem->initialBeliefStval->sval;
-    }
-
-    // now choose a starting unobserved state for the actual system
-    SharedPointer<SparseVector> startBeliefVec;
-    if (problem->initialBeliefStval->bvec)
-      startBeliefVec = problem->initialBeliefStval->bvec;
-    else
-      startBeliefVec = problem->initialBeliefYByX[actStateCompl->sval];
-    int currUnobsState = chooseFromDistribution(*startBeliefVec);
-    int belSize = startBeliefVec->size();
-
-    actStateCompl->bvec->resize(belSize);
-    actStateCompl->bvec->push_back(currUnobsState, 1.0);
-
-    DEBUG_TRACE( cout << "actStateCompl sval " << actStateCompl->sval << endl; );
-    DEBUG_TRACE( actStateCompl->bvec->write(cout) << endl; );
-
-    currBelSt->sval = actStateCompl->sval;
-    copy(*currBelSt->bvec, *startBeliefVec);
-
-    DEBUG_TRACE( cout << "currBelSt sval " << currBelSt->sval << endl; );
-    DEBUG_TRACE( currBelSt->bvec->write(cout) << endl; );
-
-    double mult=1;
-    CPTimer lapTimer;
-
-    // we now have actStateCompl (starting stateUnobs&stateObs) for "actual state" system
-    // "policy follower" system has currBelSt (starting beliefUnobs&stateObs) OR currBelSt (starting beliefUnobs&-1) and currBelX (starting beliefObs) if initial x is a belief and not a state
-
-    unsigned int firstAction;
-
-    double gamma = problem->getDiscount();
-
-    int xDim = 3;
-    vector<int> bhout(xDim,0);
-    vector<int> fhout(xDim,0);
+  //double mult=1;
+  CPTimer lapTimer;
+  int firstAction;
+  double gamma = problem->getDiscount();
     for(int timeIter = 0; timeIter < iters; timeIter++)
     { 
 	DEBUG_TRACE( cout << "timeIter " << timeIter << endl; );
 
-	if(enableFiling && timeIter == 0)
-	{
-	    *streamOut << ">>> begin\n";
-	}
-
 	// get action according to policy and current belief and state
-	int currAction;
+	//int currAction;
 	//-----------------------------
 	if (timeIter == 0)
 	{
-
 	    if(solverParams->useLookahead)
 	    {
 		if (currBelSt->sval == -1) // special case for first time step where X is a distribution
@@ -399,12 +334,6 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 	    }
 	}
 
-	//if (currAction>1 && currAction<8) {
-	//    currAction = getGreedyAction(bhout, fhout);
-	//    //currAction = (rand()%6)+2;
-	//    //cout<<"GREEDY ACTION: "<<currAction<<endl;
-	//}
-
 	if(currAction < 0 )
 	{
 	    cout << "You are using a MDP Policy, please make sure you are using a MDP policy together with one-step look ahead option turned on" << endl;
@@ -416,7 +345,7 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 	}
 
 	// this is the reward for the "actual state" system
-	double currReward = getReward(*actStateCompl, currAction);
+	currReward =engine->getReward(*actStateCompl, currAction);
 
 	DEBUG_TRACE( cout << "currAction " << currAction << endl; );
 	DEBUG_TRACE( cout << "actStateCompl sval " << actStateCompl->sval << endl; );
@@ -433,7 +362,7 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 
 	// actualActionUpdObs is belief of the fully observered state
 	belief_vector actualActionUpdUnobs(belSize), actualActionUpdObs(problem->XStates->size()) ;
-	performActionObs(actualActionUpdObs, currAction, *actStateCompl);
+	engine->performActionObs(actualActionUpdObs, currAction, *actStateCompl);
 
 	DEBUG_TRACE( cout << "actualActionUpdObs " << endl; );
 	DEBUG_TRACE( actualActionUpdObs.write(cout) << endl; );
@@ -443,7 +372,7 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 
 	// now update actualActionUpdUnobs, which is the belief of unobserved states,
 	// based on prev belif and curr observed state
-	performActionUnobs(actualActionUpdUnobs, currAction, *actStateCompl, actNewStateCompl->sval);
+	engine->performActionUnobs(actualActionUpdUnobs, currAction, *actStateCompl, actNewStateCompl->sval);
 	
 	DEBUG_TRACE( cout << "actualActionUpdUnobs " << endl; );
 	DEBUG_TRACE( actualActionUpdUnobs.write(cout) << endl; );
@@ -461,7 +390,7 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 
 	// get observations based on actual next states for observed and unobserved variable
 	belief_vector obsPoss;
-	getPossibleObservations(obsPoss, currAction, *actNewStateCompl);  
+	engine->getPossibleObservations(obsPoss, currAction, *actNewStateCompl);  
 
 
 	DEBUG_TRACE( cout << "obsPoss"<< endl; );
@@ -487,7 +416,7 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 	    //cout<<" FHOUT "<<fhout[ii];
 	}
 	//cout<<endl;
-	checkTerminal(cc["pTwo_0"],bb["obs_ballDp2S"],bhout,fhout);
+	engine->checkTerminal(cc["pTwo_0"],bb["obs_ballDp2S"],bhout,fhout);
 	//cout<<"AFTER ";
 	for (int ii=0;ii<xDim;ii++){
 	    //cout<<" BHOUT "<<bhout[ii];
@@ -495,51 +424,7 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 	for (int ii=0;ii<xDim;ii++){
 	    //cout<<" FHOUT "<<fhout[ii];
 	}
-	//cout<<endl;
-	//*************************************************************
-
-	if(enableFiling)
-	{
-	    //initial states and belief, before any action
-	    if (timeIter == 0) 
-	    {
-		//actual X state, X might be a distribution at first time step
-		map<string, string> obsState = problem->getFactoredObservedStatesSymbols(actStateCompl->sval);
-		if(obsState.size()>0){
-		    streamOut->width(4);*streamOut<<left<<"X"<<":";
-		    printTuple(obsState, streamOut);
-		}
-
-		//actual Y state
-		streamOut->width(4);*streamOut<<left<<"Y"<<":";
-		map<string, string> unobsState = problem->getFactoredUnobservedStatesSymbols(currUnobsState);
-		printTuple(unobsState, streamOut);
-
-		// if initial belief X is a distribution at first time step
-		if (currBelSt->sval == -1) {
-		    SparseVector currBelXSparse;
-		    copy(currBelXSparse, currBelX);
-		    int mostProbX  = currBelXSparse.argmax(); 	//get the most probable Y state
-		    streamOut->width(4);*streamOut<<left<<"ML X"<<":";
-		    map<string, string> mostProbXState = problem->getFactoredObservedStatesSymbols(mostProbX);
-		    printTuple(mostProbXState, streamOut);
-		}
-
-		//initial belief Y state
-		int mostProbY  = currBelSt->bvec->argmax(); 	//get the most probable Y state
-		double prob = currBelSt->bvec->operator()(mostProbY);	//get its probability
-		streamOut->width(4);*streamOut<<left<<"ML Y"<<":";
-		map<string, string> mostProbYState = problem->getFactoredUnobservedStatesSymbols(mostProbY);
-		printTuple(mostProbYState, streamOut);
-	    }
-
-	    streamOut->width(4);*streamOut<<left<<"A"<<":";
-	    map<string, string> actState = problem->getActionsSymbols(currAction);
-	    printTuple(actState, streamOut);	
-	    
-	    streamOut->width(4);*streamOut<<left<<"R"<<":";
-	    *streamOut << currReward<<endl;
-	}
+	
 
 	// now that we have the action, state of observed variable, and observation,
 	// we can update the belief of unobserved variable
@@ -550,49 +435,6 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 		    nextBelSt = problem->beliefTransition->nextBelief(currBelSt, currAction, currObservation, actNewStateCompl->sval);
 	} else 
 	    nextBelSt = problem->beliefTransition->nextBelief(currBelSt, currAction, currObservation, actNewStateCompl->sval);
-
-	//problem->getNextBeliefStval(nextBelSt, currBelSt, currAction, currObservation, actNewStateCompl->sval);
-
-
-	if(enableFiling)
-	{
-	    if(timeIter == iters - 1)
-	    {
-		*streamOut << "terminated\n";
-	    }
-
-	    //actual X state after action
-	    map<string, string> obsState = problem->getFactoredObservedStatesSymbols(actNewStateCompl->sval);
-	    if(obsState.size()>0){
-		streamOut->width(4);*streamOut<<left<<"X"<<":";
-		printTuple(obsState, streamOut);
-	    }
-
-	    //actual Y state after action
-	    streamOut->width(4);*streamOut<<left<<"Y"<<":";
-	    map<string, string> unobsState = problem->getFactoredUnobservedStatesSymbols(newUnobsState);
-	    printTuple(unobsState, streamOut);
-	    
-	    //observation after action
-	    streamOut->width(4);*streamOut<<left<<"O"<<":";
-	    map<string, string> obs = problem->getObservationsSymbols(currObservation);
-	    printTuple(obs, streamOut);
-	    
-	    //get most probable Y state from belief after applying action A	
-	    int mostProbY  = nextBelSt->bvec->argmax(); 	//get the most probable Y state
-	    double prob = nextBelSt->bvec->operator()(mostProbY);	//get its probability
-	    streamOut->width(4);*streamOut<<left<<"ML Y"<<":";
-	    map<string, string> mostProbYState = problem->getFactoredUnobservedStatesSymbols(mostProbY);
-	    printTuple(mostProbYState, streamOut);
-
-	    if(timeIter == iters - 1)
-	    {
-		//timeval timeInRunFor = getTime() - prevTime;				
-		//*streamOut << "----- time: " << timevalToSeconds(timeInRunFor) <<endl;
-		double lapTime = lapTimer.elapsed();
-		*streamOut << "----- time: " << lapTime <<endl;
-	    }
-	} 
 	//actual states
 	currUnobsState = newUnobsState; //Y state, hidden
 	actStateCompl->sval = actNewStateCompl->sval;
@@ -609,8 +451,6 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 	    // reward all 0, transfer back to it self
 	    // TODO Consider reward not all 0 case
 	    //cout <<"Terminal State!! timeIter " << timeIter << endl;
-	    if(enableFiling)
-		*streamOut << "Reached terminal state" << endl;
 	    break;
 	}
 

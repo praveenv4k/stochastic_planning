@@ -46,6 +46,7 @@ public:
       planner->read_actions("action.txt");
       planner->read_states("states.txt");
       planner->read_policy("domain.pomdpx","domain.policy");
+      planner->initialize_plan();
       return true;
 #else
       bool ret=false;

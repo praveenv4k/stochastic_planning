@@ -75,6 +75,14 @@ public:
       actNewStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       actStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       currBelSt = SharedPointer<BeliefWithState>(new BeliefWithState());
+      engine = boost::shared_ptr<SimulationEngine>(new SimulationEngine());
+      rewardCollector = boost::shared_ptr<SimulationRewardCollector>(new SimulationRewardCollector());
+      
+      xDim = 3;
+      bhout.resize(xDim);
+      fhout.resize(xDim);
+      
+      mult = 1;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -101,14 +109,8 @@ public:
       }
       return true;
     }
+    bool initialize_plan();
     int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
-    void performActionObs(belief_vector& outBelObs, int action, const BeliefWithState& belSt) const;
-    void performActionUnobs(belief_vector& outBelUnobs, int action, const BeliefWithState& belSt, int currObsState) const;
-    void getPossibleObservations(belief_vector& possObs, int action, const BeliefWithState& belSt) const;
-    string toString();
-    double getReward(const BeliefWithState& belst, int action);
-    void checkTerminal(string o, string s, vector<int> &bhout, vector<int> &fhout);
-    int getGreedyAction(vector<int> &, vector<int> &);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
@@ -132,6 +134,21 @@ private:
 								      // set sval to -1 if x value is not known
     // belief over x. May not be used depending on model type and commandline flags, but declared here anyways.
     DenseVector currBelX; // belief over x
+    
+    
+    boost::shared_ptr<SimulationEngine> engine;
+    boost::shared_ptr<SimulationRewardCollector> rewardCollector;
+    
+    int xDim;
+    vector<int> bhout;
+    vector<int> fhout;
+    
+    int currAction;
+    double currReward;
+    
+    int currUnobsState;
+    int belSize;
+    double mult;
     
     double t;
     double t0;
