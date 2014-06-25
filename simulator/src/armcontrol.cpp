@@ -72,6 +72,7 @@ void ArmControl::loop()
 	  }
 #else
 	if(arm_ctx->graspStatus == GRASPING || arm_ctx->graspStatus==RELEASING){
+	  std::cout << "Grasp Check! " << std::endl;
 	  bool done;
 	  if(arm_ctx->iPosCtrl->checkMotionDone(&done)){
 	    if(done){
@@ -117,32 +118,72 @@ void ArmControl::loop()
 		  worldPos[1] = cmd->get(1).asDouble();
 		  worldPos[2] = cmd->get(2).asDouble();
 		  if(world_to_robot(worldPos,robotPos)){
-#if 0
-		    yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
-		    iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
+#if 1
+		    yarp::os::Time::delay(0.1);
+		    if(trigger == 10) {
+		      close_hand(arm_ctx,false);
+		    }else if(trigger==100){
+		      open_hand(arm_ctx,false);
+		    }else{
+		      yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
+		      iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
+		    }
 #else
 		    yarp::sig::Vector tmpQ, tmpX, tmpO;
 		    tmpQ.resize(10);
 		    tmpX.resize(3);
 		    tmpO.resize(4);
-		    const yarp::sig::Vector postn = robotPos;
-		    const yarp::sig::Vector orntn = arm_ctx->init_orient;
+		    yarp::sig::Vector postn = robotPos;
+		    yarp::sig::Vector orntn = arm_ctx->init_orient;
 		    Vector curPose;
 		    curPose.resize(10);
-		    for(int i=0;i<10;i++){
-		      curPose[i]=arm_ctx->current_pose[i];
+		    for(int i=0;i<3;i++){
+		      curPose[i]=partCtxMap["torso"]->current_pose[i];
+		    }
+		    for(int i=3;i<10;i++){
+		      curPose[i]=arm_ctx->current_pose[i-3];
 		    }
 		    if(! arm_ctx->iCartCtrl->askForPosition(curPose,postn,tmpX,tmpO,tmpQ)){
 			std::cout << " Inversion failed!!!\n ";
 		    }
 		    else{
 		      Vector out;
-		      //move_joints(arm_ctx->iPosCtrl,tmpQ,false);
-		      move_joints_pos(arm_ctx->iPosCtrl,partCtxMap["torso"]->iPosCtrl,tmpQ,out);
+		      bool grasp = false;
+		      if(trigger == 10) grasp = true;
+		      if(grasp){
+			for(int i=8;i<16;i++){
+			  tmpQ[i]=arm_ctx->close_pose[i-8];
+			}
+		      }else{
+			for(int i=8;i<16;i++){
+			  tmpQ[i]=arm_ctx->open_pose[i-8];
+			}
+		      }
+		      //move_joints(arm_ctx->iPosCtrl,tmpQ);
+		      move_joints_pos(arm_ctx->iPosCtrl,partCtxMap["torso"]->iPosCtrl,tmpQ,grasp,out);
+// 		      yarp::os::Time::delay(0.1);
+// 		      if(grasp){
+// 			std::cout << "Closing Hand: "  << std::endl;
+// 			close_hand(arm_ctx);
+// 			std::cout << "Closed Hand: " << std::endl;
+// 		      }
+// 		      else{
+// 			std::cout << "Opening Hand: " << std::endl;
+// 			open_hand(arm_ctx);
+// 			std::cout << "Opened Hand: " << std::endl;
+// 		      }
+// 		      yarp::os::Time::delay(0.1);
+		      //move_joints_pos(arm_ctx->iPosCtrl,partCtxMap["torso"]->iPosCtrl,tmpQ,grasp,out);
 // Update
 // 		    cs.posn = tmpX;
 // 		    cs.ortn = tmpO;
-		      arm_ctx->current_pose = out;
+		    for(int i=0;i<3;i++){
+		      partCtxMap["torso"]->current_pose[i]=curPose[i];
+		    }
+		    for(int i=3;i<10;i++){
+		      arm_ctx->current_pose[i-3]=curPose[i];
+		    }
+		      //arm_ctx->current_pose = out;
 		    }
 #endif
 		  }
@@ -170,18 +211,18 @@ void ArmControl::loop()
 	Bottle &portStatus = armStatusPort.prepare();
 	portStatus.clear();
 	portStatus.addDouble(1.0);
-	armStatusPort.write();  
+	armStatusPort.writeStrict();
 	//printf("Reached\n");
       }else if(arm_ctx->status == IDLE){
 	Bottle &portStatus = armStatusPort.prepare();
 	portStatus.clear();
 	portStatus.addDouble(10.0);
-	armStatusPort.write();  
+	armStatusPort.writeStrict();  
       }else if(arm_ctx->status == MOVING){
 	Bottle &portStatus = armStatusPort.prepare();
 	portStatus.clear();
 	portStatus.addDouble(100.0);
-	armStatusPort.write();
+	armStatusPort.writeStrict();
       }
      }
    }
@@ -262,8 +303,8 @@ bool ArmControl::open()
 	right_ctx->enabled = true;
 	right_ctx->status = IDLE;
 	config &= Utils::valueToVector(right_arm["init_pose"],right_ctx->init_pose);
-	config &= Utils::valueToVector(right_arm["open_hand"],right_ctx->close_pose);
-	config &= Utils::valueToVector(right_arm["close_hand"],right_ctx->open_pose);
+	config &= Utils::valueToVector(right_arm["open_hand"],right_ctx->open_pose);
+	config &= Utils::valueToVector(right_arm["close_hand"],right_ctx->close_pose);
 	
 	if(config){
 	  if(!configure_arm(robotName, right_ctx)){
@@ -366,7 +407,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   // enable the torso yaw and pitch
   // disable the torso roll
   newDof[0]=1;
-  newDof[1]=1;
+  newDof[1]=0;
   newDof[2]=1;
 
   // send the request for dofs reconfiguration
@@ -433,21 +474,14 @@ void ArmControl::initialize_robot(){
 	  if(arm_ctx!=NULL){
 	    std::cout << "Moved " << partName <<  " to initial pose!"  << std::endl;
 	    open_hand(arm_ctx);
-	    
-// 	    bool done = false;
-// 	    do{
-// 	      arm_ctx->iPosCtrl->checkMotionDone(&done);
-// 	      yarp::os::Time::delay(.01);
-// 	    }while(!done);
-// 	    yarp::os::Time::delay(2);
-	    
+	    arm_ctx->graspStatus=RELEASED;
 	    arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
 	    std::cout << "Initial Position: " << arm_ctx->init_position.toString() << std::endl;
 	    std::cout << "Initial Orientation: " << arm_ctx->init_orient.toString() << std::endl;
 
-	    for(size_t i=8;i<16;i++){
-	      ctx->current_pose[i]=arm_ctx->open_pose[i-8];
-	    }
+// 	    for(size_t i=8;i<16;i++){
+// 	      ctx->current_pose[i]=arm_ctx->open_pose[i-8];
+// 	    }
 	    std::cout << "Current Pose: " << ctx->current_pose.toString()<< std::endl;
 	  }
 	}
@@ -489,11 +523,12 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
   bool bret = false;
   if(ctx!=NULL && ctx->iPosCtrl!=NULL && ctx->configured){
     if(ctx->graspStatus == RELEASED){
+      std::cout << "Closing Hand: "  << std::endl;
       ctx->graspStatus = GRASPING;
       yarp::sig::Vector close_pose = ctx->close_pose;
       for(size_t i=0; (i<close_pose.size()) && (i<8); i++)
       {        
-	  ctx->iPosCtrl->setRefSpeed(i+8, 80);
+	  ctx->iPosCtrl->setRefSpeed(i+8, 100);
 	  ctx->iPosCtrl->positionMove(i+8, close_pose[i]);
       }
       if(bSync){
@@ -503,6 +538,7 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 	  yarp::os::Time::delay(0.01);   // or any suitable delay
 	}
 	ctx->graspStatus = GRASPED;
+        std::cout << "Closed Hand: " << std::endl;
       }
       bret = true;
     }
@@ -516,15 +552,16 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
   bool bret = false;
   if(ctx!=NULL && ctx->iPosCtrl!=NULL && ctx->configured){
     if(ctx->graspStatus == GRASPED){
+      std::cout << "Opening Hand: " << std::endl;
       ctx->graspStatus = RELEASING;
       yarp::sig::Vector open_pose = ctx->open_pose;
       for(size_t i=1; (i<open_pose.size()) && (i<8); i++)
       {        
-	  ctx->iPosCtrl->setRefSpeed(i+8, 80);
+	  ctx->iPosCtrl->setRefSpeed(i+8, 100);
 	  ctx->iPosCtrl->positionMove(i+8, open_pose[i]);
       }        
       yarp::os::Time::delay(1.0);
-      ctx->iPosCtrl->setRefSpeed(8, 30);
+      ctx->iPosCtrl->setRefSpeed(8, 100);
       ctx->iPosCtrl->positionMove(8, open_pose[0]);
       if(bSync){
 	bool done=false;
@@ -533,7 +570,8 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 	  yarp::os::Time::delay(0.01);   // or any suitable delay
 	}
 	ctx->graspStatus = RELEASED;
-      }      
+	std::cout << "Opened Hand: " << std::endl;
+      }
       bret = true;
     }
   }
@@ -555,15 +593,16 @@ bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd,bo
 	done = true;
       }
     }
+    std::cout << "Moved to : " << qd.toString() << std::endl;
     return done;
 }
 
-void ArmControl::move_joints_pos(IPositionControl* armPosCtrl,IPositionControl* torsoPosCtrl, yarp::sig::Vector &qd,yarp::sig::Vector& out)
+void ArmControl::move_joints_pos(IPositionControl* armPosCtrl,IPositionControl* torsoPosCtrl, yarp::sig::Vector &qd,bool grasp,yarp::sig::Vector& out)
 {
     bool done = false;
     yarp::sig::Vector torsoPos;
     torsoPos.resize(3);
-    for(int i=0 ; i < 3; ++i)
+    for(int i=0 ; i < 3; i++)
     {
 	torsoPos[i] = qd[i];
     }
@@ -577,14 +616,18 @@ void ArmControl::move_joints_pos(IPositionControl* armPosCtrl,IPositionControl* 
     yarp::sig::Vector armPos;
     armPos.resize(16);
     
-    for(int i=0; i < 7; ++i)
+    for(int i=0; i < 8; i++)
     {
 	armPos[i] = qd[i+3];
     }
     
-    for(Json::ArrayIndex i=7; i<16; ++i)
+    for(Json::ArrayIndex i=8; i<16; i++)
     {
-	armPos[i] = Config::instance()->root["robot"]["parts"]["left_arm"]["open_hand"][i-7].asDouble();
+      if(!grasp){
+	armPos[i] = Config::instance()->root["robot"]["parts"]["left_arm"]["open_hand"][i-8].asDouble();
+      }else{
+	armPos[i] = Config::instance()->root["robot"]["parts"]["left_arm"]["close_hand"][i-8].asDouble();
+      }
     }
     
     armPosCtrl->positionMove(armPos.data());
@@ -599,5 +642,10 @@ void ArmControl::move_joints_pos(IPositionControl* armPosCtrl,IPositionControl* 
 	      << torsoPos.toString() << " and arm: "
 	      << armPos.toString() << "\n";
 	      
-	      out=armPos;
+    out=armPos;
+	
+    if(!grasp)
+      std::cout << "Opened Hand!" << std::endl;		
+    else
+      std::cout << "Closed Hand!" << std::endl;		
 }

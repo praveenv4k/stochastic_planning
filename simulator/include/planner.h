@@ -23,6 +23,7 @@ public:
     {
       first = true;
       sent=false;
+      counter=0;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -40,6 +41,7 @@ private:
     double t1;
     bool first;
     bool sent;
+    int counter;
 };
 
    
