@@ -23,6 +23,33 @@
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 
+
+#include "SimulationEngine.h"
+#include "GlobalResource.h"
+#include "SimulationRewardCollector.h"
+#include <string>
+#include <stdlib.h>
+#include <sstream>
+#include <fstream>
+#include <ctime>
+
+#include "CPTimer.h"
+
+#ifdef _MSC_VER
+#else
+//for timing
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/times.h>
+//end for timing
+#endif
+
+#include "MOMDP.h"
+#include "ParserSelector.h"
+#include "AlphaVectorPolicy.h"
+
+using namespace momdp;
+
 using namespace std;
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
@@ -45,6 +72,9 @@ public:
       sent=false;
       m_States = IndexVectorMapPtr(new IndexVectorMap());
       m_Actions = IndexVectorMapPtr(new IndexVectorMap());
+      actNewStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
+      actStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
+      currBelSt = SharedPointer<BeliefWithState>(new BeliefWithState());
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -55,6 +85,7 @@ public:
     
     bool read_states(std::string states_file);
     bool read_actions(std::string actions_file);
+    bool read_policy(std::string domain_file, std::string policy_file);
     bool parse_state_action(std::string str,std::vector<double>& vec){
       try{
 	if(!str.empty()){
@@ -70,6 +101,14 @@ public:
       }
       return true;
     }
+    int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
+    void performActionObs(belief_vector& outBelObs, int action, const BeliefWithState& belSt) const;
+    void performActionUnobs(belief_vector& outBelUnobs, int action, const BeliefWithState& belSt, int currObsState) const;
+    void getPossibleObservations(belief_vector& possObs, int action, const BeliefWithState& belSt) const;
+    string toString();
+    double getReward(const BeliefWithState& belst, int action);
+    void checkTerminal(string o, string s, vector<int> &bhout, vector<int> &fhout);
+    int getGreedyAction(vector<int> &, vector<int> &);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
@@ -77,6 +116,22 @@ private:
     
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;
+    
+    SolverParams* solverParams;
+    SharedPointer<MOMDP> problem;
+    SharedPointer<AlphaVectorPolicy> policy;
+    
+    
+    SharedPointer<BeliefWithState> actStateCompl;
+    SharedPointer<BeliefWithState> actNewStateCompl;
+
+    // policy follower state
+    // belief with state
+    SharedPointer<BeliefWithState> nextBelSt;
+    SharedPointer<BeliefWithState> currBelSt;// for policy follower based on known x value
+								      // set sval to -1 if x value is not known
+    // belief over x. May not be used depending on model type and commandline flags, but declared here anyways.
+    DenseVector currBelX; // belief over x
     
     double t;
     double t0;
