@@ -35,10 +35,14 @@ void ArmControl::loop()
 	  }
 	}
 	else{
-	  if(arm_ctx->graspStatus == GRASPED)
+	  if(arm_ctx->graspStatus == GRASPED){
+	    std::cout << "Opening Hand! " << std::endl;
 	    open_hand(arm_ctx,false);
-	  else if(arm_ctx->graspStatus == RELEASED)
+	  }
+	  else if(arm_ctx->graspStatus == RELEASED){
+	    std::cout << "Closing Hand! " << std::endl;
 	    close_hand(arm_ctx,false);
+	  }
 	}
       }
     }
@@ -113,7 +117,7 @@ void ArmControl::loop()
 		  worldPos[1] = cmd->get(1).asDouble();
 		  worldPos[2] = cmd->get(2).asDouble();
 		  if(world_to_robot(worldPos,robotPos)){
-#if 1
+#if 0
 		    yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
 		    iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
 #else
@@ -123,15 +127,23 @@ void ArmControl::loop()
 		    tmpO.resize(4);
 		    const yarp::sig::Vector postn = robotPos;
 		    const yarp::sig::Vector orntn = arm_ctx->init_orient;
-		    if(! arm_ctx->iCartCtrl->askForPosition(arm_ctx->current_pose,postn,tmpX,tmpO,tmpQ))
+		    Vector curPose;
+		    curPose.resize(10);
+		    for(int i=0;i<10;i++){
+		      curPose[i]=arm_ctx->current_pose[i];
+		    }
+		    if(! arm_ctx->iCartCtrl->askForPosition(curPose,postn,tmpX,tmpO,tmpQ)){
 			std::cout << " Inversion failed!!!\n ";
-
-		    move_joints(arm_ctx->iPosCtrl,tmpQ,false);
-
-		    // Update
+		    }
+		    else{
+		      Vector out;
+		      //move_joints(arm_ctx->iPosCtrl,tmpQ,false);
+		      move_joints_pos(arm_ctx->iPosCtrl,partCtxMap["torso"]->iPosCtrl,tmpQ,out);
+// Update
 // 		    cs.posn = tmpX;
 // 		    cs.ortn = tmpO;
-		    arm_ctx->current_pose = tmpQ;
+		      arm_ctx->current_pose = out;
+		    }
 #endif
 		  }
 		}
@@ -217,6 +229,29 @@ bool ArmControl::open()
     }
     
     std::string partName;
+    
+    Json::Value torso = robot["parts"]["torso"];
+    if(!torso.isNull()){
+      if(torso["enabled"].asBool()){
+	partName = "torso";
+	bool config = true;
+	boost::shared_ptr<TorsoContext> torso_ctx(new TorsoContext());
+	torso_ctx->name = partName;
+	torso_ctx->enabled = true;
+	torso_ctx->status = IDLE;
+	config &= Utils::valueToVector(torso["init_pose"],torso_ctx->init_pose);
+	if(config){
+	  if(!configure_torso(robotName, torso_ctx)){
+	    std::cout << "Failed to configure Torso" << std::endl;
+	  }
+	  else{
+	    torso_ctx->configured = true;
+	    partCtxMap[partName] = torso_ctx;
+	  }
+	}
+      }
+    }
+    
     Json::Value right_arm = robot["parts"]["right_arm"];
     if(!right_arm.isNull()){
       if(right_arm["enabled"].asBool()){
@@ -260,28 +295,6 @@ bool ArmControl::open()
 	  }else{
 	    left_ctx->configured = true;
 	    partCtxMap[partName]=left_ctx;
-	  }
-	}
-      }
-    }
-        
-    Json::Value torso = robot["parts"]["torso"];
-    if(!torso.isNull()){
-      if(torso["enabled"].asBool()){
-	partName = "torso";
-	bool config = true;
-	boost::shared_ptr<TorsoContext> torso_ctx(new TorsoContext());
-	torso_ctx->name = partName;
-	torso_ctx->enabled = true;
-	torso_ctx->status = IDLE;
-	config &= Utils::valueToVector(torso["init_pose"],torso_ctx->init_pose);
-	if(config){
-	  if(!configure_torso(robotName, torso_ctx)){
-	    std::cout << "Failed to configure Torso" << std::endl;
-	  }
-	  else{
-	    torso_ctx->configured = true;
-	    partCtxMap[partName] = torso_ctx;
 	  }
 	}
       }
@@ -359,7 +372,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   // send the request for dofs reconfiguration
   iArm->setDOF(newDof,curDof);
 
-#if 0
+#if 1
   // Dont bend more than 15 degrees
   double min, max;
   iArm->getLimits(0,&min,&max);
@@ -543,4 +556,48 @@ bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd,bo
       }
     }
     return done;
+}
+
+void ArmControl::move_joints_pos(IPositionControl* armPosCtrl,IPositionControl* torsoPosCtrl, yarp::sig::Vector &qd,yarp::sig::Vector& out)
+{
+    bool done = false;
+    yarp::sig::Vector torsoPos;
+    torsoPos.resize(3);
+    for(int i=0 ; i < 3; ++i)
+    {
+	torsoPos[i] = qd[i];
+    }
+    torsoPosCtrl->positionMove(torsoPos.data());
+    do
+    {
+	torsoPosCtrl->checkMotionDone(&done);
+	yarp::os::Time::delay(.01);
+    }while(!done);
+
+    yarp::sig::Vector armPos;
+    armPos.resize(16);
+    
+    for(int i=0; i < 7; ++i)
+    {
+	armPos[i] = qd[i+3];
+    }
+    
+    for(Json::ArrayIndex i=7; i<16; ++i)
+    {
+	armPos[i] = Config::instance()->root["robot"]["parts"]["left_arm"]["open_hand"][i-7].asDouble();
+    }
+    
+    armPosCtrl->positionMove(armPos.data());
+    
+    do
+    {
+	armPosCtrl->checkMotionDone(&done);
+	yarp::os::Time::delay(.01);
+    }while(!done);
+    
+    std::cout << "Move to pos: "
+	      << torsoPos.toString() << " and arm: "
+	      << armPos.toString() << "\n";
+	      
+	      out=armPos;
 }

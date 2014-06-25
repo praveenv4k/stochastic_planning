@@ -57,7 +57,8 @@ using boost::bad_lexical_cast;
 
 typedef vector< string > split_vector_type;
     
-typedef boost::shared_ptr<std::vector<double> > VectorPtr;
+// typedef boost::shared_ptr<std::vector<double> > VectorPtr;
+typedef boost::shared_ptr<yarp::sig::Vector> VectorPtr;
 typedef boost::unordered_map<int,VectorPtr > IndexVectorMap;
 typedef boost::shared_ptr<IndexVectorMap> IndexVectorMapPtr;
 
@@ -75,6 +76,7 @@ public:
       actNewStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       actStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       currBelSt = SharedPointer<BeliefWithState>(new BeliefWithState());
+      nextBelSt = SharedPointer<BeliefWithState>(new BeliefWithState());
       engine = boost::shared_ptr<SimulationEngine>(new SimulationEngine());
       rewardCollector = boost::shared_ptr<SimulationRewardCollector>(new SimulationRewardCollector());
       
@@ -111,6 +113,9 @@ public:
     }
     bool initialize_plan();
     int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
+    
+//     bool get_state(yarp::sig::Vector& vec);
+//     bool get_action(yarp::sig::Vector& vec);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;

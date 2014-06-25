@@ -42,15 +42,20 @@ public:
 
     bool configure(ResourceFinder &rf)
     {
-#if 1
+#if 0
       planner->read_actions("action.txt");
       planner->read_states("states.txt");
       planner->read_policy("domain.pomdpx","domain.policy");
       planner->initialize_plan();
+      planner->open(rf);
       return true;
 #else
       bool ret=false;
         //period = rf.check("period", Value(5.0)).asDouble();
+      planner->read_actions("action.txt");
+      planner->read_states("states.txt");
+      planner->read_policy("domain.pomdpx","domain.policy");
+      planner->initialize_plan();
       if(planner->open(rf)){
 	Network yarp;
 	if(! Network::connect("/armcontrol/status/out","/planner/cmd/in")){
@@ -75,7 +80,7 @@ public:
     
     bool updateModule()
     { 
-//         planner->loop();
+        planner->loop();
         return true; 
     }
 
@@ -96,7 +101,7 @@ public:
 
 int main(int argc, char *argv[])
 {   
-#if 0
+#if 1
   // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 
@@ -106,11 +111,6 @@ int main(int argc, char *argv[])
         fprintf(stdout,"Error: yarp server does not seem available\n");
         return -1;
     }
-    
-    std::string policyFile;
-    std::string domainFile;
-    std::string statesFile;
-    std::string actionFile;
 #endif
     PlannerModule module;
     ResourceFinder rf;

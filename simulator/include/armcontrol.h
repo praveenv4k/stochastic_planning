@@ -27,6 +27,7 @@
 //using namespace Eigen::Matrix4d;
 using namespace Eigen;
 //using Eigen::
+using namespace yarp::dev;
 
 class PartContext{
 public:
@@ -167,6 +168,7 @@ private:
   bool configure_arm(std::string& robotName, boost::shared_ptr<ArmContext>& ctx);
   bool configure_torso(std::string& robotName,boost::shared_ptr<TorsoContext>& ctx);
   bool move_joints(yarp::dev::IPositionControl* posCtrl, yarp::sig::Vector &qd,bool bSync=true);
+  void move_joints_pos(IPositionControl* armPosCtrl,IPositionControl* torsoPosCtrl, yarp::sig::Vector &qd,yarp::sig::Vector& out);
   bool open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync=true);
   bool close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync=true);
   bool robot_to_world(const yarp::sig::Vector& robot,yarp::sig::Vector& world);
