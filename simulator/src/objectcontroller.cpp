@@ -24,7 +24,7 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 
-ObjectController::ObjectController(const double period):RateThread(int(period*1000))
+ObjectController::ObjectController(const double period)//:RateThread(int(period*1000))
 {
   // Initializing the private members
   m_VelX = 0.1; // 0.1 m/s
@@ -85,6 +85,9 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
     m_step[i]=(m_end[i]-m_start[i])/(numPoints-1);
   }
   
+  m_multiple=50;
+  m_currmult=0;
+  m_stop = false;
 #if MYBOX
   radius=20;
   xc=0;
@@ -107,7 +110,6 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
   ballPos[2] = 0.35;
   
 #endif
-  //ball top (0,0.5,0.25)
 }
 
 ObjectController::~ObjectController()
@@ -115,8 +117,11 @@ ObjectController::~ObjectController()
 
 }
 
-bool ObjectController::threadInit()
-{
+bool ObjectController::open(yarp::os::ResourceFinder &rf){
+  bool ret=true;   
+  ret = objectCmdPort.open("/object/cmd/in");
+  ret &= objectStatusPort.open("/object/status/out");    
+    
   std::string outputPortName = "/" ;
   outputPortName += getName();
   outputPortName += "/states:o";
@@ -131,79 +136,99 @@ bool ObjectController::threadInit()
     std::cout <<": unable to connect to iCub Simulation world.\n";
     return false;  // unable to open; let RFModule know so that it won't run
   }
-  return true;
+  
+  std::cout << "ObjectCtrl Thread started successfully\n";
+  Bottle del_all("world del all"); 
+  outputStatePort.write(del_all,reply); 
+  
+  std::string str;
+#if BOX
+  str = "world mk sbox ";
+  str = str + boxSize.toString(-1,1).c_str();
+  str = str + " " + boxPos.toString(-1,1).c_str();
+  str = str + " 0.8 0.8 0.8";
+  std::cout << str << std::endl;
+//     Bottle create_box("world mk sbox 1 0.1 0.5 0.0 0.4 0.6 0.8 0.8 0.8");
+  Bottle create_box(ConstString(str.c_str()));
+  outputStatePort.write(create_box,reply);
+#endif
+
+#if STATIC
+  Bottle create_obj("world mk ssph 0.02 0.0 1 0.2 0 1 0");
+  outputStatePort.write(create_obj,reply);
+#else
+  str = "world mk sph ";
+  str = str + "0.02";
+  str = str + " " + ballPos.toString(-1,1).c_str();
+  str = str + " 0 1 0";
+  std::cout << str << std::endl;
+  Bottle create_ball(ConstString(str.c_str()));
+  outputStatePort.write(create_ball,reply);
+#endif
+  startTime = Time::now(); 
+    
+  return ret;
 }
 
-void ObjectController::threadRelease()
-{
+bool ObjectController::close(){
   outputStatePort.close();
 }
 
-void ObjectController::afterStart(bool s)
-{
-  if (s){
-    std::cout << "ObjectCtrl Thread started successfully\n";
-    Bottle del_all("world del all"); 
-    outputStatePort.write(del_all,reply); 
-    
-    std::string str;
-#if BOX
-    str = "world mk sbox ";
-    str = str + boxSize.toString(-1,1).c_str();
-    str = str + " " + boxPos.toString(-1,1).c_str();
-    str = str + " 0.8 0.8 0.8";
-    std::cout << str << std::endl;
-//     Bottle create_box("world mk sbox 1 0.1 0.5 0.0 0.4 0.6 0.8 0.8 0.8");
-    Bottle create_box(ConstString(str.c_str()));
-    outputStatePort.write(create_box,reply);
-#endif
-
-#if STATIC
-    Bottle create_obj("world mk ssph 0.02 0.0 1 0.2 0 1 0");
-    outputStatePort.write(create_obj,reply);
-#else
-    str = "world mk sph ";
-    str = str + "0.02";
-    str = str + " " + ballPos.toString(-1,1).c_str();
-    str = str + " 0 1 0";
-    std::cout << str << std::endl;
-    Bottle create_ball(ConstString(str.c_str()));
-    outputStatePort.write(create_ball,reply);
-#endif
-    startTime = Time::now(); 
-    //world mk sbox (three params for size) (three params for pos) (three params for colour) 
-    
-  }else{
-        std::cout << "ObjectCtrl Thread did not start\n";
+void ObjectController::loop(){
+  
+  // Read command from Planner
+  Bottle* cmd = objectCmdPort.read(false);
+  if(cmd)
+  {
+    bool send = false;
+    double command = cmd->get(0).asDouble();
+    if(command > 1){
+      m_stop = false;
+    }else{
+      m_stop = true;
+    }
   }
+  
+  // Send ball position to iCub World
+  m_currmult++;
+  if(m_currmult==m_multiple)
+    m_currmult=0;
+  if(!(m_currmult%m_multiple==0)){
+    //return;
+  }else{
+    if(!m_stop){
+    #if STATIC
+      Bottle move_obj("world set ssph 1"); 
+    #else
+      Bottle move_obj("world set sph 1"); 
+    #endif
+      
+    #if 0
+      yarp::sig::Vector vec = getNextPosition();
+    #else
+      yarp::sig::Vector vec = getNextPos();	
+    #endif
+      move_obj.addDouble(vec[0]); 
+      move_obj.addDouble(vec[1]); 
+      move_obj.addDouble(vec[2]);
+      outputStatePort.write(move_obj,reply); 
+    }
+  }
+  
+  // Send ball status to Planner
+  Bottle &status = objectStatusPort.prepare();
+  status.clear();
+  status.addDouble(m_currPosition[0]);
+  status.addDouble(m_currPosition[1]);
+  status.addDouble(m_currPosition[2]);
+  objectStatusPort.write();
 }
 
-void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool &invalidAct)
-{
-//  return;
-//     Bottle ball_pos("world get sph 1");
-//     outputStatePort.write(ball_pos,reply);
-//     std::cout << reply.toString() <<std::endl;
-#if STATIC
-  Bottle move_obj("world set ssph 1"); 
-#else
-  Bottle move_obj("world set sph 1"); 
-#endif
-  
-#if 0
-  yarp::sig::Vector vec = getNextPosition();
-#else
-  yarp::sig::Vector vec = getNextPos();	
-#endif
-  move_obj.addDouble(vec[0]); 
-  move_obj.addDouble(vec[1]); 
-  move_obj.addDouble(vec[2]);
-  outputStatePort.write(move_obj,reply); 
+bool ObjectController::interrupt(){
+  return true;
 }
 
 yarp::sig::Vector ObjectController::getNextPosition(){
-  //double x = m_currPosition[0] + m_VelX * m_Period;
-  //double y = 
   double t = Time::now() - startTime;   
 #if MYBOX
   double dx = (round(xc + radius*cos(t))/100); 

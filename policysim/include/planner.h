@@ -84,6 +84,7 @@ public:
       bhout.resize(xDim);
       fhout.resize(xDim);
       
+      objPosition.resize(3);
       mult = 1;
     }
 
@@ -135,8 +136,10 @@ public:
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
-    yarp::os::BufferedPort<yarp::os::Bottle> objectCmdPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> planobjCmdPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> planobjStsPort;
     std::queue<yarp::sig::Vector> posQueue;
+    yarp::sig::Vector objPosition;
     
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;

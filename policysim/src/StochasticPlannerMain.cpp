@@ -64,7 +64,15 @@ public:
          if(! Network::connect("/planner/status/out","/armcontrol/cmd/in")){
           std::cout <<": unable to connect to arm control input port.\n";
          }else{
-	   ret=true;
+	   if(! Network::connect("/planobj/status/out","/object/cmd/in")){
+            std::cout <<": unable to connect to object control input port.\n";
+           }else{
+	     if(! Network::connect("/object/status/out","/planobj/cmd/in")){
+	      std::cout <<": unable to connect to planner input port.\n";
+	     }else{
+	      ret=true;
+	     }
+	   }
 	 }   
        }
       }

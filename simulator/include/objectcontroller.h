@@ -24,7 +24,7 @@
 
 using namespace yarp::os;
 
-class ObjectController:public yarp::os::RateThread
+class ObjectController
 {
 public:
     //yarp::os::BufferedPort<yarp::os::Bottle > outputStatePort; 
@@ -41,14 +41,19 @@ public:
     yarp::sig::Vector getNextPos();
     std::string getPositionStr(yarp::sig::Vector& vector) const;
     
-    bool threadInit();
-    void afterStart(bool s);
-    void run();
-    void reset();
-    void threadRelease();
+//     bool threadInit();
+//     void afterStart(bool s);
+//     void run();
+//     void reset();
+//     void threadRelease();
     
+    bool open(yarp::os::ResourceFinder &rf);
+    bool close();
+    void loop(); 
+    bool interrupt();
 private:
-    ObjectController(const ObjectController& other):RateThread(10){
+    ObjectController(const ObjectController& other)//:RateThread(10)
+    {
     }
     virtual ObjectController& operator=(const ObjectController& other){
       return *this;
@@ -82,6 +87,13 @@ private:
     yarp::sig::Vector m_step;
  
     double ball_radius;
+    int m_multiple;
+    int m_currmult;
+    
+    bool m_stop;
+    
+    yarp::os::BufferedPort<yarp::os::Bottle> objectCmdPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> objectStatusPort;
 };
 
 #endif // OBJECTCONTROLLER_H

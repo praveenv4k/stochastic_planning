@@ -71,13 +71,24 @@ void Planner::loop()
       //printf("Move request sent\n");
      }
    }
+   Bottle* objCmd = planobjCmdPort.read(false);
+   if(objCmd){
+     objPosition[0] = objCmd->get(0).asDouble();
+     objPosition[1] = objCmd->get(1).asDouble();
+     objPosition[2] = objCmd->get(2).asDouble();
+     cout << objPosition.toString() << std::endl;
+   }
 }
 
 bool Planner::open(yarp::os::ResourceFinder &rf)
 {   
     bool ret=true;   
     ret = plannerCmdPort.open("/planner/cmd/in");
-    ret &= plannerStatusPort.open("/planner/status/out");     
+    ret &= plannerStatusPort.open("/planner/status/out"); 
+    ret &= planobjCmdPort.open("/planobj/cmd/in");
+    ret &= planobjStsPort.open("/planobj/status/out"); 
+    yarp::os::BufferedPort<yarp::os::Bottle> planobjCmdPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> planobjStsPort;
 
     {
       VectorPtr v=m_States->operator[](currBelSt->sval);
@@ -99,7 +110,7 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
       VectorPtr prev_v=m_States->operator[](currBelSt->sval);
       cout << " Current State : " << currBelSt->sval;
       action = runFor(1,NULL,reward,expReward);
-      cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval;
+      cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
       if(action!=-1 && prevState!=currBelSt->sval){
 	VectorPtr v=m_States->operator[](currBelSt->sval);
 	Vector v1;

@@ -9,32 +9,31 @@ class ObjectControllerModule:public yarp::os::RFModule
 protected:
   ObjectController* m_pCtrlThread;
 public:
+  ObjectControllerModule(){
+    m_pCtrlThread=new ObjectController(CTRL_THREAD_PER);
+  }
+  
+  virtual ~ObjectControllerModule(){
+    if(m_pCtrlThread!=NULL){
+      delete m_pCtrlThread;
+      m_pCtrlThread = NULL;
+    }
+  }
   virtual bool configure(ResourceFinder &rf){
     yarp::os::Time::turboBoost();
-    
-    m_pCtrlThread = new ObjectController(CTRL_THREAD_PER);
-    
-    if(!m_pCtrlThread->start()){
-      delete m_pCtrlThread;
-      return false;
-    }
-    return true;
+    return m_pCtrlThread->open(rf);
   }
   
   virtual bool close(){
-    if(m_pCtrlThread!=0){
-      m_pCtrlThread->stop();
-      delete m_pCtrlThread;
-      m_pCtrlThread = 0;
-    }
-    return true;
+    return m_pCtrlThread->close();
   }
   
   virtual double getPeriod(){
-    return 1.0;
+    return 0.1;
   }
   
   virtual bool updateModule(){
+    m_pCtrlThread->loop();
     return true;
   }
 };
