@@ -1,7 +1,8 @@
 #include "Global.h"
 #include "objectcontroller.h"
 
-#define CTRL_THREAD_PER 0.02 // 20 ms
+//#define CTRL_THREAD_PER 0.02 // 20 ms
+#define CTRL_THREAD_PER 5 // 20 ms
 
 class ObjectControllerModule:public yarp::os::RFModule
 {

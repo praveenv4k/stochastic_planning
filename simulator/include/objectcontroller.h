@@ -38,6 +38,7 @@ public:
       return "objectCtrl";
     }
     yarp::sig::Vector getNextPosition();
+    yarp::sig::Vector getNextPos();
     std::string getPositionStr(yarp::sig::Vector& vector) const;
     
     bool threadInit();
@@ -74,6 +75,12 @@ private:
     yarp::sig::Vector boxPos;
     yarp::sig::Vector boxSize;
     yarp::sig::Vector ballPos;
+    
+    yarp::sig::Vector m_start;
+    yarp::sig::Vector m_end;       
+    int m_currStep;
+    yarp::sig::Vector m_step;
+ 
     double ball_radius;
 };
 

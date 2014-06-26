@@ -59,7 +59,19 @@ public:
     std::cout << robot["ss"]["dim"] << std::endl;
   }
   
+  static void testLinearDiscretizer(){
+    Container<double> v1;v1.resize(3);v1[0]=0;v1[1]=0;v1[2]=2;
+    Container<double> v2;v2.resize(3);v2[0]=2;v2[1]=0;v2[2]=4;
+    LinearTrajectoryDiscretizer disc(v1,v2);
+    std::vector<Container<double> > poses;
+    disc.getAllPoses(10,poses);
+    for(int i=0;i<10;i++){
+      std::cout << poses[i] << std::endl;
+    }
+  }
+  
   static void testAll(){
+    std::cout << "************** Begin Test ***************" << std::endl;
     Container<int> state1;
     state1.push_back(1);
     state1.push_back(2);
@@ -68,6 +80,8 @@ public:
     testDiscretizer(state1);
     testCombinator(state1,state1);
     testJson();
+    testLinearDiscretizer();
+    std::cout << "************** End Test *****************" << std::endl;
   }
 };
 

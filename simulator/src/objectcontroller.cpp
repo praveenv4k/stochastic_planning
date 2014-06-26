@@ -62,6 +62,29 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
   ball_radius = 0.02;
   ballPos.resize(3);
   
+  m_start.resize(3);
+  m_end.resize(3);
+  m_step.resize(3);
+  
+//   "start": [
+//     -11,
+//     53.39,
+//     35
+//   ],
+//   "end": [
+//     11,
+//     53.39,
+//     35
+//   ]
+  
+  int numPoints=10;
+  m_currStep = 0;
+  m_start[0]=-11;m_start[1]=53.39;m_start[2]=35;
+  m_end[0]=11;m_end[1]=53.39;m_end[2]=35;
+  for(int i=0;i<3;i++){
+    m_step[i]=(m_end[i]-m_start[i])/(numPoints-1);
+  }
+  
 #if MYBOX
   radius=20;
   xc=0;
@@ -82,6 +105,7 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
   ballPos[0] = 0.1;
   ballPos[1] = 0.533951;
   ballPos[2] = 0.35;
+  
 #endif
   //ball top (0,0.5,0.25)
 }
@@ -143,9 +167,7 @@ void ObjectController::afterStart(bool s)
     str = str + " " + ballPos.toString(-1,1).c_str();
     str = str + " 0 1 0";
     std::cout << str << std::endl;
-//     Bottle create_box("world mk sbox 1 0.1 0.5 0.0 0.4 0.6 0.8 0.8 0.8");
     Bottle create_ball(ConstString(str.c_str()));
-//     Bottle create_obj("world mk sph 0.02 0.0 1 0.2 0 1 0");
     outputStatePort.write(create_ball,reply);
 #endif
     startTime = Time::now(); 
@@ -158,7 +180,7 @@ void ObjectController::afterStart(bool s)
 
 void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool &invalidAct)
 {
-  return;
+//  return;
 //     Bottle ball_pos("world get sph 1");
 //     outputStatePort.write(ball_pos,reply);
 //     std::cout << reply.toString() <<std::endl;
@@ -167,7 +189,12 @@ void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool
 #else
   Bottle move_obj("world set sph 1"); 
 #endif
+  
+#if 0
   yarp::sig::Vector vec = getNextPosition();
+#else
+  yarp::sig::Vector vec = getNextPos();	
+#endif
   move_obj.addDouble(vec[0]); 
   move_obj.addDouble(vec[1]); 
   move_obj.addDouble(vec[2]);
@@ -190,6 +217,20 @@ yarp::sig::Vector ObjectController::getNextPosition(){
   m_currPosition[0] = dx;
   m_currPosition[1] = dy;
   m_currPosition[2] = dz;
+  return m_currPosition;
+}
+
+yarp::sig::Vector ObjectController::getNextPos(){
+  if(m_currStep==10){
+    m_currStep=0;
+  }
+  double dx = (m_start[0]+m_step[0]*m_currStep)/100;
+  double dy = (m_start[1]+m_step[1]*m_currStep)/100;
+  double dz = (m_start[2]+m_step[2]*m_currStep)/100;
+  m_currPosition[0] = dx;
+  m_currPosition[1] = dy;
+  m_currPosition[2] = dz;
+  m_currStep++;
   return m_currPosition;
 }
 

@@ -59,12 +59,12 @@ include_directories(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS}
 # add required linker flags
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")      
 
-add_executable(policysim src/Simulator.cpp src/SimulationEngine.cpp)
-add_executable(StochasticPlanner src/planner.cpp src/StochasticPlannerMain.cpp)
+#add_executable(policysim src/Simulator.cpp src/SimulationEngine.cpp)
+add_executable(policysim src/planner.cpp src/StochasticPlannerMain.cpp)
 
 # we now add the YARP and iCub libraries to our project.
+#TARGET_LINK_LIBRARIES(policysim ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${CMAKE_SOURCE_DIR}/lib/libappl.a)
 TARGET_LINK_LIBRARIES(policysim ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${CMAKE_SOURCE_DIR}/lib/libappl.a)
-TARGET_LINK_LIBRARIES(StochasticPlanner ${YARP_LIBRARIES} ${ICUB_LIBRARIES} ${CMAKE_SOURCE_DIR}/lib/libappl.a)
 
 # Copy the config files to the binary directory
 file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml

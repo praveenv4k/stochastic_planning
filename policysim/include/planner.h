@@ -135,6 +135,7 @@ public:
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
+    yarp::os::BufferedPort<yarp::os::Bottle> objectCmdPort;
     std::queue<yarp::sig::Vector> posQueue;
     
     IndexVectorMapPtr m_States;
@@ -175,7 +176,7 @@ private:
     double t0;
     double t1;
     bool first;
-    bool sent;
+    bool sent;   
 };
 
    

@@ -10,11 +10,9 @@
 int main(void){
   // Test the implemented datastructures
   Test::testAll();
-  
   // Generator
   DomainExtractor extractor(Config::instance()->root);
   extractor.generate();
-  
   return 0;
 }
 

@@ -296,6 +296,15 @@ TrajectoryDiscretizerPtr DomainExtractor::getTrajectoryDiscretizer(Json::Value t
 	ptr = TrajectoryDiscretizerPtr(new Circle2DTrajectoryDiscretizer(center[0],center[1],radius));
       }
     }
+    else if(type == "linear"){
+      Json::Value linConfig = trajConfig[type.c_str()];
+      if(!linConfig.isNull()){
+	Container<double> start,end;
+	Utils::valueToVector(linConfig["start"],start);
+	Utils::valueToVector(linConfig["end"],end);
+	ptr = TrajectoryDiscretizerPtr(new LinearTrajectoryDiscretizer(start,end));
+      }
+    }
     else{
     }
   }

@@ -88,6 +88,35 @@ private:
   double m_xc,m_yc,m_zc;
 };
 
+class LinearTrajectoryDiscretizer:public TrajectoryDiscretizer{
+  
+public:
+  
+  LinearTrajectoryDiscretizer(Container<double> start,Container<double> end)
+      :m_start(start),m_end(end){
+  }
+  
+  virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose){
+    return true;
+  }
+  
+  virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
+    poses.resize(numPoints);
+    Container<double> step = (m_end-m_start)/(numPoints-1);
+    for(int i=0;i<numPoints;i++){
+      Container<double> pose;
+      pose.resize(3);
+      pose = m_start+step*i; 
+      poses[i] = pose;
+    }
+    return true;
+  }
+  
+private:
+  Container<double> m_start;
+  Container<double> m_end;
+};
+
 class Circle2DTrajectoryDiscretizer:public TrajectoryDiscretizer{
 public:
   Circle2DTrajectoryDiscretizer(double xc,double yc, double radius)
