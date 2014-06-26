@@ -51,7 +51,6 @@ public:
       return true;
 #else
       bool ret=false;
-        //period = rf.check("period", Value(5.0)).asDouble();
       planner->read_actions("action.txt");
       planner->read_states("states.txt");
       planner->read_policy("domain.pomdpx","domain.policy");
@@ -75,7 +74,7 @@ public:
 
     double getPeriod( )
     {
-        return 0.5;        
+        return 0.1;        
     }
     
     bool updateModule()
