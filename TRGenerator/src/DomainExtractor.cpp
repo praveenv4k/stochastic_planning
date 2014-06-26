@@ -245,7 +245,8 @@ double DomainExtractor::computeReward(std::vector<double> state){
     if(Utils::isEqual(state[m_agentDim-1],1)){
       reward = 500;
     }else{
-      reward = 50;
+      //reward = 50;
+      reward = -norm;
     }
   }
   else{

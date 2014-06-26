@@ -21,7 +21,6 @@ FIND_PACKAGE(ICUB)
 # add include directories
 include_directories(${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS} include jsoncpp-src-0.6.0-rc2)
 
-
 # add required linker flags
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ICUB_LINK_FLAGS}")      
 

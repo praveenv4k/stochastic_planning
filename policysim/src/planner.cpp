@@ -92,8 +92,9 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     int action=-1;
     double reward=0,expReward=0;
     double dist = 100000;
-    double graspThreshold = 3;
-    while(dist > graspThreshold){
+    double graspThreshold = 1.6;
+    bool reached=false;
+    while(!reached){
       int prevState = currBelSt->sval;
       VectorPtr prev_v=m_States->operator[](currBelSt->sval);
       cout << " Current State : " << currBelSt->sval;
@@ -118,6 +119,10 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
 	object[1]=object[1]+3;
 	dist = Planner::computeL2norm<Vector>(robot,object);
 	cout << "Distance Threshold : " << dist << std::endl;
+	if(dist < graspThreshold && v->operator[](3)>0){
+	  cout << "Reached close to object!" << std::endl;
+	  reached=true;
+	}
       }else{
 	break;
       }
