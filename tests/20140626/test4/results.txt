@@ -1,0 +1,9 @@
+praveen@praveen-virtual-machine:~/Documents/develop/appl-0.96/src$ ./pomdpsol ../../my-icub/stochastic_planner/TRGenerator/build/domain.pomdpx --output ../../my-icub/stochastic_planner/TRGenerator/build/domain.policy
+
+Loading the model ...
+  input file   : ../../my-icub/stochastic_planner/TRGenerator/build/domain.pomdpx
+WARNING
+  This problem is an MDP (all state variables are observed) but also contains observation variables. The observation variables will be ignored. 
+  loading time : 307.70s 
+Generate MDP Policy
+
