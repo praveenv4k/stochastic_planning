@@ -21,6 +21,7 @@ file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml
                       ${CMAKE_SOURCE_DIR}/config/*.conf
                       ${CMAKE_SOURCE_DIR}/config/*.json)
                    
+                   
 foreach(ConfigFile ${ConfigFiles})
   add_custom_command(TARGET trgenerator POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E

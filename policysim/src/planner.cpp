@@ -79,20 +79,6 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     ret = plannerCmdPort.open("/planner/cmd/in");
     ret &= plannerStatusPort.open("/planner/status/out");     
 
-#if 0
-    Vector v1;
-    v1.resize(4);
-    v1[0]= 0.0;
-    v1[1]= 0.6;
-    v1[2]=0.25;
-    v1[3]=1;
-    posQueue.push(v1);
-    v1[0]= 0.0;
-    v1[1]= 0.6;
-    v1[2]=0.25;
-    v1[3]=10;
-    posQueue.push(v1);
-#else
     {
       VectorPtr v=m_States->operator[](currBelSt->sval);
       Vector v1;
@@ -104,9 +90,12 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
       posQueue.push(v1);
     }
     int action=-1;
-    double reward,expReward;
-    for(int i=0;i<10;i++){
+    double reward=0,expReward=0;
+    double dist = 100000;
+    double graspThreshold = 3;
+    while(dist > graspThreshold){
       int prevState = currBelSt->sval;
+      VectorPtr prev_v=m_States->operator[](currBelSt->sval);
       cout << " Current State : " << currBelSt->sval;
       action = runFor(1,NULL,reward,expReward);
       cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval;
@@ -119,12 +108,40 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
 	v1[2]= v->operator[](2)/100;
 	v1[3]= 1;
 	posQueue.push(v1);
+	
+	Vector robot,object;
+	robot.resize(3);object.resize(3);
+	for(int i=0;i<3;i++){
+	  robot[i]=v->operator[](i);
+	  object[i]=v->operator[](i+4);
+	}
+	object[1]=object[1]+3;
+	dist = Planner::computeL2norm<Vector>(robot,object);
+	cout << "Distance Threshold : " << dist << std::endl;
       }else{
 	break;
       }
     }
+//     for(int i=0;i<10;i++){
+//       int prevState = currBelSt->sval;
+//       cout << " Current State : " << currBelSt->sval;
+//       action = runFor(1,NULL,reward,expReward);
+//       cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval;
+//       if(action!=-1 && prevState!=currBelSt->sval){
+// 	VectorPtr v=m_States->operator[](currBelSt->sval);
+// 	Vector v1;
+// 	v1.resize(4);
+// 	v1[0]= v->operator[](0)/100;
+// 	v1[1]= v->operator[](1)/100;
+// 	v1[2]= v->operator[](2)/100;
+// 	v1[3]= 1;
+// 	posQueue.push(v1);
+//       }else{
+// 	break;
+//       }
+//     }
     cout << " Reward: " << reward << " Expected Reward: " << expReward << std::endl;
-#endif
+
     printf("Targets count: %d\n",posQueue.size());
     t=t1=t0 = Time::now();
     return ret;

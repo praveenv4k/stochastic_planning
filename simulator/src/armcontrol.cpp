@@ -126,7 +126,14 @@ void ArmControl::loop()
 		      open_hand(arm_ctx,false);
 		    }else{
 		      yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
+#if 0
 		      iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
+#else
+		      iArm->goToPose(robotPos,arm_ctx->init_orient);
+		      if(!iArm->waitMotionDone()){
+			std::cout << "Wait motion done failed!" << std::endl;
+		      }
+#endif
 		    }
 #else
 		    yarp::sig::Vector tmpQ, tmpX, tmpO;
@@ -195,16 +202,6 @@ void ArmControl::loop()
 	    }
 	  }
 	}
-     
-
-      // TODO Should be checked for Grasping
-      /*bool motionDone;   
-      if(iHand->checkMotionDone(&motionDone))
-      {
-	  if(motionDone && 
-	      (yarp::os::Time::now() - actionTime) >= 3.0 )
-	      status = action;
-      }*/        
 
       if(arm_ctx->status == REACHED){
 	arm_ctx->status = IDLE;
@@ -341,7 +338,7 @@ bool ArmControl::open()
       }
     }
     
-    //Time::turboBoost();
+    Time::turboBoost();
     
     initialize_robot();
     
@@ -526,6 +523,7 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
       std::cout << "Closing Hand: "  << std::endl;
       ctx->graspStatus = GRASPING;
       yarp::sig::Vector close_pose = ctx->close_pose;
+      std::cout << close_pose.toString() << std::endl;
       for(size_t i=0; (i<close_pose.size()) && (i<8); i++)
       {        
 	  ctx->iPosCtrl->setRefSpeed(i+8, 100);
@@ -535,11 +533,16 @@ bool ArmControl::close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 	bool done=false;
 	while (!done) {
 	  ctx->iPosCtrl->checkMotionDone(&done);
-	  yarp::os::Time::delay(0.01);   // or any suitable delay
+	  yarp::os::Time::delay(0.1);   // or any suitable delay
 	}
 	ctx->graspStatus = GRASPED;
         std::cout << "Closed Hand: " << std::endl;
       }
+      else{
+	yarp::os::Time::delay(1);
+	std::cout << "Closed Hand: " << std::endl;
+      }
+      ctx->graspStatus = GRASPED;
       bret = true;
     }
   }
@@ -571,7 +574,11 @@ bool ArmControl::open_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync)
 	}
 	ctx->graspStatus = RELEASED;
 	std::cout << "Opened Hand: " << std::endl;
+      }else{
+	yarp::os::Time::delay(1);
+	std::cout << "Opened Hand: " << std::endl;
       }
+      ctx->graspStatus = RELEASED;
       bret = true;
     }
   }

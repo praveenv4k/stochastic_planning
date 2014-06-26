@@ -78,7 +78,8 @@ ObjectController::ObjectController(const double period):RateThread(int(period*10
   yc=53.3951;
   zc=40;
 
-  ballPos[0] = 0;
+  //10 54.39 35
+  ballPos[0] = 0.1;
   ballPos[1] = 0.533951;
   ballPos[2] = 0.35;
 #endif
@@ -157,6 +158,7 @@ void ObjectController::afterStart(bool s)
 
 void ObjectController::run() //Action &act, State &nxtState, bool &reached, bool &invalidAct)
 {
+  return;
 //     Bottle ball_pos("world get sph 1");
 //     outputStatePort.write(ball_pos,reply);
 //     std::cout << reply.toString() <<std::endl;

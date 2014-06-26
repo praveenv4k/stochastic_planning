@@ -77,4 +77,5 @@ foreach(ConfigFile ${ConfigFiles})
                      COMMAND ${CMAKE_COMMAND} -E
                          copy ${ConfigFile} $<TARGET_FILE_DIR:StochasticPlanner>)
 endforeach()
+
 #TARGET_LINK_LIBRARIES(${PROJECTNAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})

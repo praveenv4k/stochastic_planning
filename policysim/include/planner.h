@@ -111,6 +111,22 @@ public:
       }
       return true;
     }
+    
+    
+    template <typename T>
+    static double computeL2norm(T v1,T v2){
+      size_t dim = v1.size();  
+      if(dim != v2.size()){
+	throw std::invalid_argument("The vector dimensions do not agree!");
+      }
+      double sum = 0;
+      for(size_t i=0;i<dim;i++){
+	double temp = v1[i]-v2[i];
+	sum = sum+ temp*temp;
+      }
+      return sqrt(sum);
+    }
+
     bool initialize_plan();
     int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
     

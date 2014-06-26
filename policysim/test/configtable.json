@@ -44,7 +44,7 @@
       ]
     },
     "grasp": {
-      "distThreshold": 2
+      "distThreshold": 3
     }
   },
   "object": {
