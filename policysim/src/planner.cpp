@@ -29,18 +29,17 @@ void Planner::loop()
       robotPosition[i] = cmd->get(i+1).asDouble();
      }
      for(int i=0;i<4;i++){
-       augState[i]=robotPosition[i]*100;
+       augState[i]=round(robotPosition[i]*100);
      }
      for(int i=4;i<7;i++){
-       augState[i]=objPosition[i-4]*100;
+       augState[i]=round(objPosition[i-4]*100);
      }
      if(command == 1){
-       send = false;
-//        posQueue.pop();
-     }else if(command == 10){
-       if(sent==true){
+       if(sent == true){
 	 posQueue.pop();
 	 sent = false;
+	 
+#ifdef VECTOR_PTR_MAP
 	 VectorPtr ptr(new yarp::sig::Vector());
 	 for(size_t i=0;i<augState.size();i++){
 	   ptr->push_back(augState[i]);
@@ -54,6 +53,61 @@ void Planner::loop()
 	 }
 	  std::cout << "Ready to take next action!" << std::endl;
         }
+#else
+	 std::vector<double> val;
+	 for(size_t i=0;i<augState.size();i++){
+	   val.push_back(augState[i]);
+	   std::cout << val[i] << " ";
+	 }
+	 std::cout << std::endl;
+	 StateIndexMap::iterator found = m_StateIndexMap.find(val);
+	 if(found!=m_StateIndexMap.end()){
+	   //std::cout << "Found the augmented state!" << std::endl;
+	    int state = found->second;
+	    std::cout << "Index: " << state << std::endl;
+	 }else{
+	   std::cout << "Augmented state not found!" << std::endl;
+	 }
+       }
+#endif
+       send = true;
+     }else if(command == 10){
+       if(sent==true){
+	 //posQueue.pop();
+	 //sent = false;
+        }else{
+#if 0
+	  currBelSt->sval=1;
+	  VectorPtr prev_v=m_States->operator[](currBelSt->sval);
+	  cout << " Current State : " << currBelSt->sval;
+	  action = runFor(1,NULL,reward,expReward);
+	  cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
+	  if(action!=-1 && prevState!=currBelSt->sval){
+	    VectorPtr v=m_States->operator[](currBelSt->sval);
+	    Vector v1;
+	    v1.resize(4);
+	    v1[0]= v->operator[](0)/100;
+	    v1[1]= v->operator[](1)/100;
+	    v1[2]= v->operator[](2)/100;
+	    v1[3]= 1;
+	    posQueue.push(v1);
+	    
+	    Vector robot,object;
+	    robot.resize(3);object.resize(3);
+	    for(int i=0;i<3;i++){
+	      robot[i]=v->operator[](i);
+	      object[i]=v->operator[](i+4);
+	    }
+	    object[1]=object[1]+3;
+	    dist = Planner::computeL2norm<Vector>(robot,object);
+	    cout << "Distance Threshold : " << dist << std::endl;
+	    if(dist < graspThreshold && v->operator[](3)>0){
+	      cout << "Reached close to object!" << std::endl;
+	      reached=true;
+	    }
+	  }
+#endif
+	}
         send = true;
      }else if(command == 100){
      }
@@ -91,7 +145,6 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     ret &= planobjStsPort.open("/planobj/status/out"); 
     yarp::os::BufferedPort<yarp::os::Bottle> planobjCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> planobjStsPort;
-
     {
       VectorPtr v=m_States->operator[](currBelSt->sval);
       Vector v1;
@@ -176,7 +229,16 @@ bool Planner::read_states(std::string states_file){
 	    ptr->push_back(vec[i]);
 	  }
 	  m_States->insert(std::pair<int,VectorPtr>((int)vec[0],ptr));
+
+#ifdef VECTOR_PTR_MAP
 	  m_VectorMap->insert(std::pair<VectorPtr,int>(ptr,(int)vec[0]));
+#else
+	  std::vector<double> val;
+	  for(size_t i=1;i<vec.size()-1;i++){
+	    val.push_back(round(vec[i]));
+	  }
+	  m_StateIndexMap.insert(std::pair<std::vector<double>,int>(val,(int)vec[0]));
+#endif
 // 	  if(p<10){
 // 	    VectorPtr ptr2(new yarp::sig::Vector());
 // 	    for(size_t i=1;i<vec.size()-1;i++){
@@ -192,7 +254,11 @@ bool Planner::read_states(std::string states_file){
     bret = true;
   }
   std::cout << "Number of states in States Map: " << m_States->size() <<std::endl;
+#ifdef VECTOR_PTR_MAP
   std::cout << "Number of states in Vector Map: " << m_VectorMap->size() <<std::endl;
+#else
+  std::cout << "Number of states in State Index Map: " << m_StateIndexMap.size() <<std::endl;
+#endif
   return bret;
 }
 
@@ -313,11 +379,18 @@ bool Planner::initialize_plan(){
   {
     // random starting state for X
     const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
+    cout << startBeliefX->ToString() << std::endl;
+#if 0
     actStateCompl->sval = chooseFromDistribution(*startBeliefX);
+#else
+    actStateCompl->sval = 441;
+#endif
     copy(currBelX, *startBeliefX);
+    cout << "Random initial state: " <<  actStateCompl->sval << endl;
   }
   else
   {
+    cout << "Fixed initial state: " <<  problem->initialBeliefStval->sval << endl;
     // initial starting state for X is fixed
     actStateCompl->sval = problem->initialBeliefStval->sval;
   }

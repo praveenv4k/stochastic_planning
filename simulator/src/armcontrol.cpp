@@ -197,7 +197,7 @@ void ArmControl::loop()
 		  }
 		}
 		arm_ctx->status = MOVING;
-		arm_ctx->status = REACHED;
+		arm_ctx->action = REACHED;
 	        actionTime = yarp::os::Time::now();
 	      }
 	    }
@@ -332,6 +332,9 @@ bool ArmControl::open()
 	if(!left_arm["init_pos"].isNull()){
 	  config &= Utils::valueToVector(left_arm["init_pos"],left_ctx->init_world_position);
 	}
+	if(!left_arm["joint_speed"].isNull()){
+	  left_ctx->joint_speed=left_arm["joint_speed"].asInt();
+	}
 	if(config){
 	  if(!configure_arm(robotName, left_ctx)){
 	    std::cout << "Failed to configure " << partName << std::endl;
@@ -438,7 +441,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   // enable the torso yaw and pitch
   // disable the torso roll
   newDof[0]=1;
-  newDof[1]=0;
+  newDof[1]=1;
   newDof[2]=1;
 
   // send the request for dofs reconfiguration
@@ -455,6 +458,17 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   iArm->setLimits(1,-15,15);
 #endif
 
+  //Set joint reference speeds
+  int axes;
+  if(ctx->iPosCtrl->getAxes(&axes)){
+    Vector speeds;
+    speeds.resize(axes);
+    for(int i=0;i<axes;i++){
+      speeds[i]=ctx->joint_speed;
+    }
+    ctx->iPosCtrl->setRefSpeeds(speeds.data());
+  }
+  
   // print out some info about the controller
   Bottle info;
   iArm->getInfo(info);

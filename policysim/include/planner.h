@@ -47,52 +47,13 @@
 #include "MOMDP.h"
 #include "ParserSelector.h"
 #include "AlphaVectorPolicy.h"
+#include "Types.h"
 
 using namespace momdp;
 
 using namespace std;
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
-
-struct VectorIndexHash;
-struct VectorIndexEqualTo;
-
-typedef vector< string > split_vector_type;
-typedef boost::shared_ptr<yarp::sig::Vector> VectorPtr;
-typedef boost::unordered_map<int,VectorPtr > IndexVectorMap;
-typedef boost::unordered_map<VectorPtr,int,VectorIndexHash,VectorIndexEqualTo> VectorIndexMap;
-typedef boost::shared_ptr<IndexVectorMap> IndexVectorMapPtr;
-typedef boost::shared_ptr<VectorIndexMap> VectorIndexMapPtr;
-
-
-struct VectorIndexHash
-    : std::unary_function<VectorPtr, std::size_t>
-{
-    std::size_t operator()(VectorPtr const& e) const
-    {
-      std::size_t seed = 0;
-      for(size_t i=0;i<e->size();i++){
-	if(i==5) continue;
-	boost::hash_combine(seed,e->operator[](i));
-      }
-      return seed;
-    }
-};
-
-struct VectorIndexEqualTo
-    : std::binary_function<VectorPtr, VectorPtr, bool>
-{
-    bool operator()(VectorPtr const& x, VectorPtr const& y) const
-    {
-      bool ret=true;
-      for(size_t i=0;i<x->size();i++){
-	  //ret = (*x == *y);
-	  if(i==5) continue;
-	  ret&= fabs(x->operator[](i)-y->operator[](i))<=1e-3;
-      }
-      return ret;
-    }
-};
 
 class Planner
 {
@@ -105,7 +66,9 @@ public:
       sent=false;
       m_States = IndexVectorMapPtr(new IndexVectorMap());
       m_Actions = IndexVectorMapPtr(new IndexVectorMap());
+#ifdef VECTOR_PTR_MAP
       m_VectorMap = VectorIndexMapPtr(new VectorIndexMap());
+#endif
       actNewStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       actStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       currBelSt = SharedPointer<BeliefWithState>(new BeliefWithState());
@@ -195,7 +158,11 @@ private:
     
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;
+#ifdef VECTOR_PTR_MAP
     VectorIndexMapPtr m_VectorMap;
+#else
+    StateIndexMap m_StateIndexMap;
+#endif
     
     SolverParams* solverParams;
     SharedPointer<MOMDP> problem;

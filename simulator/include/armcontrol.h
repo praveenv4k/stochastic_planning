@@ -32,6 +32,7 @@ using namespace yarp::dev;
 class PartContext{
 public:
   PartContext(){
+    joint_speed = 10;
   }
   virtual ~PartContext(){
   }
@@ -45,6 +46,7 @@ public:
   
   armstatus_t status;
   armstatus_t action;
+  int joint_speed;
   
   bool enabled;
   bool configured;
