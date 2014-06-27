@@ -326,7 +326,9 @@ bool ArmControl::open()
 	config &= Utils::valueToVector(left_arm["init_pose"],left_ctx->init_pose);
 	config &= Utils::valueToVector(left_arm["open_hand"],left_ctx->open_pose);
 	config &= Utils::valueToVector(left_arm["close_hand"],left_ctx->close_pose);
-	
+	if(!left_arm["init_pos"].isNull()){
+	  config &= Utils::valueToVector(left_arm["init_pos"],left_ctx->init_position);
+	}
 	if(config){
 	  if(!configure_arm(robotName, left_ctx)){
 	    std::cout << "Failed to configure " << partName << std::endl;
@@ -341,6 +343,35 @@ bool ArmControl::open()
     Time::turboBoost();
     
     initialize_robot();
+    
+    // Move the robot to fixed initial position after the configuration is done.
+   std::map<std::string,boost::shared_ptr<PartContext> >::iterator it;
+   it=partCtxMap.find(Config::instance()->root["armcontrol"]["arm"].asString());
+   if(it!=partCtxMap.end()){
+    boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
+    if(arm_ctx!=NULL){
+      if(arm_ctx->init_position.size()>0){
+	std::cout << "Moving " << partName <<  " to initial position " << arm_ctx->init_position.toString(-1,1) << std::endl;
+	Vector robotPos;
+	Vector pos;
+	Vector orient;
+	arm_ctx->iCartCtrl->getPose(pos,orient);
+	world_to_robot(arm_ctx->init_position,robotPos);
+// 	robotPos[0]=robotPos[0]/100;
+// 	robotPos[1]=robotPos[1]/100;
+// 	robotPos[2]=robotPos[2]/100;
+	arm_ctx->iCartCtrl->goToPose(robotPos,orient);
+	if(!arm_ctx->iCartCtrl->waitMotionDone()){
+	  std::cout << "Wait motion done failed!" << std::endl;
+	}
+	arm_ctx->iCartCtrl->getPose(pos,orient);
+	Vector worldPos;
+	robot_to_world(pos,worldPos);
+	std::cout << "Current Pos: (" << worldPos.toString(-1,1) <<  ") Orient: " << orient.toString(-1,1) << std::endl;
+      }
+    }
+   }
+
     
     bool ret=true;   
     ret = armCmdPort.open("/armcontrol/cmd/in");
@@ -471,9 +502,17 @@ void ArmControl::initialize_robot(){
 	  if(arm_ctx!=NULL){
 	    std::cout << "Moved " << partName <<  " to initial pose!"  << std::endl;
 	    open_hand(arm_ctx);
+	    Vector robotPos;
 	    arm_ctx->graspStatus=RELEASED;
-	    arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
-	    std::cout << "Initial Position: " << arm_ctx->init_position.toString() << std::endl;
+	    if(arm_ctx->init_position.size()>0){
+	      arm_ctx->iCartCtrl->getPose(robotPos,arm_ctx->init_orient);
+	    }else{
+	      arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
+	      robotPos = arm_ctx->init_position;
+	    }
+	    Vector worldPos;
+	    robot_to_world(robotPos,worldPos);
+	    std::cout << "Initial Position: " << worldPos.toString() << std::endl;
 	    std::cout << "Initial Orientation: " << arm_ctx->init_orient.toString() << std::endl;
 
 // 	    for(size_t i=8;i<16;i++){

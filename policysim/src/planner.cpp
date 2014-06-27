@@ -76,7 +76,7 @@ void Planner::loop()
      objPosition[0] = objCmd->get(0).asDouble();
      objPosition[1] = objCmd->get(1).asDouble();
      objPosition[2] = objCmd->get(2).asDouble();
-     cout << objPosition.toString() << std::endl;
+     //cout << objPosition.toString() << std::endl;
    }
 }
 
@@ -138,38 +138,12 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
 	break;
       }
     }
-//     for(int i=0;i<10;i++){
-//       int prevState = currBelSt->sval;
-//       cout << " Current State : " << currBelSt->sval;
-//       action = runFor(1,NULL,reward,expReward);
-//       cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval;
-//       if(action!=-1 && prevState!=currBelSt->sval){
-// 	VectorPtr v=m_States->operator[](currBelSt->sval);
-// 	Vector v1;
-// 	v1.resize(4);
-// 	v1[0]= v->operator[](0)/100;
-// 	v1[1]= v->operator[](1)/100;
-// 	v1[2]= v->operator[](2)/100;
-// 	v1[3]= 1;
-// 	posQueue.push(v1);
-//       }else{
-// 	break;
-//       }
-//     }
     cout << " Reward: " << reward << " Expected Reward: " << expReward << std::endl;
 
     printf("Targets count: %d\n",posQueue.size());
     t=t1=t0 = Time::now();
     return ret;
 }
-
-// bool Planner::get_state(int index,Vector& vec){
-//   return true;
-// }
-// 
-// bool Planner::get_action(int index,Vector& vec){
-//   return true;
-// }
 
 bool Planner::close()
 {
@@ -194,12 +168,12 @@ bool Planner::read_states(std::string states_file){
       std::vector<double> vec;
       if(!str.empty()){
 	if(parse_state_action(str,vec)){
-// 	  VectorPtr ptr(new std::vector<double>());
 	  VectorPtr ptr(new yarp::sig::Vector());
 	  for(size_t i=1;i<vec.size()-1;i++){
 	    ptr->push_back(vec[i]);
 	  }
 	  m_States->insert(std::pair<int,VectorPtr>((int)vec[0],ptr));
+	  m_VectorMap->insert(std::pair<VectorPtr,int>(ptr,(int)vec[0]));
 	}
       }
     }
@@ -218,7 +192,6 @@ bool Planner::read_actions(std::string actions_file){
       std::vector<double> vec;
       if(!str.empty()){
 	if(parse_state_action(str,vec)){
-// 	  VectorPtr ptr(new std::vector<double>());
 	  VectorPtr ptr(new yarp::sig::Vector());
 	  for(size_t i=1;i<vec.size();i++){
 	    ptr->push_back(vec[i]);
@@ -358,13 +331,6 @@ bool Planner::initialize_plan(){
   DEBUG_TRACE( cout << "currBelSt sval " << currBelSt->sval << endl; );
   DEBUG_TRACE( currBelSt->bvec->write(cout) << endl; );
   
-//   double reward,expReward;
-//   for(int i=0;i<5;i++){
-//     cout << " Current State : " << currBelSt->sval;
-//     int action = runFor(1,NULL,reward,expReward);
-//     cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval;
-//   }
-//   cout << " Reward: " << reward << " Expected Reward: " << expReward << std::endl;
   return true;
 }
 
