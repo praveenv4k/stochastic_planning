@@ -412,11 +412,11 @@ bool Planner::initialize_plan(){
   {
     // random starting state for X
     const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
-    cout << startBeliefX->ToString() << std::endl;
+    //cout << startBeliefX->ToString() << std::endl;
 #if 0
     actStateCompl->sval = chooseFromDistribution(*startBeliefX);
 #else
-    actStateCompl->sval = 441;
+    actStateCompl->sval = 770;
 #endif
     copy(currBelX, *startBeliefX);
     cout << "Random initial state: " <<  actStateCompl->sval << endl;

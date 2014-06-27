@@ -7,8 +7,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/math/constants/constants.hpp>
 
-//#define PI boost::math::constants::pi<float>()
-
 class TrajectoryDiscretizer;
 class Trajectory;
 
@@ -34,12 +32,6 @@ public:
     double dx = m_focalDistance*root2*cos(currentStep)/den;
     double dy = m_focalDistance*root2*cos(currentStep)*sin(currentStep)/den;
     
-    //dx = m_focalDistance* cos(currentStep);
-    //dy = m_focalDistance* sin(currentStep);
-    
-    //pose[0] = (dx/8); 
-    //pose[1] = (dy/8+0.75); 
-    //pose[2] = (0.65);
     pose[0] = (dx); 
     pose[1] = (dy); 
     pose[2] = (0.65);
@@ -102,7 +94,13 @@ public:
   
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
     poses.resize(numPoints);
-    Container<double> step = (m_end-m_start)/(numPoints-1);
+    Container<double> step;
+    if(numPoints > 1){
+      step = (m_end-m_start)/(numPoints-1);
+    }
+    else{
+      step.resize(3);
+    }
     for(int i=0;i<numPoints;i++){
       Container<double> pose;
       pose.resize(3);
@@ -147,13 +145,6 @@ private:
 
 class Trajectory{
 public:
-//   Trajectory(Container<double> init, double step, TrajectoryDiscretizerPtr trajDiscPtr )
-//       :m_init(init),m_current(init),m_step(step),m_currentStep(0),m_trajDiscPtr(trajDiscPtr){ 
-//     if(m_trajDiscPtr!=NULL){
-//       if(m_trajDiscPtr->getNextPose(m_step,0,m_current)){
-//       }
-//     }
-//   }
   Trajectory(double step, TrajectoryDiscretizerPtr trajDiscPtr )
       :m_step(step),m_currentStep(0),m_trajDiscPtr(trajDiscPtr){ 
     if(m_trajDiscPtr!=NULL){

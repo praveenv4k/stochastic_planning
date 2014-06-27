@@ -10,6 +10,7 @@ project(${PROJECTNAME})
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 # Find the JSON CPP package used for configuration
 # FIND_PACKAGE(JsonCpp)
+
 add_definitions(-DJSON_IS_AMALGAMATION)
 
 # Find the yarp packages

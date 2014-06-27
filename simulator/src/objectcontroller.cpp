@@ -65,18 +65,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   m_start.resize(3);
   m_end.resize(3);
   m_step.resize(3);
-  
-//   "start": [
-//     -11,
-//     53.39,
-//     35
-//   ],
-//   "end": [
-//     11,
-//     53.39,
-//     35
-//   ]
-  
+    
   int numPoints=10;
   m_currStep = 0;
   m_start[0]=-11;m_start[1]=53.39;m_start[2]=35;
@@ -104,10 +93,11 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   yc=53.3951;
   zc=40;
 
-  //10 54.39 35
-  ballPos[0] = 0.1;
-  ballPos[1] = 0.533951;
-  ballPos[2] = 0.35;
+//   10 54.39 35
+  ballPos[0] = m_start[0]/100;
+  ballPos[1] = m_start[1]/100;
+  ballPos[2] = m_start[2]/100;
+//   ballPos = m_start;
 #endif
   m_currPosition = ballPos;
 }
@@ -163,7 +153,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   str = str + " 0 1 0";
   std::cout << str << std::endl;
   Bottle create_ball(ConstString(str.c_str()));
-  outputStatePort.write(create_ball,reply);
+  //outputStatePort.write(create_ball,reply);
 #endif
   startTime = Time::now(); 
     

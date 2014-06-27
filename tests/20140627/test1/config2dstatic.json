@@ -1,59 +1,53 @@
 {
   "robot": {
-    "name": "iCub",
+    "name": "agent",
     "ss": {
-      "dim": 4,
+      "dim": 3,
       "min": [
-        -13,
-        57,
-        22,
+        -25,
+        45,
         0
       ],
       "max": [
-        13,
-        60,
-        48,
+        25,
+        85,
         1
       ],
       "step": [
         2,
-        1,
         2,
         1
       ]
     },
     "action": {
-      "dim": 4,
+      "dim": 3,
       "min": [
         -2,
-        -1,
         -2,
         0
       ],
       "max": [
         2,
-        1,
         2,
         1
       ],
       "step": [
-        4,
         2,
-        4,
+        2,
         1
       ]
     },
     "grasp": {
-      "distThreshold": 1.6
+      "distThreshold": 2
     }
   },
   "object": {
     "name": "ball",
-    "radius": 3,
+    "radius": 2,
     "initialPos": [
       0,
-      53.39,
-      35
+      1,
+      0.2
     ],
     "color": [
       0,
@@ -61,33 +55,16 @@
       0
     ],
     "trajectory": {
-      "dim": 3,
-      "type": "linear",
+      "dim": 2,
+      "type": "circular2d",
       "step": 0.3141592,
       "samples": 1,
-      "noise" : {
-        "mean" : 0,
-        "sigma": 1
-      },
-      "circular": {
+      "circular2d": {
         "center": [
           0,
-          53.39,
-          35
+          65
         ],
         "radius": 10
-      },
-      "linear": {
-        "start": [
-          -11,
-          53.39,
-          35
-        ],
-        "end": [
-          11,
-          53.39,
-          35
-        ]
       }
     }
   }

@@ -62,7 +62,7 @@
     ],
     "trajectory": {
       "dim": 3,
-      "type": "circular",
+      "type": "linear",
       "step": 0.3141592,
       "samples": 1,
       "noise" : {
@@ -76,6 +76,18 @@
           35
         ],
         "radius": 10
+      },
+      "linear": {
+        "start": [
+          -11,
+          53.39,
+          35
+        ],
+        "end": [
+          11,
+          53.39,
+          35
+        ]
       }
     }
   }

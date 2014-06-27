@@ -15,6 +15,7 @@ project(${PROJECTNAME})
 # set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 # Find the JSON CPP package used for configuration
 # FIND_PACKAGE(JsonCpp)
+
 add_definitions(-DJSON_IS_AMALGAMATION)
 
 # Find the yarp packages
@@ -71,7 +72,8 @@ file(GLOB ConfigFiles ${CMAKE_SOURCE_DIR}/config/*.xml
                       ${CMAKE_SOURCE_DIR}/config/*.conf
                       ${CMAKE_SOURCE_DIR}/config/*.json
                       ${CMAKE_SOURCE_DIR}/test/*.*)
-                   
+
+                      
 foreach(ConfigFile ${ConfigFiles})
   add_custom_command(TARGET StochasticPlanner POST_BUILD
                      COMMAND ${CMAKE_COMMAND} -E
