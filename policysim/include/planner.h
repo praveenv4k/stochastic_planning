@@ -54,15 +54,16 @@ using namespace std;
 using boost::lexical_cast;
 using boost::bad_lexical_cast;
 
+struct VectorIndexHash;
+struct VectorIndexEqualTo;
 
 typedef vector< string > split_vector_type;
-    
-// typedef boost::shared_ptr<std::vector<double> > VectorPtr;
 typedef boost::shared_ptr<yarp::sig::Vector> VectorPtr;
 typedef boost::unordered_map<int,VectorPtr > IndexVectorMap;
-typedef boost::unordered_map<VectorPtr,int > VectorIndexMap;
+typedef boost::unordered_map<VectorPtr,int,VectorIndexHash,VectorIndexEqualTo> VectorIndexMap;
 typedef boost::shared_ptr<IndexVectorMap> IndexVectorMapPtr;
 typedef boost::shared_ptr<VectorIndexMap> VectorIndexMapPtr;
+
 
 struct VectorIndexHash
     : std::unary_function<VectorPtr, std::size_t>
@@ -71,6 +72,7 @@ struct VectorIndexHash
     {
       std::size_t seed = 0;
       for(size_t i=0;i<e->size();i++){
+	if(i==5) continue;
 	boost::hash_combine(seed,e->operator[](i));
       }
       return seed;
@@ -84,7 +86,9 @@ struct VectorIndexEqualTo
     {
       bool ret=true;
       for(size_t i=0;i<x->size();i++){
-	  ret = (*x == *y);
+	  //ret = (*x == *y);
+	  if(i==5) continue;
+	  ret&= fabs(x->operator[](i)-y->operator[](i))<=1e-3;
       }
       return ret;
     }
@@ -101,6 +105,7 @@ public:
       sent=false;
       m_States = IndexVectorMapPtr(new IndexVectorMap());
       m_Actions = IndexVectorMapPtr(new IndexVectorMap());
+      m_VectorMap = VectorIndexMapPtr(new VectorIndexMap());
       actNewStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       actStateCompl = SharedPointer<BeliefWithState>(new BeliefWithState());
       currBelSt = SharedPointer<BeliefWithState>(new BeliefWithState());
@@ -113,7 +118,16 @@ public:
       fhout.resize(xDim);
       
       objPosition.resize(3);
+      robotPosition.resize(4);
+      augState.resize(7);
       mult = 1;
+      
+      action=-1;
+      reward=0;
+      expReward=0;
+      dist = 100000;
+      graspThreshold = 1.6;
+      reached=false;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -167,7 +181,17 @@ private:
     yarp::os::BufferedPort<yarp::os::Bottle> planobjCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> planobjStsPort;
     std::queue<yarp::sig::Vector> posQueue;
+    
     yarp::sig::Vector objPosition;
+    yarp::sig::Vector robotPosition;
+    yarp::sig::Vector augState;
+    int action;
+    double reward,expReward;
+    double dist;
+    double graspThreshold;
+    bool reached;
+    int prevState;
+
     
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;

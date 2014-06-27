@@ -63,6 +63,8 @@ public:
   yarp::sig::Vector close_pose;
 
   yarp::sig::Vector init_position;
+  yarp::sig::Vector curr_world_position;
+  yarp::sig::Vector init_world_position;
   yarp::sig::Vector init_orient;
 
   gstatus_t graspStatus;

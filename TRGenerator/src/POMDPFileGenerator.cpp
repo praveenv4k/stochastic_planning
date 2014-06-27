@@ -17,11 +17,6 @@ void POMDPFileGenerator::writeBody(std::ofstream& fs){
   for(TransitionMap::iterator it=m_transitionMap.begin();it!=m_transitionMap.end();it++){
      StateActionTuple sa= it->first;
      if(it->second.size()>0){
-	/*#state0
-	T: n : 0 : 0 1
-	T: w : 0 : 0 1
-	T: e : 0 : 1 1
-	T: s : 0 : 4 1*/ 
 	fs << "T: " << sa.get<1>() << " : " << sa.get<0>() << " : " << it->second[0] << " " << 1 << std::endl;
      }
   }

@@ -108,8 +108,8 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   ballPos[0] = 0.1;
   ballPos[1] = 0.533951;
   ballPos[2] = 0.35;
-  
 #endif
+  m_currPosition = ballPos;
 }
 
 ObjectController::~ObjectController()
@@ -159,7 +159,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
 #else
   str = "world mk sph ";
   str = str + "0.02";
-  str = str + " " + ballPos.toString(-1,1).c_str();
+  str = str + " " + m_currPosition.toString(-1,1).c_str();
   str = str + " 0 1 0";
   std::cout << str << std::endl;
   Bottle create_ball(ConstString(str.c_str()));
@@ -203,8 +203,8 @@ void ObjectController::loop(){
       Bottle move_obj("world set sph 1"); 
     #endif
       
-    #if 0
-      yarp::sig::Vector vec = getNextPosition();
+    #if 1
+      yarp::sig::Vector vec = m_currPosition;
     #else
       yarp::sig::Vector vec = getNextPos();	
     #endif

@@ -14,28 +14,51 @@ using namespace yarp::math;
 
 void Planner::loop()
 {
+   Bottle* objCmd = planobjCmdPort.read(false);
+   if(objCmd){
+     objPosition[0] = objCmd->get(0).asDouble();
+     objPosition[1] = objCmd->get(1).asDouble();
+     objPosition[2] = objCmd->get(2).asDouble();
+   }
    Bottle* cmd = plannerCmdPort.read(false);
    if(cmd)
    {
      bool send = false;
      double command = cmd->get(0).asDouble();
+     for(size_t i=0;i<4;i++){
+      robotPosition[i] = cmd->get(i+1).asDouble();
+     }
+     for(int i=0;i<4;i++){
+       augState[i]=robotPosition[i]*100;
+     }
+     for(int i=4;i<7;i++){
+       augState[i]=objPosition[i-4]*100;
+     }
      if(command == 1){
-       //printf("Received response %lf:\n",command);
        send = false;
 //        posQueue.pop();
      }else if(command == 10){
        if(sent==true){
 	 posQueue.pop();
 	 sent = false;
-       }
+	 VectorPtr ptr(new yarp::sig::Vector());
+	 for(size_t i=0;i<augState.size();i++){
+	   ptr->push_back(augState[i]);
+	 }
+	 std::cout << "Trying to retrieve the augmented state: " << ptr->toString(-1,1) << std::endl;
+	 VectorIndexMap::iterator found = m_VectorMap->find(ptr);
+	 if(found!=m_VectorMap->end()){
+	   std::cout << "Found the augmented state!" << std::endl;
+	  int state = m_VectorMap->operator[](ptr);
+	  std::cout << "Index: " << state << "; State: ("<<ptr->toString(-1,1) << ")" << std::endl;
+	 }
+	  std::cout << "Ready to take next action!" << std::endl;
+        }
         send = true;
-	//printf("Arm is Idle response %lf:\n",command);
      }else if(command == 100){
-	//printf("Arm is Moving : %lf\n",command);
      }
 
      if(send){
-#if 1
        if(posQueue.size()>0){
 	 Vector& v = posQueue.front();
 	 double x=v[0];
@@ -54,30 +77,9 @@ void Planner::loop()
 	 printf("Move request sent\n");
 	 sent=true;
        }
-#else
-      t=Time::now();
-      double x=-0.3;
-      double y=-0.1+0.1*cos(2.0*M_PI*0.1*(t-t0));
-      double z=+0.1+0.1*sin(2.0*M_PI*0.1*(t-t0));  
-      double trigger=1;
-      Bottle &status = plannerStatusPort.prepare();
-      status.clear();
-      status.addDouble(x);
-      status.addDouble(y);
-      status.addDouble(z);
-      status.addDouble(trigger);
-      plannerStatusPort.write();
-#endif      
-      //printf("Move request sent\n");
      }
    }
-   Bottle* objCmd = planobjCmdPort.read(false);
-   if(objCmd){
-     objPosition[0] = objCmd->get(0).asDouble();
-     objPosition[1] = objCmd->get(1).asDouble();
-     objPosition[2] = objCmd->get(2).asDouble();
-     //cout << objPosition.toString() << std::endl;
-   }
+   //cout << "Aug State: (" << augState.toString(-1,1) << ")" << std::endl;
 }
 
 bool Planner::open(yarp::os::ResourceFinder &rf)
@@ -164,6 +166,7 @@ bool Planner::read_states(std::string states_file){
   if(!states_file.empty()){
     std::ifstream fs(states_file.c_str(),std::ifstream::in);
     string str;
+//     int p=0;
     while(std::getline(fs,str)){
       std::vector<double> vec;
       if(!str.empty()){
@@ -174,12 +177,22 @@ bool Planner::read_states(std::string states_file){
 	  }
 	  m_States->insert(std::pair<int,VectorPtr>((int)vec[0],ptr));
 	  m_VectorMap->insert(std::pair<VectorPtr,int>(ptr,(int)vec[0]));
+// 	  if(p<10){
+// 	    VectorPtr ptr2(new yarp::sig::Vector());
+// 	    for(size_t i=1;i<vec.size()-1;i++){
+// 	      ptr2->push_back(vec[i]);
+// 	    }
+// 	    cout << "Vector at : " << ptr2->toString() <<  "; " << vec[0] << "; -> " << m_VectorMap->at(ptr2) << std::endl;
+// 	    p++;
+// 	  }
 	}
+	
       }
     }
     bret = true;
   }
-  std::cout << "Number of states: " << m_States->size() <<std::endl;
+  std::cout << "Number of states in States Map: " << m_States->size() <<std::endl;
+  std::cout << "Number of states in Vector Map: " << m_VectorMap->size() <<std::endl;
   return bret;
 }
 

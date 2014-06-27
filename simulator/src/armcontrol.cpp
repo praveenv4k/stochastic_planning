@@ -133,7 +133,8 @@ void ArmControl::loop()
 		      if(!iArm->waitMotionDone()){
 			std::cout << "Wait motion done failed!" << std::endl;
 		      }
-#endif
+#endif  
+		      arm_ctx->curr_world_position = worldPos;
 		    }
 #else
 		    yarp::sig::Vector tmpQ, tmpX, tmpO;
@@ -203,24 +204,26 @@ void ArmControl::loop()
 	  }
 	}
 
+      Bottle &portStatus = armStatusPort.prepare();
+      portStatus.clear();
       if(arm_ctx->status == REACHED){
 	arm_ctx->status = IDLE;
-	Bottle &portStatus = armStatusPort.prepare();
-	portStatus.clear();
 	portStatus.addDouble(1.0);
-	armStatusPort.writeStrict();
 	//printf("Reached\n");
       }else if(arm_ctx->status == IDLE){
-	Bottle &portStatus = armStatusPort.prepare();
-	portStatus.clear();
 	portStatus.addDouble(10.0);
-	armStatusPort.writeStrict();  
       }else if(arm_ctx->status == MOVING){
-	Bottle &portStatus = armStatusPort.prepare();
-	portStatus.clear();
 	portStatus.addDouble(100.0);
-	armStatusPort.writeStrict();
       }
+      portStatus.addDouble(arm_ctx->curr_world_position[0]);
+      portStatus.addDouble(arm_ctx->curr_world_position[1]);
+      portStatus.addDouble(arm_ctx->curr_world_position[2]);
+      double grasp=0;
+      if(arm_ctx->graspStatus == GRASPED){
+	grasp = 1;
+      }
+      portStatus.addDouble(grasp);
+      armStatusPort.writeStrict();
      }
    }
 #endif
@@ -327,7 +330,7 @@ bool ArmControl::open()
 	config &= Utils::valueToVector(left_arm["open_hand"],left_ctx->open_pose);
 	config &= Utils::valueToVector(left_arm["close_hand"],left_ctx->close_pose);
 	if(!left_arm["init_pos"].isNull()){
-	  config &= Utils::valueToVector(left_arm["init_pos"],left_ctx->init_position);
+	  config &= Utils::valueToVector(left_arm["init_pos"],left_ctx->init_world_position);
 	}
 	if(config){
 	  if(!configure_arm(robotName, left_ctx)){
@@ -350,13 +353,13 @@ bool ArmControl::open()
    if(it!=partCtxMap.end()){
     boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
     if(arm_ctx!=NULL){
-      if(arm_ctx->init_position.size()>0){
-	std::cout << "Moving " << partName <<  " to initial position " << arm_ctx->init_position.toString(-1,1) << std::endl;
+      if(arm_ctx->init_world_position.size()>0){
+	std::cout << "Moving " << partName <<  " to initial position " << arm_ctx->init_world_position.toString(-1,1) << std::endl;
 	Vector robotPos;
 	Vector pos;
 	Vector orient;
 	arm_ctx->iCartCtrl->getPose(pos,orient);
-	world_to_robot(arm_ctx->init_position,robotPos);
+	world_to_robot(arm_ctx->init_world_position,robotPos);
 // 	robotPos[0]=robotPos[0]/100;
 // 	robotPos[1]=robotPos[1]/100;
 // 	robotPos[2]=robotPos[2]/100;
@@ -367,11 +370,11 @@ bool ArmControl::open()
 	arm_ctx->iCartCtrl->getPose(pos,orient);
 	Vector worldPos;
 	robot_to_world(pos,worldPos);
+	arm_ctx->curr_world_position = arm_ctx->init_world_position;
 	std::cout << "Current Pos: (" << worldPos.toString(-1,1) <<  ") Orient: " << orient.toString(-1,1) << std::endl;
       }
     }
    }
-
     
     bool ret=true;   
     ret = armCmdPort.open("/armcontrol/cmd/in");
@@ -504,12 +507,8 @@ void ArmControl::initialize_robot(){
 	    open_hand(arm_ctx);
 	    Vector robotPos;
 	    arm_ctx->graspStatus=RELEASED;
-	    if(arm_ctx->init_position.size()>0){
-	      arm_ctx->iCartCtrl->getPose(robotPos,arm_ctx->init_orient);
-	    }else{
-	      arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
-	      robotPos = arm_ctx->init_position;
-	    }
+	    arm_ctx->iCartCtrl->getPose(arm_ctx->init_position,arm_ctx->init_orient);
+	    robotPos = arm_ctx->init_position;
 	    Vector worldPos;
 	    robot_to_world(robotPos,worldPos);
 	    std::cout << "Initial Position: " << worldPos.toString() << std::endl;
