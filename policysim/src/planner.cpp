@@ -65,6 +65,37 @@ void Planner::loop()
 	   //std::cout << "Found the augmented state!" << std::endl;
 	    int state = found->second;
 	    std::cout << "Index: " << state << std::endl;
+	    
+	    prevState = currBelSt->sval;
+	    currBelSt->sval=state;
+	    VectorPtr prev_v=m_States->operator[](currBelSt->sval);
+	    cout << " Current State : " << currBelSt->sval;
+	    action = runFor(1,NULL,reward,expReward);
+	    cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
+	    if(action!=-1 && prevState!=currBelSt->sval){
+	      VectorPtr v=m_States->operator[](currBelSt->sval);
+	      Vector v1;
+	      v1.resize(4);
+	      v1[0]= v->operator[](0)/100;
+	      v1[1]= v->operator[](1)/100;
+	      v1[2]= v->operator[](2)/100;
+	      v1[3]= 1;
+	      posQueue.push(v1);
+	      
+	      Vector robot,object;
+	      robot.resize(3);object.resize(3);
+	      for(int i=0;i<3;i++){
+		robot[i]=v->operator[](i);
+		object[i]=v->operator[](i+4);
+	      }
+	      object[1]=object[1]+3;
+	      dist = Planner::computeL2norm<Vector>(robot,object);
+	      cout << "Distance Threshold : " << dist << std::endl;
+	      if(dist < graspThreshold && v->operator[](3)>0){
+		cout << "Reached close to object!" << std::endl;
+		reached=true;
+	      }
+	    }
 	 }else{
 	   std::cout << "Augmented state not found!" << std::endl;
 	 }
@@ -155,6 +186,7 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
       v1[3]= 1;
       posQueue.push(v1);
     }
+#if 0
     int action=-1;
     double reward=0,expReward=0;
     double dist = 100000;
@@ -196,6 +228,7 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     cout << " Reward: " << reward << " Expected Reward: " << expReward << std::endl;
 
     printf("Targets count: %d\n",posQueue.size());
+#endif
     t=t1=t0 = Time::now();
     return ret;
 }
