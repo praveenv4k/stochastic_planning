@@ -1,50 +1,54 @@
 #include "DomainExtractor.h"
 #include "POMDPFileGenerator.h"
+#include "ElapsedTime.h"
 
 void DomainExtractor::generate(){
-#if 0
-  writeStateSpace(std::cout);
-  writeActionSpace(std::cout);
-#else
-#if 0
-  std::fstream stateStream;
-  stateStream.open("states.txt",std::fstream::out);
-  writeStateSpace(stateStream);
-  stateStream.close();
-  
-  std::fstream actionStream;
-  actionStream.open("action.txt",std::fstream::out);
-  writeActionSpace(actionStream);
-  actionStream.close();
-#else
   Json::Value robotSpace = m_config["robot"]["ss"]["min"];
   m_agentDim = robotSpace.size();
   
   Json::Value objectSpace = m_config["object"]["trajectory"]["dim"];
   m_objectDim = objectSpace.asUInt();  
   
-  std::fstream stateStream;
-  stateStream.open("states.txt",std::fstream::out);
-  writeStateSpace(stateStream);
-  stateStream.close();
+  {
+    ElapsedTime elapse(std::string("Writing statespace map"));
+    std::fstream stateStream;
+    stateStream.open("states.txt",std::fstream::out);
+    writeStateSpace(stateStream);
+    stateStream.close();
+  }
   
-  std::fstream actionStream;
-  actionStream.open("action.txt",std::fstream::out);
-  writeActionSpace(actionStream);
-  actionStream.close();
-
+  {
+    ElapsedTime elapse(std::string("Writing actionspace map"));
+    std::fstream actionStream;
+    actionStream.open("action.txt",std::fstream::out);
+    writeActionSpace(actionStream);
+    actionStream.close();
+  }
   
-  std::cout << "Generating StateSpace Map" << std::endl;
-  createStateSpaceMap();
-  std::cout << "Generating ActionSpace Map" << std::endl;
-  createActionSpaceMap();
-  std::cout << "Generating Transition and Reward Tables" << std::endl;
-  generateTables();
-  std::cout << "Generating DDL File" << std::endl;
-  std::string ddlFile("domain.pomdp");
-  generateDDLFile(ddlFile);
-#endif
-#endif
+  {
+    std::cout << "Generating StateSpace Map" << std::endl;
+    ElapsedTime elapse(std::string("Generating StateSpace Map"));
+    createStateSpaceMap();
+  }
+  
+  {
+    std::cout << "Generating ActionSpace Map" << std::endl;
+    ElapsedTime elapse(std::string("Generating ActionSpace Map"));
+    createActionSpaceMap();
+  }
+  
+  {
+    std::cout << "Generating Transition and Reward Tables" << std::endl;
+    ElapsedTime elapse(std::string("Generating Transition and Reward Tables"));
+    generateTables();
+  }
+  
+  {
+    std::cout << "Generating DDL File" << std::endl;
+    ElapsedTime elapse(std::string("Generating DDL File"));
+    std::string ddlFile("domain.pomdp");
+    generateDDLFile(ddlFile);
+  }
 }
 
 void DomainExtractor::generateDDLFile(std::string& filePath){
@@ -145,14 +149,11 @@ void DomainExtractor::createStateSpaceMap(){
       bool graspable=false;
       std::vector<double> ss = Utils::concatenate(val,pose);
       double norm = computeNorm(ss,graspable);
-      //double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
       if(val[m_agentDim-1]>0){
 	if(graspable){
-	  //std::vector<double> ss = Utils::concatenate(val,pose);
 	  m_stateIndexMap[ss]=index++;
 	}
       }else{
-	//std::vector<double> ss = Utils::concatenate(val,pose);
 	m_stateIndexMap[ss]=index++;
       }
     }
@@ -198,16 +199,13 @@ void DomainExtractor::generateTables(){
       StateIndexMap::iterator found = m_stateIndexMap.find(temp);
       if(found!=m_stateIndexMap.end()){
 	std::vector<int> nextState;
-	//nextState.push_back(m_stateIndexMap[temp]);
 	nextState.push_back(found->second);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
-	//m_rewardMap[StateActionTuple(it->second,id)] = computeReward(temp);
       }
       else{
 	std::vector<int> nextState;
 	nextState.push_back(m_stateIndexMap[state]);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
-	//m_rewardMap[StateActionTuple(it->second,id)] = computeReward(state);
       }
     }
   }
@@ -239,8 +237,6 @@ double DomainExtractor::computeReward(std::vector<double> state){
   //Extract Robot position
   bool graspable=false;
   double norm = computeNorm(state,graspable);
-//   double distThres = m_config["robot"]["grasp"]["distThreshold"].asDouble();
-  //if(Utils::isEqual(norm,distThres)){
   if(graspable){
     if(Utils::isEqual(state[m_agentDim-1],1)){
       reward = 500;

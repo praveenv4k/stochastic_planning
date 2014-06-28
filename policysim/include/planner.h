@@ -91,6 +91,7 @@ public:
       dist = 100000;
       graspThreshold = 1.6;
       reached=false;
+      first = true;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -135,9 +136,7 @@ public:
 
     bool initialize_plan();
     int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
-    
-//     bool get_state(yarp::sig::Vector& vec);
-//     bool get_action(yarp::sig::Vector& vec);
+
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
@@ -155,6 +154,7 @@ private:
     bool reached;
     int prevState;
 
+    bool first;
     
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;
@@ -198,7 +198,6 @@ private:
     double t;
     double t0;
     double t1;
-    bool first;
     bool sent;   
 };
 

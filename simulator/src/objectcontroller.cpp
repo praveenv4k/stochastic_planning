@@ -76,7 +76,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   
   m_multiple=50;
   m_currmult=0;
-  m_stop = false;
+  m_stop = true;
 #if MYBOX
   radius=20;
   xc=0;
@@ -170,12 +170,18 @@ void ObjectController::loop(){
   Bottle* cmd = objectCmdPort.read(false);
   if(cmd)
   {
-    bool send = false;
     double command = cmd->get(0).asDouble();
-    if(command > 1){
-      m_stop = false;
+    std::cout << "Received something from Planner: " << command << std::endl;
+    if(command > 0){
+      if(m_stop){
+	m_stop = false;
+	std::cout << "Object motion Started from: " << m_currPosition.toString() << std::endl;
+      }
     }else{
-      m_stop = true;
+      if(!m_stop){
+	m_stop = true;
+	std::cout << "Object motion Stopped at: " << m_currPosition.toString() << std::endl;
+      }
     }
   }
   

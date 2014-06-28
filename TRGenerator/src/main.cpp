@@ -6,11 +6,13 @@
 #include "Config.h"
 #include "Test.h"
 #include "DomainExtractor.h"
+#include "ElapsedTime.h"
 
 int main(void){
   // Test the implemented datastructures
   Test::testAll();
   // Generator
+  ElapsedTime elapse(std::string("Domain Model Generation"));
   DomainExtractor extractor(Config::instance()->root);
   extractor.generate();
   return 0;

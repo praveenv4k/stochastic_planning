@@ -64,7 +64,7 @@
       "dim": 3,
       "type": "linear",
       "step": 0.3141592,
-      "samples": 1,
+      "samples": 10,
       "noise" : {
         "mean" : 0,
         "sigma": 1

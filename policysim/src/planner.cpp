@@ -14,6 +14,20 @@ using namespace yarp::math;
 
 void Planner::loop()
 {
+  if(first){
+    first=false;
+    Bottle &status = planobjStsPort.prepare();
+    status.clear();
+    status.addDouble(1);
+    planobjStsPort.writeStrict();
+  }else{
+    if(reached){
+      Bottle &status = planobjStsPort.prepare();
+      status.clear();
+      status.addDouble(0);
+      planobjStsPort.writeStrict();
+    }
+  }
    Bottle* objCmd = planobjCmdPort.read(false);
    if(objCmd){
      objPosition[0] = objCmd->get(0).asDouble();
@@ -95,6 +109,12 @@ void Planner::loop()
 		cout << "Reached close to object!" << std::endl;
 		reached=true;
 	      }
+	    }else{
+	      // Stop the ball
+	      Bottle &status = planobjStsPort.prepare();
+	      status.clear();
+	      status.addDouble(0);
+	      planobjStsPort.writeStrict();
 	    }
 	 }else{
 	   std::cout << "Augmented state not found!" << std::endl;
@@ -107,37 +127,6 @@ void Planner::loop()
 	 //posQueue.pop();
 	 //sent = false;
         }else{
-#if 0
-	  currBelSt->sval=1;
-	  VectorPtr prev_v=m_States->operator[](currBelSt->sval);
-	  cout << " Current State : " << currBelSt->sval;
-	  action = runFor(1,NULL,reward,expReward);
-	  cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
-	  if(action!=-1 && prevState!=currBelSt->sval){
-	    VectorPtr v=m_States->operator[](currBelSt->sval);
-	    Vector v1;
-	    v1.resize(4);
-	    v1[0]= v->operator[](0)/100;
-	    v1[1]= v->operator[](1)/100;
-	    v1[2]= v->operator[](2)/100;
-	    v1[3]= 1;
-	    posQueue.push(v1);
-	    
-	    Vector robot,object;
-	    robot.resize(3);object.resize(3);
-	    for(int i=0;i<3;i++){
-	      robot[i]=v->operator[](i);
-	      object[i]=v->operator[](i+4);
-	    }
-	    object[1]=object[1]+3;
-	    dist = Planner::computeL2norm<Vector>(robot,object);
-	    cout << "Distance Threshold : " << dist << std::endl;
-	    if(dist < graspThreshold && v->operator[](3)>0){
-	      cout << "Reached close to object!" << std::endl;
-	      reached=true;
-	    }
-	  }
-#endif
 	}
         send = true;
      }else if(command == 100){
@@ -157,14 +146,13 @@ void Planner::loop()
 	 status.addDouble(y);
 	 status.addDouble(z);
 	 status.addDouble(trigger);
-	 plannerStatusPort.write();  
+	 plannerStatusPort.writeStrict();  
 	 std::cout << "Target : " << v.toString() << std::endl;
 	 printf("Move request sent\n");
 	 sent=true;
        }
      }
    }
-   //cout << "Aug State: (" << augState.toString(-1,1) << ")" << std::endl;
 }
 
 bool Planner::open(yarp::os::ResourceFinder &rf)
@@ -174,8 +162,6 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     ret &= plannerStatusPort.open("/planner/status/out"); 
     ret &= planobjCmdPort.open("/planobj/cmd/in");
     ret &= planobjStsPort.open("/planobj/status/out"); 
-    yarp::os::BufferedPort<yarp::os::Bottle> planobjCmdPort;
-    yarp::os::BufferedPort<yarp::os::Bottle> planobjStsPort;
     {
       VectorPtr v=m_States->operator[](currBelSt->sval);
       Vector v1;
@@ -235,7 +221,6 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
 
 bool Planner::close()
 {
-    //iHand->stop();
     plannerCmdPort.close();
     plannerStatusPort.close();
     return true;
@@ -252,7 +237,6 @@ bool Planner::read_states(std::string states_file){
   if(!states_file.empty()){
     std::ifstream fs(states_file.c_str(),std::ifstream::in);
     string str;
-//     int p=0;
     while(std::getline(fs,str)){
       std::vector<double> vec;
       if(!str.empty()){
@@ -272,16 +256,7 @@ bool Planner::read_states(std::string states_file){
 	  }
 	  m_StateIndexMap.insert(std::pair<std::vector<double>,int>(val,(int)vec[0]));
 #endif
-// 	  if(p<10){
-// 	    VectorPtr ptr2(new yarp::sig::Vector());
-// 	    for(size_t i=1;i<vec.size()-1;i++){
-// 	      ptr2->push_back(vec[i]);
-// 	    }
-// 	    cout << "Vector at : " << ptr2->toString() <<  "; " << vec[0] << "; -> " << m_VectorMap->at(ptr2) << std::endl;
-// 	    p++;
-// 	  }
 	}
-	
       }
     }
     bret = true;
@@ -416,7 +391,9 @@ bool Planner::initialize_plan(){
 #if 0
     actStateCompl->sval = chooseFromDistribution(*startBeliefX);
 #else
-    actStateCompl->sval = 770;
+    //actStateCompl->sval = 441; // Stationary 26 June ...
+    //actStateCompl->sval = 770; // Stationary 27 June test1
+    actStateCompl->sval = 7851; // Straight Line 27 June test1 (7851 13 60 48 0 -11 53.39 35 27.5324)
 #endif
     copy(currBelX, *startBeliefX);
     cout << "Random initial state: " <<  actStateCompl->sval << endl;
