@@ -86,7 +86,7 @@ void Planner::loop()
 	    cout << " Current State : " << currBelSt->sval;
 	    action = runFor(1,NULL,reward,expReward);
 	    cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
-	    if(action!=-1 && prevState!=currBelSt->sval){
+	    if(action!=-1 && !reached){// && prevState!=currBelSt->sval){
 	      VectorPtr v=m_States->operator[](currBelSt->sval);
 	      Vector v1;
 	      v1.resize(4);
@@ -393,7 +393,7 @@ bool Planner::initialize_plan(){
 #else
     //actStateCompl->sval = 441; // Stationary 26 June ...
     //actStateCompl->sval = 770; // Stationary 27 June test1
-    actStateCompl->sval = 7851; // Straight Line 27 June test1 (7851 13 60 48 0 -11 53.39 35 27.5324)
+    actStateCompl->sval = 7850; // Straight Line 27 June test1 (7851 13 60 48 0 -11 53.39 35 27.5324)
 #endif
     copy(currBelX, *startBeliefX);
     cout << "Random initial state: " <<  actStateCompl->sval << endl;

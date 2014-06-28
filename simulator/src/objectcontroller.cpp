@@ -199,7 +199,7 @@ void ObjectController::loop(){
       Bottle move_obj("world set sph 1"); 
     #endif
       
-    #if 1
+    #if 0
       yarp::sig::Vector vec = m_currPosition;
     #else
       yarp::sig::Vector vec = getNextPos();	
