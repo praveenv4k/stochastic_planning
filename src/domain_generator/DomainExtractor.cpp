@@ -77,14 +77,14 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
    std::cout << "Cannot get requested number of Points" << std::endl; 
   }
   
-  UniformSpaceDiscretizer<double> discretizer(min,max,step);
+  AbstractSpaceDiscretizerPtr discretizer = getSpaceDiscretizer(ss);
   
-  std::cout << "State Space size: " << discretizer.size() << std::endl;
+  std::cout << "State Space size: " << discretizer->size() << std::endl;
   
   int index=0;
-  for(size_t i=0;i<discretizer.size();i++){
-    int id = discretizer();
-    Container<double> val = discretizer.getValueAtIndex(id);
+  for(size_t i=0;i<discretizer->size();i++){
+    int id = discretizer->operator()();
+    Container<double> val = discretizer->getValueAtIndex(id);
     for(int i=0; i<numPoints;i++){
       Container<double> pose = poses[i];
       std::vector<double> robotPos = val;
@@ -101,7 +101,6 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
       }else{
 	write=true;
       }
-      //write=true;
       if(write){
 	index++;
 	stream << index << " " <<  val << " " << pose  << " " << norm << std::endl;
@@ -130,14 +129,14 @@ void DomainExtractor::createStateSpaceMap(){
    std::cout << "Cannot get requested number of Points" << std::endl; 
   }
   
-  UniformSpaceDiscretizer<double> discretizer(min,max,step);
+  AbstractSpaceDiscretizerPtr discretizer=getSpaceDiscretizer(ss);
   
-  std::cout << "State Space size: " << discretizer.size() << std::endl;
+  std::cout << "State Space size: " << discretizer->size() << std::endl;
   
   int index=0;
-  for(size_t i=0;i<discretizer.size();i++){
-    int id = discretizer();
-    Container<double> val = discretizer.getValueAtIndex(id);
+  for(size_t i=0;i<discretizer->size();i++){
+    int id = discretizer->operator()();
+    Container<double> val = discretizer->getValueAtIndex(id);
     for(int i=0; i<numPoints;i++){
       Container<double> pose = poses[i];
       
@@ -160,7 +159,6 @@ void DomainExtractor::createStateSpaceMap(){
     }
   }
   std::cout << m_stateIndexMap.size() <<std::endl;
-  //Utils::SaveMap("statesmap.txt",m_stateIndexMap);
 }
 
 void DomainExtractor::createActionSpaceMap(){
@@ -171,11 +169,10 @@ void DomainExtractor::createActionSpaceMap(){
   Utils::valueToVector(action["max"],max);
   Utils::valueToVector(action["step"],step);
   
-  UniformSpaceDiscretizer<double> discretizer(min,max,step);
-    
-  for(size_t i=0;i<discretizer.size();i++){
-    int id = discretizer();
-    Container<double> val = discretizer.getValueAtIndex(id);
+  AbstractSpaceDiscretizerPtr discretizer = getSpaceDiscretizer(action);  
+  for(size_t i=0;i<discretizer->size();i++){
+    int id = discretizer->operator()();
+    Container<double> val = discretizer->getValueAtIndex(id);
     m_actionIndexMap[val]=id;
   }
 }
@@ -261,12 +258,12 @@ void DomainExtractor::writeActionSpace(std::ostream& stream)
   Utils::valueToVector(action["max"],max);
   Utils::valueToVector(action["step"],step);
   
-  UniformSpaceDiscretizer<double> discretizer(min,max,step);
-  std::cout << "Action Space size: " << discretizer.size() << std::endl;
+  AbstractSpaceDiscretizerPtr discretizer=getSpaceDiscretizer(action);
+  std::cout << "Action Space size: " << discretizer->size() << std::endl;
     
-  for(size_t i=0;i<discretizer.size();i++){
-    int id = discretizer();
-    Container<double> val = discretizer.getValueAtIndex(id);
+  for(size_t i=0;i<discretizer->size();i++){
+    int id = discretizer->operator()();
+    Container<double> val = discretizer->getValueAtIndex(id);
     stream << id << " " << val << std::endl;
   }
 }
@@ -308,10 +305,20 @@ TrajectoryDiscretizerPtr DomainExtractor::getTrajectoryDiscretizer(Json::Value t
   return ptr;
 }
 
-AbstractSpaceDiscretizerPtr DomainExtractor::getSpaceDiscretizer(Json::Value spaceDiscConfig){
+AbstractSpaceDiscretizerPtr DomainExtractor::getSpaceDiscretizer(Json::Value config){
   AbstractSpaceDiscretizerPtr ptr;
-  if(!spaceDiscConfig.isNull()){
-    
+  if(!config.isNull()){
+    Json::Value disc = config["discretizer"];
+    if(!disc.isNull()){
+      std::string name = disc.asString();
+      if(name == "uniform"){
+	Container<double> min,max,step;
+	Utils::valueToVector(config["min"],min);
+	Utils::valueToVector(config["max"],max);
+	Utils::valueToVector(config["step"],step);
+	ptr = AbstractSpaceDiscretizerPtr(new UniformSpaceDiscretizer<double>(min,max,step));
+      }
+    }
   }
   return ptr;
 }

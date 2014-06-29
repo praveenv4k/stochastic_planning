@@ -112,6 +112,7 @@
       "distThreshold": 1.6
     },
     "ss": {
+      "discretizer": "uniform",
       "dim": 4,
       "min": [
         -13,
@@ -133,6 +134,7 @@
       ]
     },
     "action": {
+      "discretizer": "uniform",
       "dim": 4,
       "min": [
         -2,
