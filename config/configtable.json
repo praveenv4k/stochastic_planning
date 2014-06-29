@@ -204,6 +204,7 @@
   "objectcontrol": {},
   "planner": {},
   "simulator":{
-    "policy_path": "../tests/20140627/test1/"
+    "policy_path": "../tests/20140627/test1/",
+    "start_state": 770
   }
 }

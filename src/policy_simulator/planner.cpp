@@ -9,6 +9,7 @@ using namespace yarp::math;
 
 #include <math.h>
 #include <fstream>
+#include "Config.h"
 
 #define DEBUG_TRACE_ON 1
 
@@ -393,7 +394,13 @@ bool Planner::initialize_plan(){
 #else
     //actStateCompl->sval = 441; // Stationary 26 June ...
     //actStateCompl->sval = 770; // Stationary 27 June test1
-    actStateCompl->sval = 7850; // Straight Line 27 June test1 (7851 13 60 48 0 -11 53.39 35 27.5324)
+    //actStateCompl->sval = 7850; // Straight Line 27 June test1 (7851 13 60 48 0 -11 53.39 35 27.5324)
+    if(!Config::instance()->root["simulator"]["start_state"].isNull()){
+      actStateCompl->sval = Config::instance()->root["simulator"]["start_state"].asInt();
+    }else{
+      const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
+      actStateCompl->sval = chooseFromDistribution(*startBeliefX);
+    }
 #endif
     copy(currBelX, *startBeliefX);
     cout << "Random initial state: " <<  actStateCompl->sval << endl;
