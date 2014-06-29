@@ -4,7 +4,7 @@
 #include <fstream>
 #include "Container.h"
 #include "Combinator.h"
-#include "Discretizer.h"
+#include "AbstractSpaceDiscretizer.h"
 #include "Types.h"
 #include "States.h"
 #include "Action.h"
@@ -22,6 +22,7 @@ private:
   void createStateSpaceMap();
   void createActionSpaceMap();
   TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig);
+  AbstractSpaceDiscretizerPtr getSpaceDiscretizer(Json::Value config);
   void generateTables();
   void generateDDLFile(std::string& filePath);
   double computeReward(std::vector<double> state);

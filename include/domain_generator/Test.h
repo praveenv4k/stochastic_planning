@@ -3,7 +3,7 @@
 
 #include "Config.h"
 #include "Container.h"
-#include "Discretizer.h"
+#include "UniformSpaceDiscretizer.h"
 #include "Combinator.h"
 
 class Test{
@@ -31,7 +31,7 @@ public:
     step[1]=0.02;
     step[2]=0.02;
 
-    Discretizer<double> discretizer(min,max,step);
+    UniformSpaceDiscretizer<double> discretizer(min,max,step);
     discretizer();
   }
   

@@ -1,6 +1,7 @@
 #include "DomainExtractor.h"
 #include "POMDPFileGenerator.h"
 #include "ElapsedTime.h"
+#include "UniformSpaceDiscretizer.h"
 
 void DomainExtractor::generate(){
   Json::Value robotSpace = m_config["robot"]["ss"]["min"];
@@ -76,7 +77,7 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
    std::cout << "Cannot get requested number of Points" << std::endl; 
   }
   
-  Discretizer<double> discretizer(min,max,step);
+  UniformSpaceDiscretizer<double> discretizer(min,max,step);
   
   std::cout << "State Space size: " << discretizer.size() << std::endl;
   
@@ -129,7 +130,7 @@ void DomainExtractor::createStateSpaceMap(){
    std::cout << "Cannot get requested number of Points" << std::endl; 
   }
   
-  Discretizer<double> discretizer(min,max,step);
+  UniformSpaceDiscretizer<double> discretizer(min,max,step);
   
   std::cout << "State Space size: " << discretizer.size() << std::endl;
   
@@ -170,7 +171,7 @@ void DomainExtractor::createActionSpaceMap(){
   Utils::valueToVector(action["max"],max);
   Utils::valueToVector(action["step"],step);
   
-  Discretizer<double> discretizer(min,max,step);
+  UniformSpaceDiscretizer<double> discretizer(min,max,step);
     
   for(size_t i=0;i<discretizer.size();i++){
     int id = discretizer();
@@ -260,7 +261,7 @@ void DomainExtractor::writeActionSpace(std::ostream& stream)
   Utils::valueToVector(action["max"],max);
   Utils::valueToVector(action["step"],step);
   
-  Discretizer<double> discretizer(min,max,step);
+  UniformSpaceDiscretizer<double> discretizer(min,max,step);
   std::cout << "Action Space size: " << discretizer.size() << std::endl;
     
   for(size_t i=0;i<discretizer.size();i++){
@@ -303,6 +304,14 @@ TrajectoryDiscretizerPtr DomainExtractor::getTrajectoryDiscretizer(Json::Value t
     }
     else{
     }
+  }
+  return ptr;
+}
+
+AbstractSpaceDiscretizerPtr DomainExtractor::getSpaceDiscretizer(Json::Value spaceDiscConfig){
+  AbstractSpaceDiscretizerPtr ptr;
+  if(!spaceDiscConfig.isNull()){
+    
   }
   return ptr;
 }
