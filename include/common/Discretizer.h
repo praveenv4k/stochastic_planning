@@ -4,9 +4,10 @@
 #include "Container.h"
 #include <math.h>
 #include "Utils.h"
+#include "AbstractDiscretizer.h"
 
 template <typename T>
-class Discretizer
+class Discretizer: public AbstractDiscretizer<T>
 {
     public:
         Discretizer (Container<T> min,Container<T> max,Container<T> step) : 
@@ -15,17 +16,17 @@ class Discretizer
 	  initialize();
 	}
 	
-	size_t size() const{
+	virtual size_t size() const{
 	  return m_totalElements;
 	}
         
-        int operator() () 
+        virtual int operator() () 
 	{ 
 	  id++;
 	  return id;
 	}
 
-	Container<T> getValueAtIndex(int id){
+	virtual Container<T> getValueAtIndex(int id){
 	  Container<int> indices;
 	  Container<T> values;
 	  Utils::ind2sub(m_numElements,id,indices);
@@ -38,7 +39,7 @@ class Discretizer
 	  return values;
 	}
 	
-	bool isInLimits(Container<T> value){
+	virtual bool isInLimits(Container<T> value){
 	  bool ret = true;
 	  if(value.size() == m_min.size()){
 	    for(size_t i=0;i<value.size();i++){
@@ -51,7 +52,7 @@ class Discretizer
 	  return ret;
 	}
 	
-	void reset(){
+	virtual void reset(){
 	  initialize();
 	}
 	
@@ -68,17 +69,6 @@ class Discretizer
 	      m_numElements[i] = round((m_max[i]-m_min[i])/m_step[i])+1;
 	      m_totalElements*=m_numElements[i];
 	    }
-#if 0
-	    std::cout << "Total number of states: " << m_totalElements << std::endl;
-	    std::cout << "Minimum Bounds: "; m_min.print();
-	    std::cout << "Maximum Bounds: "; m_max.print();
-	    std::cout << "Values at Index 0 : ";
-	    Container<T> value0 = getValueAtIndex(0);
-	    value0.print();
-	    std::cout << "Values at Index " << m_totalElements << " : " ;
-	    Container<T> valueMax = getValueAtIndex(m_totalElements);
-	    valueMax.print();
-#endif
 	  }
 	}
 	Container<T> m_min;
