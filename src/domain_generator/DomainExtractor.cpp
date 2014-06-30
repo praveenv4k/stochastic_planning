@@ -2,6 +2,7 @@
 #include "POMDPFileGenerator.h"
 #include "ElapsedTime.h"
 #include "UniformSpaceDiscretizer.h"
+#include "GoalBasedSpaceDiscretizer.h"
 
 void DomainExtractor::generate(){
   Json::Value robotSpace = m_config["robot"]["ss"]["min"];
