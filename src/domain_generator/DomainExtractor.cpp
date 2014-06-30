@@ -105,8 +105,8 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
 	write=true;
       }
       if(write){
-	index++;
 	stream << index << " " <<  val << " " << pose  << " " << norm << std::endl;
+	index++;
       }
     }
   }

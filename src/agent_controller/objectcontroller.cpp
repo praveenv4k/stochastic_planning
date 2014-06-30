@@ -20,6 +20,8 @@
 #include "objectcontroller.h"
 #include "json/json.h"
 #include "Config.h"
+#include <iostream>
+#include <string.h>
 
 using namespace std;
 using namespace yarp::os;
@@ -73,7 +75,6 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   m_end.resize(3);
   m_step.resize(3);
     
-  int numPoints=10;
   m_currStep = 0;
   
   i=0;
@@ -89,9 +90,29 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   m_end[2]=trajConfig["linear"]["end"].get(i++,Json::Value(35)).asDouble();
   
   std::cout << "End : " << m_end.toString(-1,1) << std::endl;
+
+  m_numPoints=objectConfig["trajectory"]["samples"].asInt();
+  if(m_numPoints==0){
+    m_numPoints=1;
+  }
   
-  for(int i=0;i<3;i++){
-    m_step[i]=(m_end[i]-m_start[i])/(numPoints-1);
+  m_radius=objectConfig["radius"].asDouble();
+  if(m_radius > 1){
+    m_radius/=100; // cm->m
+  }else{
+    m_radius = 0.03; //default
+  }
+  
+  if(m_numPoints==1){
+    m_static = true;
+    for(int i=0;i<3;i++){
+      m_step[i]=0;
+    }
+  }else{
+    m_static = false;
+    for(int i=0;i<3;i++){
+      m_step[i]=(m_end[i]-m_start[i])/(m_numPoints-1);
+    }
   }
   
   m_multiple=50;
@@ -162,19 +183,19 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   Bottle create_box(ConstString(str.c_str()));
   outputStatePort.write(create_box,reply);
 #endif
-
-#if STATIC
-  Bottle create_obj("world mk ssph 0.02 0.0 1 0.2 0 1 0");
-  outputStatePort.write(create_obj,reply);
-#else
-  str = "world mk sph ";
-  str = str + "0.02";
+  
+  if(!m_static)
+    str = "world mk sph ";
+  else
+    str = "world mk ssph ";
+  Vector rad;rad.push_back(m_radius/2);
+  str = str + string(rad.toString().c_str());
   str = str + " " + m_currPosition.toString(-1,1).c_str();
   str = str + " 0 1 0";
   std::cout << str << std::endl;
   Bottle create_ball(ConstString(str.c_str()));
   outputStatePort.write(create_ball,reply);
-#endif
+  
   startTime = Time::now(); 
     
   return ret;
@@ -213,11 +234,13 @@ void ObjectController::loop(){
     //return;
   }else{
     if(!m_stop){
-    #if STATIC
-      Bottle move_obj("world set ssph 1"); 
-    #else
-      Bottle move_obj("world set sph 1"); 
-    #endif
+      string str;
+    if(m_static)
+      str = "world set ssph 1";
+    else
+      str = "world set sph 1";
+    
+    Bottle move_obj(str); 
       
     #if 0
       yarp::sig::Vector vec = m_currPosition;
@@ -262,7 +285,7 @@ yarp::sig::Vector ObjectController::getNextPosition(){
 }
 
 yarp::sig::Vector ObjectController::getNextPos(){
-  if(m_currStep==10){
+  if(m_currStep==m_numPoints){
     m_currStep=0;
   }
   double dx = (m_start[0]+m_step[0]*m_currStep)/100;

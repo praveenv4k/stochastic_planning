@@ -91,6 +91,10 @@ private:
     int m_currmult;
     
     bool m_stop;
+    bool m_static;
+    
+    double m_radius;
+    int m_numPoints;
     
     yarp::os::BufferedPort<yarp::os::Bottle> objectCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> objectStatusPort;
