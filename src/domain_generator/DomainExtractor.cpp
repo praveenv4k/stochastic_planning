@@ -11,6 +11,8 @@ void DomainExtractor::generate(){
   Json::Value objectSpace = m_config["object"]["trajectory"]["dim"];
   m_objectDim = objectSpace.asUInt();  
   
+  farGrasp = m_config["robot"]["grasp"]["farGrasp"].asBool();
+  
   {
     ElapsedTime elapse(std::string("Writing statespace map"));
     std::fstream stateStream;
@@ -96,7 +98,7 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
       double norm = computeNorm(ss,graspable);      
       bool write=false;
       if(val[m_agentDim-1]>0){
-	if(graspable){
+	if(graspable || farGrasp){
 	  write = true;
 	}
       }else{
@@ -151,7 +153,7 @@ void DomainExtractor::createStateSpaceMap(){
       std::vector<double> ss = Utils::concatenate(val,pose);
       double norm = computeNorm(ss,graspable);
       if(val[m_agentDim-1]>0){
-	if(graspable){
+	if(graspable || farGrasp){
 	  m_stateIndexMap[ss]=index++;
 	}
       }else{

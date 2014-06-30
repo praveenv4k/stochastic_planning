@@ -35,6 +35,7 @@ private:
   RewardMap m_rewardMap;
   size_t m_agentDim;
   size_t m_objectDim;
+  bool farGrasp;
 };
 
 #endif
