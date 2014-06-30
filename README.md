@@ -1,4 +1,4 @@
-**Stochastic Planner evaluation project***
+**Stochastic Planner evaluation project**
 
 **About**
 * The aim of the project is to study the Stochastic planning for the specific iCub grasping of a moving object. Markov decision process and Partially Observable MDP planning methods are 
