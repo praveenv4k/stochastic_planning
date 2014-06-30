@@ -14,9 +14,9 @@ public:
     :m_trajDiscPtr(trajDiscPtr),m_objectConfig(objectConfig)
   {
     m_trajSamples = 10;
-    m_radius = 0.03;
-    m_graspDelta = 0.005;
-    m_increment = 0.02;
+    m_radius = 3;
+    m_graspDelta = 0.5;
+    m_increment = 3;
     initialize();
   }
   
@@ -46,7 +46,8 @@ private:
 	}
 	Json::Value rad = m_objectConfig["radius"].asInt();
 	if(!rad.isNull()){
-	  m_radius = rad.asDouble()/100;
+	  //m_radius = rad.asDouble()/100;
+	  m_radius = rad.asDouble();
 	}
 	std::cout << "GoalBasedDiscretizer: Numpoints -> " << m_trajSamples << " Radius -> " << m_radius << std::endl;
       }
@@ -60,18 +61,18 @@ private:
 	    Container<double> val;
 	    val.resize(4);
 	    val[0] = pose[0];
-	    val[1] = pose[1] + j*m_increment;
+	    val[1] = pose[1]+m_radius + j*m_increment;
 	    val[2] = pose[2];
 	    if(j==0){
 	      val[1]+=m_graspDelta;
 	    }
 	    val[3]=0;
-#if 1
+#if 0
 	    std::cout << val << std::endl;
 #endif
 	    m_valueMap.insert(std::pair<int,Container<double> >(index,val));
 	    val[3]=1;
-#if 1
+#if 0
 	    std::cout << val << std::endl;
 #endif
 	    index++;
@@ -81,6 +82,8 @@ private:
 	}
       }
     }
+    std::cout << "Goal Disc: " << m_valueMap.size() << std::endl;
+    this->m_totalElements=m_valueMap.size();
   }
   
   double m_radius;

@@ -22,11 +22,13 @@ void Planner::loop()
     status.addDouble(1);
     planobjStsPort.writeStrict();
   }else{
-    if(reached){
+    if(reached&&!execStop){
       Bottle &status = planobjStsPort.prepare();
       status.clear();
       status.addDouble(0);
       planobjStsPort.writeStrict();
+      execStop = true;
+      std::cout << "Target Reached : Exec stop" << std::endl;
     }
   }
    Bottle* objCmd = planobjCmdPort.read(false);
@@ -74,66 +76,67 @@ void Planner::loop()
 	   val.push_back(augState[i]);
 	   std::cout << val[i] << " ";
 	 }
-	 std::cout << std::endl;
-	 StateIndexMap::iterator found = m_StateIndexMap.find(val);
-	 if(found!=m_StateIndexMap.end()){
-	   //std::cout << "Found the augmented state!" << std::endl;
-	    int state = found->second;
-	    std::cout << "Index: " << state << std::endl;
-	    
-	    prevState = currBelSt->sval;
-	    currBelSt->sval=state;
-	    VectorPtr prev_v=m_States->operator[](currBelSt->sval);
-	    cout << " Current State : " << currBelSt->sval;
-	    action = runFor(1,NULL,reward,expReward);
-	    cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
-	    if(action!=-1 && !reached){// && prevState!=currBelSt->sval){
-	      VectorPtr v=m_States->operator[](currBelSt->sval);
-	      Vector v1;
-	      v1.resize(4);
-	      v1[0]= v->operator[](0)/100;
-	      v1[1]= v->operator[](1)/100;
-	      v1[2]= v->operator[](2)/100;
-	      v1[3]= 1;
-	      posQueue.push(v1);
-	      
-	      Vector robot,object;
-	      robot.resize(3);object.resize(3);
-	      for(int i=0;i<3;i++){
-		robot[i]=v->operator[](i);
-		object[i]=v->operator[](i+4);
-	      }
-	      object[1]=object[1]+3;
-	      dist = Planner::computeL2norm<Vector>(robot,object);
-	      cout << "Distance Threshold : " << dist << std::endl;
-	      if(dist < graspThreshold && v->operator[](3)>0){
-		cout << "Reached close to object!" << std::endl;
-		reached=true;
-	      }
-	    }else{
-	      // Stop the ball
-	      Bottle &status = planobjStsPort.prepare();
-	      status.clear();
-	      status.addDouble(0);
-	      planobjStsPort.writeStrict();
-	    }
+	 
+	 bool reach = has_reached(augState,graspThreshold);
+	 if(reach){
+	   reached = reach;
 	 }else{
-	   std::cout << "Augmented state not found!" << std::endl;
-	 }
-       }
+	  StateIndexMap::iterator found = m_StateIndexMap.find(val);
+	  if(found!=m_StateIndexMap.end()){
+	    //std::cout << "Found the augmented state!" << std::endl;
+	      int state = found->second;
+	      std::cout << "Index: " << state << std::endl;
+	      
+	      prevState = currBelSt->sval;
+	      currBelSt->sval=state;
+	      VectorPtr prev_v=m_States->operator[](currBelSt->sval);
+	      cout << " Current State : " << currBelSt->sval;
+	      action = runFor(1,NULL,reward,expReward);
+	      cout << " Best Action : " << action <<  " Next State: " << currBelSt->sval << std::endl;
+	      if(action!=-1 && !reached){// && prevState!=currBelSt->sval){
+		VectorPtr v=m_States->operator[](currBelSt->sval);
+		Vector v1;
+		v1.resize(4);
+		v1[0]= v->operator[](0)/100;
+		v1[1]= v->operator[](1)/100;
+		v1[2]= v->operator[](2)/100;
+		v1[3]= 1;
+		if(!(fabs(v->operator[](0)-val[0])<1e-2)||
+		   !(fabs(v->operator[](1)-val[1])<1e-2)||
+		   !(fabs(v->operator[](2)-val[2])<1e-2)){
+		    std::cout << "New position pushed to queue!" << std::endl;
+		    posQueue.push(v1);
+		    send = true;
+		}
+		
+		reached = has_reached(*v,graspThreshold);
+	      }else{
+		// Stop the ball
+		Bottle &status = planobjStsPort.prepare();
+		status.clear();
+		status.addDouble(0);
+		planobjStsPort.writeStrict();
+	      }
+	  }else{
+	    std::cout << "Augmented state not found!" << std::endl;
+	  }
+	}
+     }
 #endif
-       send = true;
+       //send = true;
      }else if(command == 10){
        if(sent==true){
 	 //posQueue.pop();
 	 //sent = false;
         }else{
 	}
-        send = true;
+	reached = has_reached(augState,graspThreshold);
+        //send = true;
      }else if(command == 100){
      }
 
-     if(send){
+     if(send || firstSend){
+       if(firstSend) firstSend=false;
        if(posQueue.size()>0){
 	 Vector& v = posQueue.front();
 	 double x=v[0];
@@ -154,6 +157,26 @@ void Planner::loop()
        }
      }
    }
+}
+
+bool Planner::has_reached(yarp::sig::Vector& augState,double graspThreshold){
+  bool ret=false;
+  if(augState.size()==7){
+    Vector robot,object;
+    robot.resize(3);object.resize(3);
+    for(int i=0;i<3;i++){
+      robot[i]=augState[i];
+      object[i]=augState[i+4];
+    }
+    object[1]+=radius;
+    dist = Planner::computeL2norm<Vector>(robot,object);
+    cout << "Distance Threshold : (" << robot.toString(-1,1) << "),(" <<object.toString(-1,1) << ") :" << dist << std::endl;
+    if(dist < graspThreshold /*&& augState[3]>0*/){
+      cout << "Reached close to object!" << std::endl;
+      ret=true;
+    }
+  }
+  return ret;
 }
 
 bool Planner::open(yarp::os::ResourceFinder &rf)

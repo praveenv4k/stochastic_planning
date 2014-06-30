@@ -50,6 +50,7 @@
 #include "ParserSelector.h"
 #include "AlphaVectorPolicy.h"
 #include "Types.h"
+#include "Config.h"
 
 using namespace momdp;
 
@@ -131,9 +132,16 @@ public:
       reward=0;
       expReward=0;
       dist = 100000;
-      graspThreshold = 1.6;
+      graspThreshold =Config::instance()->root["robot"]["grasp"]["distThreshold"].asDouble();
+      radius = Config::instance()->root["object"]["radius"].asDouble();
+      std::cout << "Grasp Threshold : " << graspThreshold << " Radius: " << radius << std::endl;
+      if(graspThreshold<=0.001){
+	graspThreshold=1.6;
+      }
       reached=false;
       first = true;
+      firstSend = true;
+      execStop=false;
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -179,6 +187,7 @@ public:
     bool initialize_plan();
     int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
 
+    bool has_reached(yarp::sig::Vector& augState,double graspThreshold);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
@@ -197,7 +206,9 @@ private:
     int prevState;
 
     bool first;
-    
+    bool execStop;
+    bool firstSend;
+    double radius;
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;
 #ifdef VECTOR_PTR_MAP

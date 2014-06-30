@@ -319,6 +319,11 @@ AbstractSpaceDiscretizerPtr DomainExtractor::getSpaceDiscretizer(Json::Value con
 	Utils::valueToVector(config["step"],step);
 	ptr = AbstractSpaceDiscretizerPtr(new UniformSpaceDiscretizer<double>(min,max,step));
       }
+      else if(name == "goal"){
+	Json::Value object = m_config["object"];
+        TrajectoryDiscretizerPtr trajPtr=getTrajectoryDiscretizer(object["trajectory"]);
+	ptr = AbstractSpaceDiscretizerPtr(new GoalBasedSpaceDiscretizer(trajPtr,object));
+      }
     }
   }
   return ptr;

@@ -18,6 +18,8 @@
 
 
 #include "objectcontroller.h"
+#include "json/json.h"
+#include "Config.h"
 
 using namespace std;
 using namespace yarp::os;
@@ -26,10 +28,13 @@ using namespace yarp::sig;
 
 ObjectController::ObjectController(const double period)//:RateThread(int(period*1000))
 {
+  Json::Value objectConfig = Config::instance()->root["object"];
+  Json::Value trajConfig = objectConfig["trajectory"];
+  
   // Initializing the private members
   m_VelX = 0.1; // 0.1 m/s
-  m_Mean = 0; // Zero mean //TODO
-  m_Sigma = 0.005; // Standard Deviation in Position //TODO
+  m_Mean = trajConfig["noise"]["mean"].asDouble(); // Zero mean //TODO
+  m_Sigma = trajConfig["noise"]["sigma"].asDouble(); // Standard Deviation in Position //TODO
   m_Period = period; // Period of the Thread;
   
   // Resizing the position vectors
@@ -38,9 +43,11 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   
   // Set the initial position. 
   // TODO Read from config file
-  m_initPosition[0] = 0.0;
-  m_initPosition[1] = 1;
-  m_initPosition[2] = 0.4;
+  Json::ArrayIndex i=0;
+  m_initPosition[0] = objectConfig["initialPos"].get(i++,Json::Value(0)).asDouble();
+  m_initPosition[1] = objectConfig["initialPos"].get(i++,Json::Value(1)).asDouble();
+  m_initPosition[2] = objectConfig["initialPos"].get(i++,Json::Value(0.45)).asDouble();
+  std::cout << "Initial Position : " << m_initPosition.toString(-1,1) << std::endl;
   
   m_currPosition = m_initPosition;
     
@@ -68,8 +75,21 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
     
   int numPoints=10;
   m_currStep = 0;
-  m_start[0]=-11;m_start[1]=53.39;m_start[2]=35;
-  m_end[0]=11;m_end[1]=53.39;m_end[2]=35;
+  
+  i=0;
+  m_start[0]=trajConfig["linear"]["start"].get(i++,Json::Value(-10)).asDouble();
+  m_start[1]=trajConfig["linear"]["start"].get(i++,Json::Value(53.39)).asDouble();
+  m_start[2]=trajConfig["linear"]["start"].get(i++,Json::Value(35)).asDouble();
+  
+  std::cout << "Start : " << m_start.toString(-1,1) << std::endl;
+  
+  i=0;
+  m_end[0]=trajConfig["linear"]["end"].get(i++,Json::Value(8)).asDouble();
+  m_end[1]=trajConfig["linear"]["end"].get(i++,Json::Value(53.39)).asDouble();
+  m_end[2]=trajConfig["linear"]["end"].get(i++,Json::Value(35)).asDouble();
+  
+  std::cout << "End : " << m_end.toString(-1,1) << std::endl;
+  
   for(int i=0;i<3;i++){
     m_step[i]=(m_end[i]-m_start[i])/(numPoints-1);
   }
@@ -153,7 +173,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   str = str + " 0 1 0";
   std::cout << str << std::endl;
   Bottle create_ball(ConstString(str.c_str()));
-  //outputStatePort.write(create_ball,reply);
+  outputStatePort.write(create_ball,reply);
 #endif
   startTime = Time::now(); 
     
