@@ -9,6 +9,7 @@
 #include <vector>
 
 class GoalBasedSpaceDiscretizer:public AbstractSpaceDiscretizer<double>{
+public:
   GoalBasedSpaceDiscretizer(TrajectoryDiscretizerPtr trajDiscPtr,Json::Value objectConfig)
     :m_trajDiscPtr(trajDiscPtr),m_objectConfig(objectConfig)
   {
@@ -50,14 +51,33 @@ private:
 	std::cout << "GoalBasedDiscretizer: Numpoints -> " << m_trajSamples << " Radius -> " << m_radius << std::endl;
       }
       std::vector<Container<double> > poses;
+      int index=0;
       if(m_trajDiscPtr->getAllPoses(10,poses)){
+	std::cout << "Numpoints :" << poses.size() << std::endl;
 	for(size_t i=0;i<poses.size();i++){
-// 	  Container<double> pose=
-// 	  for(int j=0;i<10;j++){
-// 	    Container<double> val;
-// 	    val.resize(4);
-// 	    val[0] = val[0] + j*m_increment*
-// 	  }
+	  Container<double> pose=poses[i];
+	  for(int j=0;j<10;j++){
+	    Container<double> val;
+	    val.resize(4);
+	    val[0] = pose[0];
+	    val[1] = pose[1] + j*m_increment;
+	    val[2] = pose[2];
+	    if(j==0){
+	      val[1]+=m_graspDelta;
+	    }
+	    val[3]=0;
+#if 1
+	    std::cout << val << std::endl;
+#endif
+	    m_valueMap.insert(std::pair<int,Container<double> >(index,val));
+	    val[3]=1;
+#if 1
+	    std::cout << val << std::endl;
+#endif
+	    index++;
+	    m_valueMap.insert(std::pair<int,Container<double> >(index,val));
+	    index++;
+	  }
 	}
       }
     }

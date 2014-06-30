@@ -4,6 +4,7 @@
 #include "Config.h"
 #include "Container.h"
 #include "UniformSpaceDiscretizer.h"
+#include "GoalBasedSpaceDiscretizer.h"
 #include "Combinator.h"
 
 class Test{
@@ -71,6 +72,21 @@ public:
     }
   }
   
+  static void testGoalBasedDiscretizer(){
+    Json::Value object = Config::instance()->root["object"];
+    Json::Value linConfig = object["trajectory"]["linear"];
+    TrajectoryDiscretizerPtr ptr;
+    if(!linConfig.isNull()){
+      Container<double> start,end;
+      Utils::valueToVector(linConfig["start"],start);
+      Utils::valueToVector(linConfig["end"],end);
+      ptr = TrajectoryDiscretizerPtr(new LinearTrajectoryDiscretizer(start,end));
+    }
+    if(ptr!=NULL){
+      GoalBasedSpaceDiscretizer disc(ptr,object);
+    }
+  }
+  
   static void testAll(){
     std::cout << "************** Begin Test ***************" << std::endl;
     Container<int> state1;
@@ -82,6 +98,7 @@ public:
     testCombinator(state1,state1);
     testJson();
     testLinearDiscretizer();
+    testGoalBasedDiscretizer();
     std::cout << "************** End Test *****************" << std::endl;
   }
 };
