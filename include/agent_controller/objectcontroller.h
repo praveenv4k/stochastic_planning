@@ -28,7 +28,6 @@ using namespace yarp::os;
 class ObjectController
 {
 public:
-    Port outputStatePort;
     ObjectController(const double period);
     virtual ~ObjectController();
     std::string getName() const{
@@ -48,8 +47,10 @@ private:
     }
     virtual bool operator==(const ObjectController& other) const{
     }
-    
+
+    Port outputStatePort;
     Container<double> m_currPosition;
+    Container<double> m_currElbowPosition;
     Container<double> m_initPosition;
     
     yarp::os::Bottle outputState;
@@ -76,6 +77,7 @@ private:
     
     double m_radius;
     int m_numPoints;
+    bool m_elbowEnabled;
     
     std::vector<Container<double> > m_objPoses;
     std::vector<Container<double> > m_elbowPoses;

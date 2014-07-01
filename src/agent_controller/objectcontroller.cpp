@@ -80,12 +80,13 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
     m_static = false;
   }
   
+  m_elbowEnabled=false;
   TrajectoryDiscretizerPtr trajPtr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(trajConfig);
   if(trajPtr!=NULL){
     if(trajPtr->getAllPoses(m_numPoints,m_objPoses)){
       if(!elbowConfig.isNull()){
-	bool enabled = elbowConfig["enabled"].asBool();
-	if(enabled){
+	m_elbowEnabled = elbowConfig["enabled"].asBool();
+	if(m_elbowEnabled){
 	  std::vector<double> range;
 	  if(Utils::valueToVector(elbowConfig["range"],range)){
 	    double length = elbowConfig["length"].isNull() ? 0.3: elbowConfig["length"].asDouble();
@@ -104,6 +105,10 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
     m_currPosition = m_objPoses[0]/100;
   }else{
     m_currPosition = m_initPosition/100;
+  }
+  
+  if(m_elbowPoses.size()>0){
+    m_currElbowPosition = m_elbowPoses[0]/100;
   }
 }
 
@@ -151,7 +156,8 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
     str = "world mk sph ";
   else
     str = "world mk ssph ";
-  Vector rad;rad.push_back(m_radius/2);
+  Vector rad;
+  rad.push_back(m_radius/2); //TODO
   str = str + string(rad.toString().c_str());
   stringstream ss;
   ss << m_currPosition;
@@ -160,6 +166,20 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   std::cout << str << std::endl;
   Bottle create_ball(ConstString(str.c_str()));
   outputStatePort.write(create_ball,reply);
+  
+  if(m_elbowEnabled && m_elbowPoses.size()>0){
+    str = "world mk ssph ";
+    Vector elb;
+    elb.push_back(m_radius);
+    str = str + string(elb.toString().c_str());
+    stringstream ss;
+    ss << m_currElbowPosition;
+    str = str + " " + ss.str();
+    str = str + " 0 0 1";
+    std::cout << str << std::endl;
+    Bottle create_elbow(ConstString(str.c_str()));
+    outputStatePort.write(create_elbow,reply);
+  }
   
   startTime = Time::now(); 
     
@@ -200,12 +220,12 @@ void ObjectController::loop(){
   }else{
     if(!m_stop){
       string str;
-    if(m_static)
-      str = "world set ssph 1";
-    else
-      str = "world set sph 1";
-    
-    Bottle move_obj(str); 
+      if(m_static)
+	str = "world set ssph 1";
+      else
+	str = "world set sph 1";
+      
+      Bottle move_obj(str); 
       
     #if 0
       yarp::sig::Vector vec = m_currPosition;
@@ -216,6 +236,17 @@ void ObjectController::loop(){
       move_obj.addDouble(vec[1]); 
       move_obj.addDouble(vec[2]);
       outputStatePort.write(move_obj,reply); 
+      
+      if(m_elbowEnabled && m_elbowPoses.size()>0){
+	string str;
+	str = "world set ssph 1";
+	
+	Bottle move_elb(str); 
+	move_elb.addDouble(m_currElbowPosition[0]); 
+	move_elb.addDouble(m_currElbowPosition[1]); 
+	move_elb.addDouble(m_currElbowPosition[2]);
+	outputStatePort.write(move_elb,reply); 
+      }
     }
   }
   
@@ -242,6 +273,8 @@ Container<double> ObjectController::getNextPosition(){
   m_currPosition[0] = dx;
   m_currPosition[1] = dy;
   m_currPosition[2] = dz;
+  
+  m_currElbowPosition = m_elbowPoses[m_currStep]/100;
   m_currStep++;
   return m_currPosition;
 }
