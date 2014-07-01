@@ -21,7 +21,6 @@ private:
   void writeActionSpace(std::ostream& stream);
   void createStateSpaceMap();
   void createActionSpaceMap();
-  TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig);
   AbstractSpaceDiscretizerPtr getSpaceDiscretizer(Json::Value config);
   void generateTables();
   void generateDDLFile(std::string& filePath);

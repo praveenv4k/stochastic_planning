@@ -81,13 +81,14 @@ public:
   }
   
   template <typename T>
-  static bool deg2Radian(T& vector){
-    if(vector.size() >0){
-      for(size_t i=0;i<vector.size();i++){
-	vector[i] = vector[i]*M_PI/180.0;
-      }
-    }
-    return true;
+  static bool deg2Radian(T deg){
+//     //if(vector.size() >0){
+//       for(size_t i=0;i<vector.size();i++){
+// 	vector[i] = vector[i]*M_PI/180.0;
+//       }
+//     }
+//     return true;
+    return deg*M_PI/180.0;
   }
   
   static std::vector<double> concatenate(std::vector<double>& a,std::vector<double>& b){
@@ -147,6 +148,18 @@ public:
       T b = c1 / c2;
       Container<T> pb = seg.first + (v*b);
       return computeL2norm(pt, pb);
+  }
+  
+  template <typename T>
+  static Container<T> compute2dPoint(Container<T> pt2d,T angle,T length){
+    if(pt2d.size() > 2){
+      throw std::invalid_argument("The vector should be 2 dimensional!");
+    }
+    Container<T> ret;
+    ret.resize(2);
+    ret[0] = pt2d[0] + cos(deg2Radian(angle))*length;
+    ret[1] = pt2d[1] + sin(deg2Radian(angle))*length;
+    return ret;
   }
 };
 

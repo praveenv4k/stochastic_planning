@@ -69,7 +69,7 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
   Utils::valueToVector(ss["step"],step);
   double distThres = robot["grasp"]["distThreshold"].asDouble();
   
-  TrajectoryDiscretizerPtr pTrajDisc = getTrajectoryDiscretizer(m_config["object"]["trajectory"]);
+  TrajectoryDiscretizerPtr pTrajDisc = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(m_config["object"]["trajectory"]);
   
   double delta = m_config["object"]["trajectory"]["step"].asDouble();
   TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
@@ -121,7 +121,7 @@ void DomainExtractor::createStateSpaceMap(){
   Utils::valueToVector(ss["step"],step);
   double distThres = robot["grasp"]["distThreshold"].asDouble();
   
-  TrajectoryDiscretizerPtr pTrajDisc = getTrajectoryDiscretizer(m_config["object"]["trajectory"]);
+  TrajectoryDiscretizerPtr pTrajDisc = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(m_config["object"]["trajectory"]);
   
   double delta = m_config["object"]["trajectory"]["step"].asDouble();
   TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
@@ -271,43 +271,6 @@ void DomainExtractor::writeActionSpace(std::ostream& stream)
   }
 }
 
-TrajectoryDiscretizerPtr DomainExtractor::getTrajectoryDiscretizer(Json::Value trajConfig){
-  TrajectoryDiscretizerPtr ptr;
-  if(!trajConfig.isNull()){
-    std::string type = trajConfig["type"].asString();
-    if(type == "circular"){
-      Json::Value cirConfig = trajConfig[type.c_str()];
-      if(!cirConfig.isNull()){
-	Container<double> center;
-	Utils::valueToVector(cirConfig["center"],center);
-	double radius = cirConfig["radius"].asDouble();
-	ptr = TrajectoryDiscretizerPtr(new CircleTrajectoryDiscretizer(center[0],center[1],center[2],radius));
-      }
-    }
-    else if(type== "circular2d"){
-      Json::Value cirConfig = trajConfig[type.c_str()];
-      if(!cirConfig.isNull()){
-	Container<double> center;
-	Utils::valueToVector(cirConfig["center"],center);
-	double radius = cirConfig["radius"].asDouble();
-	ptr = TrajectoryDiscretizerPtr(new Circle2DTrajectoryDiscretizer(center[0],center[1],radius));
-      }
-    }
-    else if(type == "linear"){
-      Json::Value linConfig = trajConfig[type.c_str()];
-      if(!linConfig.isNull()){
-	Container<double> start,end;
-	Utils::valueToVector(linConfig["start"],start);
-	Utils::valueToVector(linConfig["end"],end);
-	ptr = TrajectoryDiscretizerPtr(new LinearTrajectoryDiscretizer(start,end));
-      }
-    }
-    else{
-    }
-  }
-  return ptr;
-}
-
 AbstractSpaceDiscretizerPtr DomainExtractor::getSpaceDiscretizer(Json::Value config){
   AbstractSpaceDiscretizerPtr ptr;
   if(!config.isNull()){
@@ -323,7 +286,7 @@ AbstractSpaceDiscretizerPtr DomainExtractor::getSpaceDiscretizer(Json::Value con
       }
       else if(name == "goal"){
 	Json::Value object = m_config["object"];
-        TrajectoryDiscretizerPtr trajPtr=getTrajectoryDiscretizer(object["trajectory"]);
+        TrajectoryDiscretizerPtr trajPtr=TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(object["trajectory"]);
 	ptr = AbstractSpaceDiscretizerPtr(new GoalBasedSpaceDiscretizer(trajPtr,object));
       }
     }

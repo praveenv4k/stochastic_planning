@@ -210,6 +210,13 @@
     "arm": "left"
   },
   "objectcontrol": {},
+  "domain_model":{
+    "reward":{
+      "scheme": "l2norm",
+      "max" :  500,
+      "collision" : -50
+    }
+  },
   "planner": {},
   "simulator":{
     "policy_path": "../tests/20140701/test1_linear/",

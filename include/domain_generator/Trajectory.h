@@ -6,6 +6,7 @@
 #include <cmath>
 #include <boost/shared_ptr.hpp>
 #include <boost/math/constants/constants.hpp>
+#include "Utils.h"
 
 class TrajectoryDiscretizer;
 class Trajectory;
@@ -19,6 +20,33 @@ public:
   }
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose)=0;
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses)=0;
+  static bool getElbowPoses(std::vector<Container<double> >& objPoses,std::vector<Container<double> >& elbPoses,double startAngle,double endAngle,double elbowLength){
+    bool ret=false;
+    if(objPoses.size()>0){
+      if(objPoses.size() ==1){
+	Container<double> pose = objPoses[0];
+	pose[1]+=elbowLength;
+	elbPoses.push_back(pose);
+	ret=true;
+      }else{
+	double step=(endAngle-startAngle)/objPoses.size();
+	for(size_t i=0;i<objPoses.size();i++){
+	  Container<double> pose = objPoses[i];
+	  Container<double> pose2d;
+	  pose2d.resize(2);
+	  pose2d[0]=pose[0],
+	  pose2d[1]=pose[1];
+	  
+	  Container<double> out2d = Utils::compute2dPoint(pose2d,startAngle+i*step,elbowLength);
+	  pose[0]=out2d[0];
+	  pose[1]=out2d[1];
+	  elbPoses.push_back(pose);
+	}
+	ret=true;
+      }
+    }
+    return ret;
+  }
 };
 
 class BernoulliDiscretizer:public TrajectoryDiscretizer{
@@ -183,6 +211,46 @@ private:
   double m_step;
   double m_currentStep;
   TrajectoryDiscretizerPtr m_trajDiscPtr;
+};
+
+class TrajectoryDiscretizerFactory{
+public:
+  static TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig){
+    TrajectoryDiscretizerPtr ptr;
+    if(!trajConfig.isNull()){
+      std::string type = trajConfig["type"].asString();
+      if(type == "circular"){
+	Json::Value cirConfig = trajConfig[type.c_str()];
+	if(!cirConfig.isNull()){
+	  Container<double> center;
+	  Utils::valueToVector(cirConfig["center"],center);
+	  double radius = cirConfig["radius"].asDouble();
+	  ptr = TrajectoryDiscretizerPtr(new CircleTrajectoryDiscretizer(center[0],center[1],center[2],radius));
+	}
+      }
+      else if(type== "circular2d"){
+	Json::Value cirConfig = trajConfig[type.c_str()];
+	if(!cirConfig.isNull()){
+	  Container<double> center;
+	  Utils::valueToVector(cirConfig["center"],center);
+	  double radius = cirConfig["radius"].asDouble();
+	  ptr = TrajectoryDiscretizerPtr(new Circle2DTrajectoryDiscretizer(center[0],center[1],radius));
+	}
+      }
+      else if(type == "linear"){
+	Json::Value linConfig = trajConfig[type.c_str()];
+	if(!linConfig.isNull()){
+	  Container<double> start,end;
+	  Utils::valueToVector(linConfig["start"],start);
+	  Utils::valueToVector(linConfig["end"],end);
+	  ptr = TrajectoryDiscretizerPtr(new LinearTrajectoryDiscretizer(start,end));
+	}
+      }
+      else{
+      }
+    }
+    return ptr;
+  }
 };
 
 #endif
