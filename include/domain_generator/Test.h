@@ -92,7 +92,7 @@ public:
     Container<double> p1;p1.resize(3);p1[0]=1;p1[1]=2;p1[2]=2;
     Container<double> p2;p2.resize(3);p2[0]=20;p2[1]=5;p2[2]=3;
     
-    double dist = Utils::dist_Point_to_Segment(pt,std::pair<Container<double>,Container<double> >(p1,p2));
+    double dist = Utils::ptDistToLine(pt,std::pair<Container<double>,Container<double> >(p1,p2));
     
     std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
     
@@ -100,7 +100,7 @@ public:
     p1[0]=0;p1[1]=0;p1[2]=0;
     p2[0]=0;p2[1]=0;p2[2]=1;
     
-    dist = Utils::dist_Point_to_Segment(pt,std::pair<Container<double>,Container<double> >(p1,p2));
+    dist = Utils::ptDistToLine(pt,std::pair<Container<double>,Container<double> >(p1,p2));
     
     std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
     
@@ -108,7 +108,7 @@ public:
     p1[0]=0;p1[1]=0;p1[2]=0;
     p2[0]=0;p2[1]=0;p2[2]=1;
     
-    dist = Utils::dist_Point_to_Segment(pt,std::pair<Container<double>,Container<double> >(p1,p2));
+    dist = Utils::ptDistToLine(pt,std::pair<Container<double>,Container<double> >(p1,p2));
     
     std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
   }

@@ -130,7 +130,7 @@ public:
   }
   
   template<typename T>
-  static T dist_Point_to_Segment(Container<T> pt, 
+  static T ptDistToLine(Container<T> pt, 
 				      std::pair<Container<T>,Container<T> > seg)
   {
       Container<T> v = seg.second - seg.first;
