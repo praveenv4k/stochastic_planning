@@ -30,7 +30,9 @@ using namespace Eigen;
 using namespace yarp::dev;
 
 /**
- * @brief Robot Part Context
+ * @brief Context of a Robot Part
+ *        
+ * The datastructure contains information about a particular part of a robot (leg,arm etc.,)
  **/
 class PartContext{
 public:
