@@ -21,6 +21,7 @@ void Planner::loop()
     status.clear();
     status.addDouble(1);
     planobjStsPort.writeStrict();
+    m_ElaspedTime->start();
   }else{
     if(reached&&!execStop){
       Bottle &status = planobjStsPort.prepare();
@@ -28,6 +29,8 @@ void Planner::loop()
       status.addDouble(0);
       planobjStsPort.writeStrict();
       execStop = true;
+      m_ElaspedTime->pause();
+      m_ElaspedTime->printElasped();
       std::cout << "Target Reached : Exec stop" << std::endl;
     }
   }
@@ -83,7 +86,6 @@ void Planner::loop()
 	 }else{
 	  StateIndexMap::iterator found = m_StateIndexMap.find(val);
 	  if(found!=m_StateIndexMap.end()){
-	    //std::cout << "Found the augmented state!" << std::endl;
 	      int state = found->second;
 	      std::cout << "Index: " << state << std::endl;
 	      
@@ -130,7 +132,9 @@ void Planner::loop()
 	 //sent = false;
         }else{
 	}
-	reached = has_reached(augState,graspThreshold);
+	if(!reached){
+	  reached = has_reached(augState,graspThreshold);
+	}
         //send = true;
      }else if(command == 100){
      }

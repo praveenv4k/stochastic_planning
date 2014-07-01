@@ -52,6 +52,8 @@
 #include "Types.h"
 #include "Config.h"
 
+#include "ElapsedTime.h"
+
 using namespace momdp;
 
 using namespace std;
@@ -142,6 +144,8 @@ public:
       first = true;
       firstSend = true;
       execStop=false;
+      
+      m_ElaspedTime= boost::shared_ptr<ElapsedTime>(new ElapsedTime("Policy Execution Time"));
     }
 
     bool open(yarp::os::ResourceFinder &rf);
@@ -252,6 +256,8 @@ private:
     double t0;
     double t1;
     bool sent;   
+    
+    boost::shared_ptr<ElapsedTime> m_ElaspedTime;
 };
 
    

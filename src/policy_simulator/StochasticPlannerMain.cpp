@@ -14,6 +14,7 @@
 #include "planner.h"
 #include <json/json.h>
 #include "Config.h"
+#include "ElapsedTime.h"
 
 YARP_DECLARE_DEVICES(icubmod)
 
@@ -51,11 +52,22 @@ public:
 	std::string domainFile = policy_folder+"domain.pomdpx";
 	std::string policyFile = policy_folder+"domain.policy";
 	
-	planner->read_actions(actionFile);
-	planner->read_states(statesFile);
-	planner->read_policy(domainFile,policyFile);
-	planner->initialize_plan();
-      
+	{
+	  ElapsedTime elapsed("Reading Actions Map");
+	  planner->read_actions(actionFile);
+	}
+	{
+	  ElapsedTime elapsed("Reading States Map");
+	  planner->read_states(statesFile);
+	}
+	{
+	  ElapsedTime elapsed("Reading Policy File");
+	  planner->read_policy(domainFile,policyFile);
+	}
+	{
+	  ElapsedTime elapsed("Policy initialization");
+	  planner->initialize_plan();
+	}
       }
       else{
 	return false;

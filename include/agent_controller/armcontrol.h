@@ -29,6 +29,9 @@ using namespace Eigen;
 //using Eigen::
 using namespace yarp::dev;
 
+/**
+ * @brief Robot Part Context
+ **/
 class PartContext{
 public:
   PartContext(){

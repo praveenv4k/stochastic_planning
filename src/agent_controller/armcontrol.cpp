@@ -8,6 +8,8 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::math;
 
+#define SPOOF 1
+
 #include <math.h>
 
 void ArmControl::loop()
@@ -109,7 +111,6 @@ void ArmControl::loop()
 		  //open_hand(arm_ctx);
 		}
 	        else{
-		  std::cout << "Received new position" << std::endl;
 		  Vector robotPos,handOrient;
 		  Vector worldPos;
 		  worldPos.resize(3);
@@ -125,13 +126,19 @@ void ArmControl::loop()
 		      open_hand(arm_ctx,false);
 		    }else{
 		      yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
+		      std::cout << "Moving to Pos: " << worldPos.toString(-1,1) << ",Orient: " << arm_ctx->init_orient.toString(-1,-1)<< std::endl;
 #if 0
 		      iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
+#else
+
+#if SPOOF
 #else
 		      iArm->goToPose(robotPos,arm_ctx->init_orient);
 		      if(!iArm->waitMotionDone()){
 			std::cout << "Wait motion done failed!" << std::endl;
 		      }
+#endif
+
 #endif  
 		      arm_ctx->curr_world_position = worldPos;
 		    }
