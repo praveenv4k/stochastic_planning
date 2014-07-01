@@ -87,6 +87,32 @@ public:
     }
   }
   
+  static void testPointDistance(){
+    Container<double> pt;pt.resize(3);pt[0]=10;pt[1]=23;pt[2]=9;
+    Container<double> p1;p1.resize(3);p1[0]=1;p1[1]=2;p1[2]=2;
+    Container<double> p2;p2.resize(3);p2[0]=20;p2[1]=5;p2[2]=3;
+    
+    double dist = Utils::dist_Point_to_Segment(pt,std::pair<Container<double>,Container<double> >(p1,p2));
+    
+    std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
+    
+    pt[0]=1;pt[1]=1;pt[2]=1;
+    p1[0]=0;p1[1]=0;p1[2]=0;
+    p2[0]=0;p2[1]=0;p2[2]=1;
+    
+    dist = Utils::dist_Point_to_Segment(pt,std::pair<Container<double>,Container<double> >(p1,p2));
+    
+    std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
+    
+    pt[0]=0;pt[1]=0;pt[2]=1;
+    p1[0]=0;p1[1]=0;p1[2]=0;
+    p2[0]=0;p2[1]=0;p2[2]=1;
+    
+    dist = Utils::dist_Point_to_Segment(pt,std::pair<Container<double>,Container<double> >(p1,p2));
+    
+    std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
+  }
+  
   static void testAll(){
     std::cout << "************** Begin Test ***************" << std::endl;
     Container<int> state1;
@@ -99,6 +125,7 @@ public:
     testJson();
     testLinearDiscretizer();
     testGoalBasedDiscretizer();
+    testPointDistance();
     std::cout << "************** End Test *****************" << std::endl;
   }
 };

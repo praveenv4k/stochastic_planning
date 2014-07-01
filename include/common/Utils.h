@@ -7,6 +7,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/unordered_map.hpp>
+#include <Container.h>
+#include <map>
 
 #define EPSILON 1e-6
 
@@ -49,12 +51,12 @@ public:
   }
   
   template <typename T>
-  static double computeL2norm(std::vector<T> v1,std::vector<T> v2){
+  static double computeL2norm(T v1,T v2){
     size_t dim = v1.size();  
     if(dim != v2.size()){
       throw std::invalid_argument("The vector dimensions do not agree!");
     }
-    double sum = 0;
+    double sum = 0.0;
     for(size_t i=0;i<dim;i++){
       double temp = v1[i]-v2[i];
       sum = sum+ temp*temp;
@@ -115,12 +117,37 @@ public:
       boost::serialization::load(oa,mp,0);
   }
   
-//   static std::string getFileNameFromPath(const std::string& pathname)
-//   {
-//       return{std::find_if(pathname.rbegin(), pathname.rend(),
-// 			  [](char c) { return c == '/'; }).base(),
-// 	      pathname.end()};
-//   }
+  template<typename T>
+  static T dot(Container<T> a,Container<T> b){
+    if(a.size() != b.size()){
+      throw std::invalid_argument("The vector dimensions do not agree!");
+    }
+    T dotP=0;
+    for(size_t i=0;i<a.size();i++){
+      dotP+= a[i]*b[i];
+    }
+    return dotP;
+  }
+  
+  template<typename T>
+  static T dist_Point_to_Segment(Container<T> pt, 
+				      std::pair<Container<T>,Container<T> > seg)
+  {
+      Container<T> v = seg.second - seg.first;
+      Container<T> w = pt - seg.first;
+
+      T c1 = Utils::dot(w,v);
+      if ( c1 <= 0 )
+	    return computeL2norm(pt, seg.first);
+
+      T c2 = Utils::dot(v,v);
+      if ( c2 <= c1 )
+	    return computeL2norm(pt, seg.second);
+
+      T b = c1 / c2;
+      Container<T> pb = seg.first + (v*b);
+      return computeL2norm(pt, pb);
+  }
 };
 
 #endif
