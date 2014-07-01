@@ -21,32 +21,20 @@
 #define OBJECTCONTROLLER_H
 
 #include "Global.h"
+#include "Container.h"
 
 using namespace yarp::os;
 
 class ObjectController
 {
 public:
-    //yarp::os::BufferedPort<yarp::os::Bottle > outputStatePort; 
-    
-//     yarp::os::RpcClient outputStatePort;
     Port outputStatePort;
-    
     ObjectController(const double period);
     virtual ~ObjectController();
     std::string getName() const{
       return "objectCtrl";
     }
-    yarp::sig::Vector getNextPosition();
-    yarp::sig::Vector getNextPos();
-    std::string getPositionStr(yarp::sig::Vector& vector) const;
-    
-//     bool threadInit();
-//     void afterStart(bool s);
-//     void run();
-//     void reset();
-//     void threadRelease();
-    
+    Container<double> getNextPosition();
     bool open(yarp::os::ResourceFinder &rf);
     bool close();
     void loop(); 
@@ -61,8 +49,8 @@ private:
     virtual bool operator==(const ObjectController& other) const{
     }
     
-    yarp::sig::Vector m_currPosition;
-    yarp::sig::Vector m_initPosition;
+    Container<double> m_currPosition;
+    Container<double> m_initPosition;
     
     yarp::os::Bottle outputState;
     yarp::os::Bottle reply;
@@ -76,15 +64,8 @@ private:
     
     double startTime;
     double xc,yc,zc,radius;
-    
-    yarp::sig::Vector boxPos;
-    yarp::sig::Vector boxSize;
-    yarp::sig::Vector ballPos;
-    
-    yarp::sig::Vector m_start;
-    yarp::sig::Vector m_end;       
+        
     int m_currStep;
-    yarp::sig::Vector m_step;
  
     double ball_radius;
     int m_multiple;
@@ -95,6 +76,9 @@ private:
     
     double m_radius;
     int m_numPoints;
+    
+    std::vector<Container<double> > m_objPoses;
+    std::vector<Container<double> > m_elbowPoses;
     
     yarp::os::BufferedPort<yarp::os::Bottle> objectCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> objectStatusPort;

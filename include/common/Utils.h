@@ -82,12 +82,6 @@ public:
   
   template <typename T>
   static bool deg2Radian(T deg){
-//     //if(vector.size() >0){
-//       for(size_t i=0;i<vector.size();i++){
-// 	vector[i] = vector[i]*M_PI/180.0;
-//       }
-//     }
-//     return true;
     return deg*M_PI/180.0;
   }
   

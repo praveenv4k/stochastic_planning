@@ -22,6 +22,7 @@
 #include "Config.h"
 #include <iostream>
 #include <string.h>
+#include "Trajectory.h"
 
 using namespace std;
 using namespace yarp::os;
@@ -32,6 +33,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
 {
   Json::Value objectConfig = Config::instance()->root["object"];
   Json::Value trajConfig = objectConfig["trajectory"];
+  Json::Value elbowConfig = Config::instance()->root["elbow"];
   
   // Initializing the private members
   m_VelX = 0.1; // 0.1 m/s
@@ -49,48 +51,17 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   m_initPosition[0] = objectConfig["initialPos"].get(i++,Json::Value(0)).asDouble();
   m_initPosition[1] = objectConfig["initialPos"].get(i++,Json::Value(1)).asDouble();
   m_initPosition[2] = objectConfig["initialPos"].get(i++,Json::Value(0.45)).asDouble();
-  std::cout << "Initial Position : " << m_initPosition.toString(-1,1) << std::endl;
+  std::cout << "Initial Position : " << m_initPosition << std::endl;
   
-  m_currPosition = m_initPosition;
-    
   // Y- UP
   // X - Left/Right of Robot
   // Z - In front of the robot
   //Vector boxSize;
-  boxSize.resize(3);
-  boxSize[0]=1.0;
-  boxSize[1]=0.1;
-  boxSize[2]=0.5;
-  
-  //Vector boxPos;
-  boxPos.resize(3);
-  boxPos[0]=0.0;
-  boxPos[1]=0.4;
-  boxPos[2]=0.45;
 
   ball_radius = 0.02;
-  ballPos.resize(3);
-  
-  m_start.resize(3);
-  m_end.resize(3);
-  m_step.resize(3);
-    
+      
   m_currStep = 0;
   
-  i=0;
-  m_start[0]=trajConfig["linear"]["start"].get(i++,Json::Value(-10)).asDouble();
-  m_start[1]=trajConfig["linear"]["start"].get(i++,Json::Value(53.39)).asDouble();
-  m_start[2]=trajConfig["linear"]["start"].get(i++,Json::Value(35)).asDouble();
-  
-  std::cout << "Start : " << m_start.toString(-1,1) << std::endl;
-  
-  i=0;
-  m_end[0]=trajConfig["linear"]["end"].get(i++,Json::Value(8)).asDouble();
-  m_end[1]=trajConfig["linear"]["end"].get(i++,Json::Value(53.39)).asDouble();
-  m_end[2]=trajConfig["linear"]["end"].get(i++,Json::Value(35)).asDouble();
-  
-  std::cout << "End : " << m_end.toString(-1,1) << std::endl;
-
   m_numPoints=objectConfig["trajectory"]["samples"].asInt();
   if(m_numPoints==0){
     m_numPoints=1;
@@ -105,42 +76,35 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   
   if(m_numPoints==1){
     m_static = true;
-    for(int i=0;i<3;i++){
-      m_step[i]=0;
-    }
   }else{
     m_static = false;
-    for(int i=0;i<3;i++){
-      m_step[i]=(m_end[i]-m_start[i])/(m_numPoints-1);
+  }
+  
+  TrajectoryDiscretizerPtr trajPtr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(trajConfig);
+  if(trajPtr!=NULL){
+    if(trajPtr->getAllPoses(m_numPoints,m_objPoses)){
+      if(!elbowConfig.isNull()){
+	bool enabled = elbowConfig["enabled"].asBool();
+	if(enabled){
+	  std::vector<double> range;
+	  if(Utils::valueToVector(elbowConfig["range"],range)){
+	    double length = elbowConfig["length"].isNull() ? 0.3: elbowConfig["length"].asDouble();
+	    trajPtr->getElbowPoses(m_objPoses,m_elbowPoses,range[0],range[1],length);
+	  }
+	}
+      }
     }
   }
   
-  m_multiple=50;
+  m_multiple=20;
   m_currmult=0;
   m_stop = true;
-#if MYBOX
-  radius=20;
-  xc=0;
-  yc=65;
-  zc=40;
 
-  ballPos[0] = 0;
-  ballPos[1] = boxPos[1]+boxSize[1]/2+ball_radius;
-  ballPos[2] = 0.25;
-#else
-  
-  radius=10;
-  xc=0;
-  yc=53.3951;
-  zc=40;
-
-//   10 54.39 35
-  ballPos[0] = m_start[0]/100;
-  ballPos[1] = m_start[1]/100;
-  ballPos[2] = m_start[2]/100;
-//   ballPos = m_start;
-#endif
-  m_currPosition = ballPos;
+  if(m_objPoses.size()>0){
+    m_currPosition = m_objPoses[0]/100;
+  }else{
+    m_currPosition = m_initPosition/100;
+  }
 }
 
 ObjectController::~ObjectController()
@@ -179,7 +143,6 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   str = str + " " + boxPos.toString(-1,1).c_str();
   str = str + " 0.8 0.8 0.8";
   std::cout << str << std::endl;
-//     Bottle create_box("world mk sbox 1 0.1 0.5 0.0 0.4 0.6 0.8 0.8 0.8");
   Bottle create_box(ConstString(str.c_str()));
   outputStatePort.write(create_box,reply);
 #endif
@@ -190,7 +153,9 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
     str = "world mk ssph ";
   Vector rad;rad.push_back(m_radius/2);
   str = str + string(rad.toString().c_str());
-  str = str + " " + m_currPosition.toString(-1,1).c_str();
+  stringstream ss;
+  ss << m_currPosition;
+  str = str + " " + ss.str();
   str = str + " 0 1 0";
   std::cout << str << std::endl;
   Bottle create_ball(ConstString(str.c_str()));
@@ -216,12 +181,12 @@ void ObjectController::loop(){
     if(command > 0){
       if(m_stop){
 	m_stop = false;
-	std::cout << "Object motion Started from: " << m_currPosition.toString() << std::endl;
+	std::cout << "Object motion Started from: " << m_currPosition << std::endl;
       }
     }else{
       if(!m_stop){
 	m_stop = true;
-	std::cout << "Object motion Stopped at: " << m_currPosition.toString() << std::endl;
+	std::cout << "Object motion Stopped at: " << m_currPosition << std::endl;
       }
     }
   }
@@ -245,7 +210,7 @@ void ObjectController::loop(){
     #if 0
       yarp::sig::Vector vec = m_currPosition;
     #else
-      yarp::sig::Vector vec = getNextPos();	
+      Container<double> vec = getNextPosition();	
     #endif
       move_obj.addDouble(vec[0]); 
       move_obj.addDouble(vec[1]); 
@@ -267,43 +232,16 @@ bool ObjectController::interrupt(){
   return true;
 }
 
-yarp::sig::Vector ObjectController::getNextPosition(){
-  double t = Time::now() - startTime;   
-#if MYBOX
-  double dx = (round(xc + radius*cos(t))/100); 
-  double dy = (round(yc + radius*sin(t))/100); 
-  double dz = round(zc)/100;
-#else
-  double dx = (round(xc + radius*cos(t))/100); 
-  double dz = (round(zc + radius*sin(t))/100); 
-  double dy = round(yc)/100;
-#endif
-  m_currPosition[0] = dx;
-  m_currPosition[1] = dy;
-  m_currPosition[2] = dz;
-  return m_currPosition;
-}
-
-yarp::sig::Vector ObjectController::getNextPos(){
-  if(m_currStep==m_numPoints){
+Container<double> ObjectController::getNextPosition(){
+  if(m_currStep==m_numPoints || m_currStep>=m_objPoses.size()){
     m_currStep=0;
   }
-  double dx = (m_start[0]+m_step[0]*m_currStep)/100;
-  double dy = (m_start[1]+m_step[1]*m_currStep)/100;
-  double dz = (m_start[2]+m_step[2]*m_currStep)/100;
+  double dx = m_objPoses[m_currStep][0]/100;
+  double dy = m_objPoses[m_currStep][1]/100;
+  double dz = m_objPoses[m_currStep][2]/100;
   m_currPosition[0] = dx;
   m_currPosition[1] = dy;
   m_currPosition[2] = dz;
   m_currStep++;
   return m_currPosition;
-}
-
-std::string ObjectController::getPositionStr(yarp::sig::Vector& vector) const{
-  std::string str;
-  str += vector[0];
-  str += " ";
-  str += vector[1];
-  str += " ";
-  str += vector[2];
-  return str;
 }
