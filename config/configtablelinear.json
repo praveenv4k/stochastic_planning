@@ -201,6 +201,11 @@
       }
     }
   },
+  "elbow":{
+    "enabled":true,
+    "range":[120,60],
+    "length":0.3
+  },
   "armcontrol": {
     "arm": "left"
   },
