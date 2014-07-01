@@ -89,7 +89,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
 	if(m_elbowEnabled){
 	  std::vector<double> range;
 	  if(Utils::valueToVector(elbowConfig["range"],range)){
-	    double length = elbowConfig["length"].isNull() ? 0.3: elbowConfig["length"].asDouble();
+	    double length = elbowConfig["length"].isNull() ? 30: elbowConfig["length"].asDouble();
 	    trajPtr->getElbowPoses(m_objPoses,m_elbowPoses,range[0],range[1],length);
 	  }
 	}
@@ -110,6 +110,8 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   if(m_elbowPoses.size()>0){
     m_currElbowPosition = m_elbowPoses[0]/100;
   }
+  
+  m_stop = false;
 }
 
 ObjectController::~ObjectController()
@@ -236,7 +238,7 @@ void ObjectController::loop(){
       move_obj.addDouble(vec[1]); 
       move_obj.addDouble(vec[2]);
       outputStatePort.write(move_obj,reply); 
-      
+      cout << move_obj.toString() << std::endl;
       if(m_elbowEnabled && m_elbowPoses.size()>0){
 	string str;
 	str = "world set ssph 1";
@@ -246,6 +248,7 @@ void ObjectController::loop(){
 	move_elb.addDouble(m_currElbowPosition[1]); 
 	move_elb.addDouble(m_currElbowPosition[2]);
 	outputStatePort.write(move_elb,reply); 
+	cout << move_elb.toString() << std::endl;
       }
     }
   }

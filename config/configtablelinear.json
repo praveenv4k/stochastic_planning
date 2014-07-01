@@ -204,7 +204,7 @@
   "elbow":{
     "enabled":true,
     "range":[120,60],
-    "length":0.3
+    "length":30
   },
   "armcontrol": {
     "arm": "left"

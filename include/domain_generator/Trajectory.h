@@ -29,7 +29,7 @@ public:
 	elbPoses.push_back(pose);
 	ret=true;
       }else{
-	double step=(endAngle-startAngle)/objPoses.size();
+	double step=(endAngle-startAngle)/(objPoses.size()-1);
 	for(size_t i=0;i<objPoses.size();i++){
 	  Container<double> pose = objPoses[i];
 	  Container<double> pose2d;
@@ -37,9 +37,11 @@ public:
 	  pose2d[0]=pose[0],
 	  pose2d[1]=pose[1];
 	  
-	  Container<double> out2d = Utils::compute2dPoint(pose2d,startAngle+i*step,elbowLength);
+	  double angle = startAngle+i*step;
+	  Container<double> out2d = Utils::compute2dPoint(pose2d,angle,elbowLength);
 	  pose[0]=out2d[0];
 	  pose[1]=out2d[1];
+	  std::cout << "Object: " << objPoses[i] << " Elbow: " << pose  << " Angle : " << angle<< std::endl;
 	  elbPoses.push_back(pose);
 	}
 	ret=true;
@@ -185,8 +187,7 @@ public:
     m_current = m_init;
   }
   Container<double> getNextPose(){
-    //Container<double> delta = 
-    if(m_trajDiscPtr!=NULL){
+   if(m_trajDiscPtr!=NULL){
       if(m_trajDiscPtr->getNextPose(m_step,m_currentStep+m_step,m_current)){
 	m_currentStep+=m_step;
       }

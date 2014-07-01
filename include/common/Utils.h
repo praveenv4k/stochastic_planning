@@ -81,7 +81,7 @@ public:
   }
   
   template <typename T>
-  static bool deg2Radian(T deg){
+  static T deg2Radian(T deg){
     return deg*M_PI/180.0;
   }
   
@@ -151,6 +151,7 @@ public:
     }
     Container<T> ret;
     ret.resize(2);
+    std::cout << "Pt: " << pt2d << "; Angle " << angle << "; (C,S) " << cos(deg2Radian(angle)) << " " << sin(deg2Radian(angle)) << std::endl;
     ret[0] = pt2d[0] + cos(deg2Radian(angle))*length;
     ret[1] = pt2d[1] + sin(deg2Radian(angle))*length;
     return ret;
