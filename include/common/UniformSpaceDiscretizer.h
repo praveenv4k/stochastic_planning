@@ -11,9 +11,19 @@
 #include "AbstractSpaceDiscretizer.h"
 
 template <typename T>
+/**
+ * @brief Uniform space discretization class - Extends abstract discretizer
+ **/
 class UniformSpaceDiscretizer: public AbstractSpaceDiscretizer<T>
 {
 public:
+  /**
+   * @brief Constructor
+   *
+   * @param min min bounds
+   * @param max max bounds
+   * @param step discretization steps
+   **/
   UniformSpaceDiscretizer(Container<T> min,Container<T> max,Container<T> step)
   : m_step(step)
   {
@@ -23,6 +33,12 @@ public:
     initialize();
   }
 
+  /**
+   * @brief Get the value of the element at index
+   *
+   * @param id Spatial index
+   * @return Container< T > - Vector at index id
+   **/
   virtual Container<T> getValueAtIndex(int id){
     Container<int> indices;
     Container<T> values;
@@ -35,6 +51,12 @@ public:
     return values;
   }
 
+  /**
+   * @brief Bound check
+   *
+   * @param value Value to be checked
+   * @return bool - true if exists inside the space,false otherwise
+   **/
   virtual bool isInLimits(Container<T> value){
     bool ret = true;
     if(value.size() == this->m_min.size()){
@@ -48,6 +70,11 @@ public:
     return ret;
   }
 
+  /**
+   * @brief Reset the spatial index
+   *
+   * @return void
+   **/
   virtual void reset(){
     initialize();
   }

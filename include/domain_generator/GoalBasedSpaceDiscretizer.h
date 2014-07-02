@@ -12,8 +12,17 @@
 #include <string.h>
 #include <vector>
 
+/**
+ * @brief Goal Based Greedy discretizer
+ **/
 class GoalBasedSpaceDiscretizer:public AbstractSpaceDiscretizer<double>{
 public:
+  /**
+   * @brief Constructor
+   *
+   * @param trajDiscPtr Object trajectory pointer
+   * @param objectConfig Object configuration information
+   **/
   GoalBasedSpaceDiscretizer(TrajectoryDiscretizerPtr trajDiscPtr,Json::Value objectConfig)
     :m_trajDiscPtr(trajDiscPtr),m_objectConfig(objectConfig)
   {
@@ -24,6 +33,12 @@ public:
     initialize();
   }
   
+  /**
+   * @brief Get the spatial vector at a given index
+   *
+   * @param id Spatial index
+   * @return Container< double > - Element at index id
+   **/
   virtual Container<double> getValueAtIndex(int id){
     std::map<int,Container<double> >::iterator it = m_valueMap.find(id);
     if(it!=m_valueMap.end()){
@@ -35,6 +50,11 @@ public:
     return Container<double>();
   }
   
+  /**
+   * @brief Resets the index
+   *
+   * @return void
+   **/
   virtual void reset(){
     id=-1;
   }
