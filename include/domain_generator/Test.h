@@ -6,6 +6,16 @@
 #include "UniformSpaceDiscretizer.h"
 #include "GoalBasedSpaceDiscretizer.h"
 #include "Combinator.h"
+#include <boost/math/distributions.hpp>
+
+using boost::math::normal;
+
+#include <iostream>
+  using std::cout; using std::endl; using std::left; using std::showpoint; using std::noshowpoint;
+#include <iomanip>
+  using std::setw; using std::setprecision;
+#include <limits>
+  using std::numeric_limits;
 
 class Test{
 public:
@@ -113,6 +123,26 @@ public:
     std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
   }
   
+  static void testNormalDistribution(){
+    normal s;
+    double step = 1.; // in z 
+    double range = 4; // min and max z = -range to +range.
+    int precision = 17; // traditional tables are only computed to much lower precision.
+
+    std::cout << "Standard normal distribution, mean = "<< s.mean()
+    << ", standard deviation = " << s.standard_deviation() << std::endl;
+    
+    std::cout << "Probability distribution function values" << std::endl;
+    std::cout << "  z " "      pdf " << std::endl;
+    std::cout.precision(5);
+    for (double z = -range; z < range + step; z += step)
+    {
+      std::cout << left << setprecision(3) << setw(6) << z << " " 
+	<< setprecision(precision) << setw(12) << pdf(s, z) << std::endl;
+    }
+    std::cout.precision(6); // default
+  }
+  
   static void testAll(){
     std::cout << "************** Begin Test ***************" << std::endl;
     Container<int> state1;
@@ -126,6 +156,7 @@ public:
     testLinearDiscretizer();
     testGoalBasedDiscretizer();
     testPointDistance();
+    testNormalDistribution();
     std::cout << "************** End Test *****************" << std::endl;
   }
 };

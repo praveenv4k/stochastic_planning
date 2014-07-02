@@ -37,13 +37,14 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   
   // Initializing the private members
   m_VelX = 0.1; // 0.1 m/s
-  m_Mean = trajConfig["noise"]["mean"].asDouble(); // Zero mean //TODO
-  m_Sigma = trajConfig["noise"]["sigma"].asDouble(); // Standard Deviation in Position //TODO
+  m_Mean = 0; // Zero mean 
+  m_Sigma = 0; // Standard Deviation in Position 
   m_Period = period; // Period of the Thread;
   
   // Resizing the position vectors
   m_initPosition.resize(3);
   m_currPosition.resize(3);
+  m_exactPosition.resize(3);
   
   // Set the initial position. 
   // TODO Read from config file
@@ -80,31 +81,52 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
     m_static = false;
   }
   
+  m_noiseEnabled=false;
+  if(!trajConfig["noise"].isNull()){
+    m_noiseEnabled=trajConfig["noise"].asBool();
+    if(m_noiseEnabled){
+      m_Mean = trajConfig["noise"]["mean"].asDouble();
+      m_Sigma = trajConfig["noise"]["sigma"].asDouble();
+    }
+  }
+  
   m_elbowEnabled=false;
   TrajectoryDiscretizerPtr trajPtr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(trajConfig);
   if(trajPtr!=NULL){
     if(trajPtr->getAllPoses(m_numPoints,m_objPoses)){
+      
+      if(m_noiseEnabled){
+	TrajectoryDiscretizer::getNoisyPoses(m_Mean,m_Sigma,m_objPoses,m_noisyObjPoses);
+      }else{
+	for(size_t i=0;i<m_objPoses.size();i++){
+	  m_noisyObjPoses.push_back(m_objPoses[i]);
+	}
+      }
+      
       if(!elbowConfig.isNull()){
 	m_elbowEnabled = elbowConfig["enabled"].asBool();
 	if(m_elbowEnabled){
 	  std::vector<double> range;
 	  if(Utils::valueToVector(elbowConfig["range"],range)){
 	    double length = elbowConfig["length"].isNull() ? 30: elbowConfig["length"].asDouble();
-	    trajPtr->getElbowPoses(m_objPoses,m_elbowPoses,range[0],range[1],length);
+	    trajPtr->getElbowPoses(m_noisyObjPoses,m_elbowPoses,range[0],range[1],length);
 	  }
 	}
       }
     }
   }
   
+  
   m_multiple=20;
   m_currmult=0;
   m_stop = true;
 
-  if(m_objPoses.size()>0){
-    m_currPosition = m_objPoses[0]/100;
+  if(m_noisyObjPoses.size()>0){
+    m_currPosition = m_noisyObjPoses[0]/100;
+    m_exactPosition = m_objPoses[0]/100;
   }else{
     m_currPosition = m_initPosition/100;
+    m_exactPosition = m_initPosition/100;
   }
   
   if(m_elbowPoses.size()>0){
@@ -256,6 +278,9 @@ void ObjectController::loop(){
   // Send ball status to Planner
   Bottle &status = objectStatusPort.prepare();
   status.clear();
+  status.addDouble(m_exactPosition[0]);
+  status.addDouble(m_exactPosition[1]);
+  status.addDouble(m_exactPosition[2]);
   status.addDouble(m_currPosition[0]);
   status.addDouble(m_currPosition[1]);
   status.addDouble(m_currPosition[2]);
@@ -270,14 +295,18 @@ Container<double> ObjectController::getNextPosition(){
   if(m_currStep==m_numPoints || m_currStep>=m_objPoses.size()){
     m_currStep=0;
   }
-  double dx = m_objPoses[m_currStep][0]/100;
-  double dy = m_objPoses[m_currStep][1]/100;
-  double dz = m_objPoses[m_currStep][2]/100;
-  m_currPosition[0] = dx;
-  m_currPosition[1] = dy;
-  m_currPosition[2] = dz;
   
+//   double dx = m_objPoses[m_currStep][0]/100;
+//   double dy = m_objPoses[m_currStep][1]/100;
+//   double dz = m_objPoses[m_currStep][2]/100;
+//   m_currPosition[0] = dx;
+//   m_currPosition[1] = dy;
+//   m_currPosition[2] = dz;
+  
+  m_currPosition = m_noisyObjPoses[m_currStep]/100;
+  m_exactPosition = m_objPoses[m_currStep]/100;
   m_currElbowPosition = m_elbowPoses[m_currStep]/100;
+  
   m_currStep++;
   return m_currPosition;
 }

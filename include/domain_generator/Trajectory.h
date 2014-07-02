@@ -7,6 +7,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/math/constants/constants.hpp>
 #include "Utils.h"
+#include <boost/math/distributions.hpp>
+
+using boost::math::normal;
 
 class TrajectoryDiscretizer;
 class Trajectory;
@@ -20,6 +23,38 @@ public:
   }
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose)=0;
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses)=0;
+  
+  static bool getNoisyPoses(double mean, double std, std::vector<Container<double> >& objPoses,std::vector<Container<double> >& noisyPoses){
+    bool ret = true;
+    if(objPoses.size()>1){
+      normal s(mean,std);
+      int step = 1; // in z 
+      int minRange = floor(objPoses.size()/2); // min and max z = -range to +range.
+      int maxRange = minRange+objPoses.size()-1;
+      std::cout << "Standard normal distribution, mean = "<< s.mean()
+      << ", standard deviation = " << s.standard_deviation() << std::endl;
+
+      for (int z = -minRange; z <= maxRange; z++)
+      {
+	double noise = pdf(s,z);
+	Container<double> pose = objPoses[z+minRange];
+	
+	std::cout << "Actual : " << pose ;
+	
+	pose[2]+=noise;
+	noisyPoses.push_back(pose);
+	
+	std::cout << "Noisy : " << pose << std::endl ;
+	
+      }
+    }else{
+      for(size_t i=0;i<objPoses.size();i++){
+	noisyPoses.push_back(objPoses[i]);
+      }
+    }
+    return ret;
+  }
+  
   static bool getElbowPoses(std::vector<Container<double> >& objPoses,std::vector<Container<double> >& elbPoses,double startAngle,double endAngle,double elbowLength){
     bool ret=false;
     if(objPoses.size()>0){

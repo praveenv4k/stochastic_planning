@@ -50,6 +50,7 @@ private:
 
     Port outputStatePort;
     Container<double> m_currPosition;
+    Container<double> m_exactPosition;
     Container<double> m_currElbowPosition;
     Container<double> m_initPosition;
     
@@ -78,8 +79,10 @@ private:
     double m_radius;
     int m_numPoints;
     bool m_elbowEnabled;
+    bool m_noiseEnabled;
     
     std::vector<Container<double> > m_objPoses;
+    std::vector<Container<double> > m_noisyObjPoses;
     std::vector<Container<double> > m_elbowPoses;
     
     yarp::os::BufferedPort<yarp::os::Bottle> objectCmdPort;
