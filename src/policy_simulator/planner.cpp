@@ -39,9 +39,9 @@ void Planner::loop()
      objPosition[0] = objCmd->get(0).asDouble();
      objPosition[1] = objCmd->get(1).asDouble();
      objPosition[2] = objCmd->get(2).asDouble();
-     noisyObjPosition[0] = objCmd->get(3).asDouble();
-     noisyObjPosition[1] = objCmd->get(4).asDouble();
-     noisyObjPosition[2] = objCmd->get(5).asDouble();
+     noisyObjPosition[0] = objCmd->get(3).asDouble()*100;
+     noisyObjPosition[1] = objCmd->get(4).asDouble()*100;
+     noisyObjPosition[2] = objCmd->get(5).asDouble()*100;
    }
    Bottle* cmd = plannerCmdPort.read(false);
    if(cmd)
@@ -123,7 +123,7 @@ void Planner::loop()
 		planobjStsPort.writeStrict();
 	      }
 	  }else{
-	    std::cout << "Augmented state not found!" << std::endl;
+	    std::cout << "Augmented state (" << val << ") not found!" << std::endl;
 	  }
 	}
      }
@@ -131,14 +131,11 @@ void Planner::loop()
        //send = true;
      }else if(command == 10){
        if(sent==true){
-	 //posQueue.pop();
-	 //sent = false;
         }else{
 	}
 	if(!reached){
 	  reached = has_reached(augState,graspThreshold);
 	}
-        //send = true;
      }else if(command == 100){
      }
 

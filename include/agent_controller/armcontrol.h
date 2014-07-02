@@ -13,7 +13,6 @@
 #include <yarp/os/Time.h>
 
 #include <boost/shared_ptr.hpp>
-//#include <CGAL/Plane_3.h>
 
 #include "Config.h"
 #include "Types.h"
@@ -26,6 +25,8 @@
 
 using namespace Eigen;
 using namespace yarp::dev;
+
+#define SPOOF 0
 
 /**
  * @brief Context of a Robot Part
@@ -195,7 +196,46 @@ private:
   bool close_hand(boost::shared_ptr<ArmContext>& ctx,bool bSync=true);
   bool robot_to_world(const yarp::sig::Vector& robot,yarp::sig::Vector& world);
   bool world_to_robot(const yarp::sig::Vector& world,yarp::sig::Vector& robot);
+  void make_dummy_cube(){
+#if SPOOF
+    if (!spoofStatePort.open("/armcontrol/spoofobject"))
+    {
+      std::cout <<": unable to open port to send states\n";
+      return;  // unable to open; let RFModule know so that it won't run
+    }
+    /* Connect to iCub Simulation world */
+    if(!yarp::os::Network::connect("/armcontrol/spoofobject","/icubSim/world"))
+    {
+      std::cout <<": unable to connect to iCub Simulation world.\n";
+      return;  // unable to open; let RFModule know so that it won't run
+    }
+    
+    yarp::os::Bottle reply;
+    
+//     yarp::os::Bottle del_all("world del all"); 
+//     spoofStatePort.write(del_all,reply); 
+    
+    std::string str;
+    str = "world mk sbox 0.01 0.01 0.01 -0.1 0.60 0.35 1 0 0";
+    std::cout << str << std::endl;
+    yarp::os::Bottle create_box(yarp::os::ConstString(str.c_str()));
+    spoofStatePort.write(create_box,reply);
+#endif
+  }
+  void set_cube_position(yarp::sig::Vector& pos){
+#if SPOOF
+    yarp::os::Bottle move_obj("world set sbox 1");
+    yarp::os::Bottle reply;
+    move_obj.addDouble(pos[0]); 
+    move_obj.addDouble(pos[1]); 
+    move_obj.addDouble(pos[2]);
+    spoofStatePort.write(move_obj,reply);
+#endif
+  }
 private:
+#if SPOOF
+  yarp::os::Port spoofStatePort;
+#endif
   yarp::os::BufferedPort<yarp::os::Bottle> armCmdPort;
   yarp::os::BufferedPort<yarp::os::Bottle> armStatusPort;
   std::map<std::string,boost::shared_ptr<PartContext> > partCtxMap;

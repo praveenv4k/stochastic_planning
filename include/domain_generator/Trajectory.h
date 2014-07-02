@@ -30,7 +30,7 @@ public:
       normal s(mean,std);
       int step = 1; // in z 
       int minRange = floor(objPoses.size()/2); // min and max z = -range to +range.
-      int maxRange = minRange+objPoses.size()-1;
+      int maxRange = -minRange+objPoses.size()-1;
       std::cout << "Standard normal distribution, mean = "<< s.mean()
       << ", standard deviation = " << s.standard_deviation() << std::endl;
 

@@ -8,8 +8,6 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::math;
 
-#define SPOOF 1
-
 #include <math.h>
 
 void ArmControl::loop()
@@ -132,11 +130,18 @@ void ArmControl::loop()
 #else
 
 #if SPOOF
+		      set_cube_position(worldPos);
+		      yarp::os::Time::delay(0.5);
 #else
-		      iArm->goToPose(robotPos,arm_ctx->init_orient);
+		      //iArm->goToPose(robotPos,arm_ctx->init_orient);
+		      iArm->goToPosition(robotPos);
 		      if(!iArm->waitMotionDone()){
 			std::cout << "Wait motion done failed!" << std::endl;
 		      }
+		      Vector curPos,curOrient,curWpos;
+		      iArm->getPose(curPos,curOrient);
+		      robot_to_world(curPos,curWpos);
+		      std::cout << "Current Pos : " << curWpos.toString(-1,1) << " Current Orient : " << curOrient.toString(-1,1) << std::endl;
 #endif
 
 #endif  
@@ -173,31 +178,13 @@ void ArmControl::loop()
 			  tmpQ[i]=arm_ctx->open_pose[i-8];
 			}
 		      }
-		      //move_joints(arm_ctx->iPosCtrl,tmpQ);
 		      move_joints_pos(arm_ctx->iPosCtrl,partCtxMap["torso"]->iPosCtrl,tmpQ,grasp,out);
-// 		      yarp::os::Time::delay(0.1);
-// 		      if(grasp){
-// 			std::cout << "Closing Hand: "  << std::endl;
-// 			close_hand(arm_ctx);
-// 			std::cout << "Closed Hand: " << std::endl;
-// 		      }
-// 		      else{
-// 			std::cout << "Opening Hand: " << std::endl;
-// 			open_hand(arm_ctx);
-// 			std::cout << "Opened Hand: " << std::endl;
-// 		      }
-// 		      yarp::os::Time::delay(0.1);
-		      //move_joints_pos(arm_ctx->iPosCtrl,partCtxMap["torso"]->iPosCtrl,tmpQ,grasp,out);
-// Update
-// 		    cs.posn = tmpX;
-// 		    cs.ortn = tmpO;
-		    for(int i=0;i<3;i++){
-		      partCtxMap["torso"]->current_pose[i]=curPose[i];
-		    }
-		    for(int i=3;i<10;i++){
-		      arm_ctx->current_pose[i-3]=curPose[i];
-		    }
-		      //arm_ctx->current_pose = out;
+		      for(int i=0;i<3;i++){
+			partCtxMap["torso"]->current_pose[i]=curPose[i];
+		      }
+		      for(int i=3;i<10;i++){
+			arm_ctx->current_pose[i-3]=curPose[i];
+		      }
 		    }
 #endif
 		  }
@@ -354,36 +341,48 @@ bool ArmControl::open()
     
     Time::turboBoost();
     
-    initialize_robot();
-    
-    // Move the robot to fixed initial position after the configuration is done.
+#if SPOOF
+   make_dummy_cube();
    std::map<std::string,boost::shared_ptr<PartContext> >::iterator it;
    it=partCtxMap.find(Config::instance()->root["armcontrol"]["arm"].asString());
    if(it!=partCtxMap.end()){
-    boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
-    if(arm_ctx!=NULL){
-      if(arm_ctx->init_world_position.size()>0){
-	std::cout << "Moving " << partName <<  " to initial position " << arm_ctx->init_world_position.toString(-1,1) << std::endl;
-	Vector robotPos;
-	Vector pos;
-	Vector orient;
-	arm_ctx->iCartCtrl->getPose(pos,orient);
-	world_to_robot(arm_ctx->init_world_position,robotPos);
-// 	robotPos[0]=robotPos[0]/100;
-// 	robotPos[1]=robotPos[1]/100;
-// 	robotPos[2]=robotPos[2]/100;
-	arm_ctx->iCartCtrl->goToPose(robotPos,orient);
-	if(!arm_ctx->iCartCtrl->waitMotionDone()){
-	  std::cout << "Wait motion done failed!" << std::endl;
+      boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
+      if(arm_ctx!=NULL){
+	Vector worldPos;worldPos.resize(3);
+	worldPos[0]=-0.1;worldPos[1]=0.60;worldPos[2]=0.35;
+	arm_ctx->curr_world_position = worldPos;
+	arm_ctx->graspStatus=RELEASED;
+      }
+   }
+#else
+    initialize_robot();
+    
+    // Move the robot to fixed initial position after the configuration is done.
+    std::map<std::string,boost::shared_ptr<PartContext> >::iterator it;
+    it=partCtxMap.find(Config::instance()->root["armcontrol"]["arm"].asString());
+    if(it!=partCtxMap.end()){
+      boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
+      if(arm_ctx!=NULL){
+	if(arm_ctx->init_world_position.size()>0){
+	  std::cout << "Moving " << partName <<  " to initial position " << arm_ctx->init_world_position.toString(-1,1) << std::endl;
+	  Vector robotPos;
+	  Vector pos;
+	  Vector orient;
+	  arm_ctx->iCartCtrl->getPose(pos,orient);
+	  world_to_robot(arm_ctx->init_world_position,robotPos);
+	  arm_ctx->iCartCtrl->goToPose(robotPos,orient);
+	  if(!arm_ctx->iCartCtrl->waitMotionDone()){
+	    std::cout << "Wait motion done failed!" << std::endl;
+	  }
+	  arm_ctx->iCartCtrl->getPose(pos,orient);
+	  Vector worldPos;
+	  robot_to_world(pos,worldPos);
+	  arm_ctx->curr_world_position = arm_ctx->init_world_position;
+	  std::cout << "Current Pos: (" << worldPos.toString(-1,1) <<  ") Orient: " << orient.toString(-1,1) << std::endl;
 	}
-	arm_ctx->iCartCtrl->getPose(pos,orient);
-	Vector worldPos;
-	robot_to_world(pos,worldPos);
-	arm_ctx->curr_world_position = arm_ctx->init_world_position;
-	std::cout << "Current Pos: (" << worldPos.toString(-1,1) <<  ") Orient: " << orient.toString(-1,1) << std::endl;
       }
     }
-   }
+#endif
     
     bool ret=true;   
     ret = armCmdPort.open("/armcontrol/cmd/in");

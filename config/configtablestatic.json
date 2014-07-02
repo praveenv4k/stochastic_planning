@@ -129,7 +129,7 @@
       ],
       "step": [
         2,
-        1,
+        2,
         2,
         1
       ]
@@ -139,19 +139,19 @@
       "dim": 4,
       "min": [
         -2,
-        -1,
+        -2,
         -2,
         0
       ],
       "max": [
         2,
-        1,
+        2,
         2,
         1
       ],
       "step": [
         4,
-        2,
+        4,
         4,
         1
       ]
@@ -161,9 +161,9 @@
     "name": "ball",
     "radius": 3,
     "initialPos": [
-      -10,
+      10,
       53,
-      35
+      45
     ],
     "color": [
       0,
@@ -176,38 +176,52 @@
       "step": 0.3141592,
       "samples": 1,
       "noise": {
+	"enabled" : true,
         "mean": 0,
-        "sigma": 1
+        "sigma": 3
       },
       "circular": {
         "center": [
           0,
           53,
-          35
+          45
         ],
         "radius": 10
       },
       "linear": {
         "start": [
-          -10,
+          10,
           53,
-          35
+          45
         ],
         "end": [
-          8,
+          -6,
           53,
-          35
+          45
         ]
       }
     }
+  },
+  "elbow":{
+    "enabled":false,
+    "range":[120,60],
+    "length":30,
+    "radius":2
   },
   "armcontrol": {
     "arm": "left"
   },
   "objectcontrol": {},
+  "domain_model":{
+    "reward":{
+      "scheme": "l2norm",
+      "max" :  500,
+      "collision" : -50
+    }
+  },
   "planner": {},
   "simulator":{
-    "policy_path": "../tests/20140630/test2_static/",
-    "start_state": 1567
+    "policy_path": "../tests/20140702/test3_static/",
+    "start_state": 602
   }
 }

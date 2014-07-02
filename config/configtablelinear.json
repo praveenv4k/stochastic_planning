@@ -206,7 +206,7 @@
     "enabled":true,
     "range":[120,60],
     "length":30,
-    "radius":3,
+    "radius":2
   },
   "armcontrol": {
     "arm": "left"

@@ -188,7 +188,7 @@ bool DomainExtractor::isInCollision(Container<double> robot,Container<double> ob
   bool ret=false;
   if(elbowEnabled){
     double dist = Utils::ptDistToLine(robot,std::pair<Container<double>,Container<double> >(object,elbow));
-    ret = dist <= 2*elbowRadius;
+    ret = dist <= elbowRadius;
   }
   return ret;
 }

@@ -77,6 +77,7 @@ private:
     bool m_static;
     
     double m_radius;
+    double m_elbowRadius;
     int m_numPoints;
     bool m_elbowEnabled;
     bool m_noiseEnabled;

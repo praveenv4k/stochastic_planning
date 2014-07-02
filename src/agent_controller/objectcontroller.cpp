@@ -109,14 +109,17 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
 	  std::vector<double> range;
 	  if(Utils::valueToVector(elbowConfig["range"],range)){
 	    double length = elbowConfig["length"].isNull() ? 30: elbowConfig["length"].asDouble();
-	    trajPtr->getElbowPoses(m_noisyObjPoses,m_elbowPoses,range[0],range[1],length);
+	    m_elbowRadius = elbowConfig["radius"].asDouble();
+	    m_elbowRadius/=100;
+	    std::cout << "Get Elbow pos: " << length << "," << range[0] << "," << range[1] << std::endl;
+	    TrajectoryDiscretizer::getElbowPoses(m_noisyObjPoses,m_elbowPoses,range[0],range[1],length);
 	  }
 	}
       }
     }
   }
   
-  
+   
   m_multiple=20;
   m_currmult=0;
   m_stop = true;
@@ -134,6 +137,8 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   }
   
   m_stop = false;
+  
+  std::cout << "Object constructed" << std::endl;
 }
 
 ObjectController::~ObjectController()
@@ -181,7 +186,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   else
     str = "world mk ssph ";
   Vector rad;
-  rad.push_back(m_radius/2); //TODO
+  rad.push_back(m_radius); //TODO
   str = str + string(rad.toString().c_str());
   stringstream ss;
   ss << m_currPosition;
@@ -194,7 +199,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   if(m_elbowEnabled && m_elbowPoses.size()>0){
     str = "world mk ssph ";
     Vector elb;
-    elb.push_back(m_radius);
+    elb.push_back(m_elbowRadius);
     str = str + string(elb.toString().c_str());
     stringstream ss;
     ss << m_currElbowPosition;
@@ -305,7 +310,9 @@ Container<double> ObjectController::getNextPosition(){
   
   m_currPosition = m_noisyObjPoses[m_currStep]/100;
   m_exactPosition = m_objPoses[m_currStep]/100;
-  m_currElbowPosition = m_elbowPoses[m_currStep]/100;
+  if(m_elbowEnabled && m_elbowPoses.size()>0){
+    m_currElbowPosition = m_elbowPoses[m_currStep]/100;
+  }
   
   m_currStep++;
   return m_currPosition;
