@@ -186,7 +186,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   else
     str = "world mk ssph ";
   Vector rad;
-  rad.push_back(m_radius); //TODO
+  rad.push_back(m_radius/2); //TODO
   str = str + string(rad.toString().c_str());
   stringstream ss;
   ss << m_currPosition;
