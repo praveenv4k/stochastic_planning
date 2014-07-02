@@ -66,18 +66,45 @@ using boost::bad_lexical_cast;
 struct VectorIndexHash;
 struct VectorIndexEqualTo;
 
+/**
+ * @brief Vector of strings
+ **/
 typedef vector< string > split_vector_type;
+/**
+ * @brief Pointer to yarp::sig::Vector type
+ **/
 typedef boost::shared_ptr<yarp::sig::Vector> VectorPtr;
+/**
+ * @brief Index Vector Map
+ **/
 typedef boost::unordered_map<int,VectorPtr > IndexVectorMap;
+/**
+ * @brief Vector Index Map
+ **/
 typedef boost::unordered_map<VectorPtr,int,VectorIndexHash,VectorIndexEqualTo> VectorIndexMap;
+/**
+ * @brief Pointer to Index Vector map
+ **/
 typedef boost::shared_ptr<IndexVectorMap> IndexVectorMapPtr;
+/**
+ * @brief Pointer to Vector Index Map
+ **/
 typedef boost::shared_ptr<VectorIndexMap> VectorIndexMapPtr;
 
 
+/**
+ * @brief Vector Index Hash class
+ **/
 struct VectorIndexHash
     : std::unary_function<VectorPtr, std::size_t>
 {
-    std::size_t operator()(VectorPtr const& e) const
+  /**
+   * @brief Hashing operator
+   *
+   * @param e Pointer to Vector
+   * @return :size_t - Hash
+   **/
+  std::size_t operator()(VectorPtr const& e) const
     {
       std::size_t seed = 0;
       for(size_t i=0;i<e->size();i++){
@@ -88,10 +115,20 @@ struct VectorIndexHash
     }
 };
 
+/**
+ * @brief Vector Index Equal to class
+ **/
 struct VectorIndexEqualTo
     : std::binary_function<VectorPtr, VectorPtr, bool>
 {
-    bool operator()(VectorPtr const& x, VectorPtr const& y) const
+  /**
+   * @brief Equality check functor
+   *
+   * @param x Vector ptr 1
+   * @param y Vector ptr 2
+   * @return bool - true if equal,false otherwise
+   **/
+  bool operator()(VectorPtr const& x, VectorPtr const& y) const
     {
       bool ret=true;
       for(size_t i=0;i<x->size();i++){
@@ -103,12 +140,19 @@ struct VectorIndexEqualTo
     }
 };
 
+/**
+ * @brief Policy Executor class
+ **/
 class Planner
 {
    
 public:
 
-    Planner()
+  /**
+   * @brief Constructor
+   *
+   **/
+  Planner()
     {
       first = true;
       sent=false;
@@ -152,15 +196,55 @@ public:
       m_ElaspedTime= boost::shared_ptr<ElapsedTime>(new ElapsedTime("Policy Execution Time"));
     }
 
+    /**
+     * @brief Open the ports
+     *
+     * @param rf Resource finder instance
+     * @return bool - true on success, false otherwise
+     **/
     bool open(yarp::os::ResourceFinder &rf);
 
+    /**
+     * @brief Close the ports
+     * 
+     * @return bool - true on success, false otherwise
+     **/
     bool close();
+    /**
+     * @brief Thread main loop
+     *
+     * @return void
+     **/
     void loop(); 
+    /**
+     * @brief Thread interrupt
+     *
+     * @return bool
+     **/
     bool interrupt();
-    
     bool read_states(std::string states_file);
+    /**
+     * @brief Read the states index mapping from file
+     *
+     * @param states_file State index map file
+     * @return bool - true on success,fakse otherwise
+     **/
     bool read_actions(std::string actions_file);
+    /**
+     * @brief Read the policy file
+     *
+     * @param domain_file Domain description file
+     * @param policy_file Policy file
+     * @return bool
+     **/
     bool read_policy(std::string domain_file, std::string policy_file);
+    /**
+     * @brief Parse state and action from string
+     *
+     * @param str String containing action index and action vector
+     * @param vec Parsed vector
+     * @return bool - true on success,false otherwise
+     **/
     bool parse_state_action(std::string str,std::vector<double>& vec){
       try{
 	if(!str.empty()){
@@ -176,9 +260,14 @@ public:
       }
       return true;
     }
-    
-    
     template <typename T>
+    /**
+     * @brief Compute L2 norm
+     *
+     * @param v1 Vector 1
+     * @param v2 Vector 2
+     * @return double - L2 norm
+     **/
     static double computeL2norm(T v1,T v2){
       size_t dim = v1.size();  
       if(dim != v2.size()){
@@ -191,10 +280,29 @@ public:
       }
       return sqrt(sum);
     }
-
+    /**
+     * @brief Initialize the plan
+     *
+     * @return bool - true on success,false otherwise
+     **/
     bool initialize_plan();
+    /**
+     * @brief Run the poliy for the specified number of steps
+     *
+     * @param iters Iteration count
+     * @param streamOut Output stream
+     * @param reward Reward
+     * @param expReward Expected reward
+     * @return int - Best action
+     **/
     int runFor(int iters, ofstream* streamOut, double& reward, double& expReward);
-
+    /**
+     * @brief Check if the agent has reached the target
+     *
+     * @param augState Augemented state
+     * @param graspThreshold Grasp threshold
+     * @return bool - true if reached , false otherwise
+     **/
     bool has_reached(yarp::sig::Vector& augState,double graspThreshold);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
