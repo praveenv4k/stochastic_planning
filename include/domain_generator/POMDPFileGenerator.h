@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __POMDPFILEGENERATOR_H__
 #define __POMDPFILEGENERATOR_H__
 

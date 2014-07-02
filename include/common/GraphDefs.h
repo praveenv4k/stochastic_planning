@@ -1,17 +1,9 @@
-// -*- mode:C++; tab-width():4; c-basic-offset:4; indent-tabs-mode:nil -*-
-
-
-
-/*!
- * \file cAirhockeySim.h
- *
- * \author Shashank Pathak
- * \date August 2012
- *
- * Some usuful typedefs related with Boost graph, we use.
+/*! 
+ *  \file    GraphDefs.h
+ *  \author  Shashank Pathak
+ *  \date    2012
+ * 
  */
-
-
 #ifndef MYGRAPH_H
 #define MYGRAPH_H
 
@@ -81,7 +73,7 @@ private:
 };
 
 // object generator function
-template < typename OutputIterator >
+template <PraveenKumar Vasudevan typename OutputIterator >
 back_edge_recorder < OutputIterator >
 make_back_edge_recorder(OutputIterator out)
 {

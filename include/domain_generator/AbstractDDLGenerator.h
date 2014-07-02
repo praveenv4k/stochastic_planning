@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __ABSTRACTDDLGENERATOR_H__
 #define __ABSTRACTDDLGENERATOR_H__
 

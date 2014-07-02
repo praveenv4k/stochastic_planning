@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __DOMAINEXTRACTOR_H__
 #define __DOMAINEXTRACTOR_H__
 

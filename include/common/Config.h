@@ -1,3 +1,7 @@
+/*! 
+ *  \author    Shashank Pathak
+ *  \date      2012
+ */
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
@@ -6,26 +10,59 @@
 #include <iostream>
 
 #define JINDEX (Json::Value::ArrayIndex)
-// #define PATH2CONFIG "config3dstatic.json"
 #define CONFIGFOLDER "../config/"
 #define MASTERCONFIG "master.json"
 #define PATH2CONFIG "../config/configtable.json"
 
+/**
+ * @brief JSON Configuration class
+ **/
 class Config
 {
 
 public:
-    static Config* instance();
-    static Config* refresh();
-    Json::Value root;
-    double totTime;
-    bool hasCollided;
+  /**
+   * @brief Single instance of the Config class
+   *
+   * @return Config* - Pointer to the Config class
+   **/
+  static Config* instance();
+  /**
+   * @brief Refresh the config (re-read the config file)
+   *
+   * @return Config*
+   **/
+  static Config* refresh();
+  /**
+   * @brief Root element of the JSON file
+   **/
+  Json::Value root;
+  /**
+   * @brief Total time
+   **/
+  double totTime;
+  bool hasCollided;
 
-    ~Config()
+  /**
+   * @brief Destructor
+   *
+   **/
+  ~Config()
     {
         instanceFlag = false;
     }
+    /**
+     * @brief Version of the configuration file
+     *
+     * @return int - Returns the version numner
+     **/
     static int GetVersion();
+    /**
+     * @brief Set the version number of the config file
+     *
+     * @param version Version number
+     * @return void
+     **/
     static void SetVersion(int version);
 private:
     static bool instanceFlag;

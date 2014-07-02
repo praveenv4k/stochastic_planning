@@ -1,22 +1,7 @@
-/*
-    <one line to give the program's name and a brief idea of what it does.>
-    Copyright (C) 2014  <copyright holder> <email>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef OBJECTCONTROLLER_H
 #define OBJECTCONTROLLER_H
 
@@ -25,18 +10,61 @@
 
 using namespace yarp::os;
 
+/**
+ * @brief The Object controller class which controls the motion of the object in the environment
+ **/
 class ObjectController
 {
 public:
-    ObjectController(const double period);
-    virtual ~ObjectController();
-    std::string getName() const{
+  /**
+   * @brief Constructor
+   *
+   * @param period Period of the thread
+   **/
+  ObjectController(const double period);
+  /**
+   * @brief Destructor
+   *
+   **/
+  virtual ~ObjectController();
+  /**
+   * @brief Name of the controller
+   *
+   * @return :string - Controller Name
+   **/
+  std::string getName() const{
       return "objectCtrl";
     }
+    /**
+     * @brief Get the next position of the object to be set onto the world
+     *
+     * @return Container< double > - Position vector (3D)
+     **/
     Container<double> getNextPosition();
+    /**
+     * @brief Open the device and ports
+     *
+     * @param rf Resource/Configuration information finder object
+     * @return bool - Success/Failure
+     **/
     bool open(yarp::os::ResourceFinder &rf);
+    /**
+     * @brief Close the ports/deinitialize
+     *
+     * @return bool - Success/Failure
+     **/
     bool close();
+    /**
+     * @brief Control Loop
+     *
+     * @return void
+     **/
     void loop(); 
+    /**
+     * @brief Interrupt the thread
+     *
+     * @return bool - Success.Failure
+     **/
     bool interrupt();
 private:
     ObjectController(const ObjectController& other)//:RateThread(10)

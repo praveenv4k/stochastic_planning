@@ -1,4 +1,7 @@
-
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #include <string>
 #include <vector>
 #include <yarp/os/ResourceFinder.h>
@@ -182,9 +185,29 @@ public:
 //          0    1.0000         0   -0.5976
 //          0         0         0    1.0000*/
   }
+  /**
+   * @brief Initializes the ports and configures the devices
+   *
+   * @return bool - Success/Failure of the configuration
+   **/
   bool open();
+  /**
+   * @brief Closes the Arm control ports
+   *
+   * @return bool - Success /Failure
+   **/
   bool close();
+  /**
+   * @brief Main control loop
+   *
+   * @return void
+   **/
   void loop(); 
+  /**
+   * @brief Interrupt the control thread
+   *
+   * @return bool
+   **/
   bool interrupt();
 private:
   void initialize_robot();

@@ -1,4 +1,7 @@
-
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #include <string>
 #include <vector>
 #include <yarp/os/ResourceFinder.h>

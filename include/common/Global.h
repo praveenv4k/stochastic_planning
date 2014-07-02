@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __GLOBAL_H__
 #define __GLOBAL_H__
 
@@ -9,7 +13,5 @@
 #include <iCub/ctrl/math.h>
 #include <json/json.h>
 #include <yarp/os/Time.h>
-//#include "GraphDefs.h"
-//#define EPSILON 1e-6
 
 #endif //__GLOBAL_H__

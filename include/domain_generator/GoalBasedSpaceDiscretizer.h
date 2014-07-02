@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __GOALBASEDSPACEDISCRETIZER_H__
 #define __GOALBASEDSPACEDISCRETIZER_H__
 

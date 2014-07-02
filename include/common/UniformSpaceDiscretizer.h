@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __UNIFORM_SPACE_DISCRETIZER_H__
 #define __UNIFORM_SPACE_DISCRETIZER_H__
 

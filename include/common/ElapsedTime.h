@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __ELAPSED_TIME_H__
 #define __ELAPSED_TIME_H__
 

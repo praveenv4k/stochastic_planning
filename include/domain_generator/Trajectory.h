@@ -1,3 +1,7 @@
+/*! 
+ *  \author    PraveenKumar Vasudevan
+ *  \date      2014
+ */
 #ifndef __TRAJECTORY_H__
 #define __TRAJECTORY_H__
 
