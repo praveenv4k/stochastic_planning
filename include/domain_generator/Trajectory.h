@@ -18,16 +18,53 @@ using boost::math::normal;
 class TrajectoryDiscretizer;
 class Trajectory;
 
+/**
+ * @brief Trajectory Discretizer pointer type definition
+ **/
 typedef boost::shared_ptr<TrajectoryDiscretizer> TrajectoryDiscretizerPtr;
+/**
+ * @brief Trajectory pointer type definition
+ **/
 typedef boost::shared_ptr<Trajectory> TrajectoryPtr;
 
+/**
+ * @brief Trajectory discretizer class
+ **/
 class TrajectoryDiscretizer{
 public:
+  /**
+   * @brief Constructor
+   *
+   **/
   TrajectoryDiscretizer(){
   }
+  /**
+   * @brief Get next pose of the object
+   *
+   * @param stepSize Step size
+   * @param currentStep Current step
+   * @param pose Pose output
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose)=0;
+  /**
+   * @brief Get all the poses
+   *
+   * @param numPoints number of requested poses
+   * @param poses List of poses
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses)=0;
   
+  /**
+   * @brief Get the noisy poses given the exact poses of the object
+   *
+   * @param mean Mean value
+   * @param std Standard deviation
+   * @param objPoses Exact object poses
+   * @param noisyPoses noisy object poses
+   * @return bool - true on success,false otherwise
+   **/
   static bool getNoisyPoses(double mean, double std, std::vector<Container<double> >& objPoses,std::vector<Container<double> >& noisyPoses){
     bool ret = true;
     if(objPoses.size()>1){
@@ -58,7 +95,16 @@ public:
     }
     return ret;
   }
-  
+  /**
+   * @brief Get the elbow positions
+   *
+   * @param objPoses Object poses
+   * @param elbPoses Elbow poses
+   * @param startAngle Start Angle of the elbow
+   * @param endAngle End angle of the elbow
+   * @param elbowLength Lenght of elbow
+   * @return bool - true on success,false otherwise
+   **/
   static bool getElbowPoses(std::vector<Container<double> >& objPoses,std::vector<Container<double> >& elbPoses,double startAngle,double endAngle,double elbowLength){
     bool ret=false;
     if(objPoses.size()>0){
@@ -90,10 +136,26 @@ public:
   }
 };
 
+/**
+ * @brief Bernoulli Discretization
+ **/
 class BernoulliDiscretizer:public TrajectoryDiscretizer{
 public:
+  /**
+   * @brief Constructor
+   *
+   * @param focalDistance Focal distance of bernoulli lemniscate
+   **/
   BernoulliDiscretizer(double focalDistance):m_focalDistance(focalDistance){
   }
+  /**
+   * @brief Get the next pose in the trajectory
+   *
+   * @param stepSize Step size
+   * @param currentStep Current step
+   * @param pose Object pose
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose){
     pose.resize(3);
     double root2 = sqrt(2);
@@ -115,11 +177,30 @@ private:
   double m_focalDistance;
 };
 
+/**
+ * @brief Circular trajectory Discretizer
+ **/
 class CircleTrajectoryDiscretizer:public TrajectoryDiscretizer{
 public:
+  /**
+   * @brief Constructor
+   *
+   * @param xc Center - X
+   * @param yc Center - Y
+   * @param zc Center - Z
+   * @param radius Radius of the circle
+   **/
   CircleTrajectoryDiscretizer(double xc,double yc,double zc, double radius)
       :m_radius(radius*100),m_xc(xc*100),m_yc(yc*100),m_zc(zc*100){
   }
+  /**
+   * @brief Get the next pose in the trajectory
+   *
+   * @param stepSize Step size
+   * @param currentStep Current step
+   * @param pose Object pose
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose){
     pose.resize(3);
     pose[0] = (round(m_xc + m_radius*cos(currentStep))/100); 
@@ -128,6 +209,13 @@ public:
     
     return true;
   }
+  /**
+   * @brief Get all the poses
+   *
+   * @param numPoints number of requested poses
+   * @param poses List of poses
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
     poses.resize(numPoints);
     double step = (2*M_PI)/numPoints;
@@ -149,18 +237,40 @@ private:
   double m_xc,m_yc,m_zc;
 };
 
+/**
+ * @brief Linear trajectory discretizer
+ **/
 class LinearTrajectoryDiscretizer:public TrajectoryDiscretizer{
   
 public:
-  
+  /**
+   * @brief Constructor
+   *
+   * @param start Start pt
+   * @param end End pt
+   **/
   LinearTrajectoryDiscretizer(Container<double> start,Container<double> end)
       :m_start(start),m_end(end){
   }
   
+  /**
+   * @brief Get the next pose in the trajectory
+   *
+   * @param stepSize Step size
+   * @param currentStep Current step
+   * @param pose Object pose
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose){
     return true;
   }
-  
+  /**
+   * @brief Get all the poses
+   *
+   * @param numPoints number of requested poses
+   * @param poses List of poses
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
     poses.resize(numPoints);
     Container<double> step;
@@ -184,17 +294,42 @@ private:
   Container<double> m_end;
 };
 
+/**
+ * @brief 2D circular trajectory discretizer
+ **/
 class Circle2DTrajectoryDiscretizer:public TrajectoryDiscretizer{
 public:
+  /**
+   * @brief Constructor
+   *
+   * @param xc Center - X
+   * @param yc Center - Y
+   * @param radius Radius
+   **/
   Circle2DTrajectoryDiscretizer(double xc,double yc, double radius)
       :m_radius(radius*100),m_xc(xc*100),m_yc(yc*100){
   }
+  /**
+   * @brief Get the next pose in the trajectory
+   *
+   * @param stepSize Step size
+   * @param currentStep Current step
+   * @param pose Object pose
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getNextPose(double stepSize, double currentStep,Container<double>& pose){
     pose.resize(2);
     pose[0] = (round(m_xc + m_radius*cos(currentStep))/100); 
     pose[1] = (round(m_yc + m_radius*sin(currentStep))/100);
     return true;
   }
+  /**
+   * @brief Get all the poses
+   *
+   * @param numPoints number of requested poses
+   * @param poses List of poses
+   * @return bool - true on success,false otherwise
+   **/
   virtual bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
     poses.resize(numPoints);
     double step = (2*M_PI)/numPoints;
@@ -212,8 +347,17 @@ private:
   double m_xc,m_yc;
 };
 
+/**
+ * @brief Trajectory class
+ **/
 class Trajectory{
 public:
+  /**
+   * @brief Constructor
+   *
+   * @param step Step
+   * @param trajDiscPtr Trajectory Discretizer pointer
+   **/
   Trajectory(double step, TrajectoryDiscretizerPtr trajDiscPtr )
       :m_step(step),m_currentStep(0),m_trajDiscPtr(trajDiscPtr){ 
     if(m_trajDiscPtr!=NULL){
@@ -222,9 +366,19 @@ public:
       }
     }
   }
+  /**
+   * @brief Reset trajectory
+   *
+   * @return void
+   **/
   void reset(){
     m_current = m_init;
   }
+  /**
+   * @brief Get next pose in the trajectory
+   *
+   * @return Container< double > - Pose
+   **/
   Container<double> getNextPose(){
    if(m_trajDiscPtr!=NULL){
       if(m_trajDiscPtr->getNextPose(m_step,m_currentStep+m_step,m_current)){
@@ -233,12 +387,29 @@ public:
     }
     return m_current;
   }
+  /**
+   * @brief Get initial position of the trajectory
+   *
+   * @return Container< double >& - Initial pse
+   **/
   Container<double>& getInitPose(){
     return m_init;
   }
+  /**
+   * @brief Get the current posture
+   *
+   * @return Container< double >& - Pose
+   **/
   Container<double>& getCurrentPose(){
     return m_current;
   }
+  /**
+   * @brief Get all the poses of the object
+   *
+   * @param numPoints Total number of points
+   * @param poses Poses
+   * @return bool - true on success and false on failure
+   **/
   bool getAllPoses(int numPoints, std::vector<Container<double> >& poses){
     if(m_trajDiscPtr !=NULL){
       return m_trajDiscPtr->getAllPoses(numPoints, poses);
@@ -253,8 +424,17 @@ private:
   TrajectoryDiscretizerPtr m_trajDiscPtr;
 };
 
+/**
+ * @brief TrajectoryDiscretizer Factory class
+ **/
 class TrajectoryDiscretizerFactory{
 public:
+  /**
+   * @brief Composes the trajectory discretizer given the config information
+   *
+   * @param trajConfig Trajectory configuration
+   * @return TrajectoryDiscretizerPtr - Pointer to the composed Trajectory discretizer
+   **/
   static TrajectoryDiscretizerPtr getTrajectoryDiscretizer(Json::Value trajConfig){
     TrajectoryDiscretizerPtr ptr;
     if(!trajConfig.isNull()){

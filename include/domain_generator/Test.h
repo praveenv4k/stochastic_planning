@@ -21,12 +21,27 @@ using boost::math::normal;
 #include <limits>
   using std::numeric_limits;
 
-class Test{
+  /**
+   * @brief Unit test class
+   **/
+  class Test{
 public:
+  /**
+   * @brief Test the container class
+   *
+   * @param state Container object
+   * @return void
+   **/
   static void testContainer(Container<int>& state){
     std::cout << state;
   }
   
+  /**
+   * @brief Discretizer test method
+   *
+   * @param state Container object
+   * @return void
+   **/
   static void testDiscretizer(Container<int>& state){
     Container<double> min;
     min.resize(3);
@@ -50,12 +65,24 @@ public:
     discretizer();
   }
   
+  /**
+   * @brief Combinator class test method
+   *
+   * @param state1 Container object 1
+   * @param state2 Container object 2
+   * @return void
+   **/
   static void testCombinator(Container<int>& state1, Container<int>& state2){
     Combinator<int> combinator(state1);
     Container<int> state3 = combinator(state2);
     state3.print();
   }
   
+  /**
+   * @brief Test JSON parsing and access
+   *
+   * @return void
+   **/
   static void testJson(){
     Config* config = Config::instance();
     Json::Value root = config->root;
@@ -75,6 +102,11 @@ public:
     std::cout << robot["ss"]["dim"] << std::endl;
   }
   
+  /**
+   * @brief Test linear discretizer
+   *
+   * @return void
+   **/
   static void testLinearDiscretizer(){
     Container<double> v1;v1.resize(3);v1[0]=0;v1[1]=0;v1[2]=2;
     Container<double> v2;v2.resize(3);v2[0]=2;v2[1]=0;v2[2]=4;
@@ -86,6 +118,11 @@ public:
     }
   }
   
+  /**
+   * @brief Test goal based discretizer
+   *
+   * @return void
+   **/
   static void testGoalBasedDiscretizer(){
     Json::Value object = Config::instance()->root["object"];
     Json::Value linConfig = object["trajectory"]["linear"];
@@ -101,6 +138,11 @@ public:
     }
   }
   
+  /**
+   * @brief Test the point distance calculation utility
+   *
+   * @return void
+   **/
   static void testPointDistance(){
     Container<double> pt;pt.resize(3);pt[0]=10;pt[1]=23;pt[2]=9;
     Container<double> p1;p1.resize(3);p1[0]=1;p1[1]=2;p1[2]=2;
@@ -127,6 +169,11 @@ public:
     std::cout << "Distance of the point " << pt << " from line (" << p1 << ");(" << p2 << ") : " << dist << std::endl;
   }
   
+  /**
+   * @brief Test normal distribution class
+   *
+   * @return void
+   **/
   static void testNormalDistribution(){
     normal s;
     double step = 1.; // in z 
@@ -147,6 +194,11 @@ public:
     std::cout.precision(6); // default
   }
   
+  /**
+   * @brief Master test method
+   *
+   * @return void
+   **/
   static void testAll(){
     std::cout << "************** Begin Test ***************" << std::endl;
     Container<int> state1;
