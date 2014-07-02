@@ -2,7 +2,7 @@
 #include "POMDPFileGenerator.h"
 #include "ElapsedTime.h"
 #include "UniformSpaceDiscretizer.h"
-#include "GoalBasedSpaceDiscretizer.h"
+#include "GoalBasedSpaceDiscretizer.h"	
 
 void DomainExtractor::generate(){
   Json::Value robotSpace = m_config["robot"]["ss"]["min"];
@@ -12,6 +12,7 @@ void DomainExtractor::generate(){
   m_objectDim = objectSpace.asUInt();  
   
   farGrasp = m_config["robot"]["grasp"]["farGrasp"].asBool();
+  elbowEnabled = m_config["elbow"]["enabled"].asBool();
   
   {
     ElapsedTime elapse(std::string("Writing statespace map"));
@@ -88,8 +89,8 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
   for(size_t i=0;i<discretizer->size();i++){
     int id = discretizer->operator()();
     Container<double> val = discretizer->getValueAtIndex(id);
-    for(int i=0; i<numPoints;i++){
-      Container<double> pose = poses[i];
+    for(int objId=0; objId<numPoints;objId++){
+      Container<double> pose = poses[objId];
       std::vector<double> robotPos = val;
       robotPos.pop_back();
       
@@ -132,6 +133,16 @@ void DomainExtractor::createStateSpaceMap(){
    std::cout << "Cannot get requested number of Points" << std::endl; 
   }
   
+  std::vector<Container<double> > elbowPoses;
+  if(elbowEnabled){
+    std::vector<double> range;
+    if(Utils::valueToVector(m_config["elbow"]["range"],range)){
+      double length = m_config["elbow"]["length"].isNull() ? 30: m_config["elbow"]["length"].asDouble();
+      elbowRadius = m_config["elbow"]["radius"].asDouble();
+      TrajectoryDiscretizer::getElbowPoses(poses,elbowPoses,range[0],range[1],length);
+    }
+  }
+  
   AbstractSpaceDiscretizerPtr discretizer=getSpaceDiscretizer(ss);
   
   std::cout << "State Space size: " << discretizer->size() << std::endl;
@@ -140,18 +151,27 @@ void DomainExtractor::createStateSpaceMap(){
   for(size_t i=0;i<discretizer->size();i++){
     int id = discretizer->operator()();
     Container<double> val = discretizer->getValueAtIndex(id);
-    for(int i=0; i<numPoints;i++){
-      Container<double> pose = poses[i];
+    for(int objId=0; objId<numPoints;objId++){
+      Container<double> pose = poses[objId];
       
-      std::vector<double> robotPos;
+      Container<double> robotPos;
       //Extract Robot position
-      for(size_t i=0;i<m_agentDim-1;i++){
-	robotPos.push_back(val[i]);
+      for(size_t posId=0;posId<m_agentDim-1;posId++){
+	robotPos.push_back(val[posId]);
       }
       
       bool graspable=false;
       std::vector<double> ss = Utils::concatenate(val,pose);
       double norm = computeNorm(ss,graspable);
+      
+      bool collision = false;
+      if(elbowPoses.size()>0 && elbowEnabled){
+	Container<double> elbowPose = elbowPoses[objId];
+	collision = isInCollision(robotPos,pose,elbowPose);
+      }
+      
+      m_collisionMap[index]=collision;
+      
       if(val[m_agentDim-1]>0){
 	if(graspable || farGrasp){
 	  m_stateIndexMap[ss]=index++;
@@ -162,6 +182,15 @@ void DomainExtractor::createStateSpaceMap(){
     }
   }
   std::cout << m_stateIndexMap.size() <<std::endl;
+}
+
+bool DomainExtractor::isInCollision(Container<double> robot,Container<double> object,Container<double> elbow){
+  bool ret=false;
+  if(elbowEnabled){
+    double dist = Utils::ptDistToLine(robot,std::pair<Container<double>,Container<double> >(object,elbow));
+    ret = dist <= 2*elbowRadius;
+  }
+  return ret;
 }
 
 void DomainExtractor::createActionSpaceMap(){
@@ -186,7 +215,8 @@ void DomainExtractor::generateTables(){
   }
     
   for(StateIndexMap::iterator it=m_stateIndexMap.begin();it!=m_stateIndexMap.end();it++){
-    m_rewardMap[it->second] = computeReward(it->first);
+    bool collision = m_collisionMap[it->second];
+    m_rewardMap[it->second] = computeReward(it->first,collision);
     for(StateIndexMap::iterator ait=m_actionIndexMap.begin();ait!=m_actionIndexMap.end();ait++){
       int id = ait->second;
       std::vector<double> val = ait->first;
@@ -231,23 +261,30 @@ double DomainExtractor::computeNorm(std::vector<double> state,bool& graspable){
 }
 
 
-double DomainExtractor::computeReward(std::vector<double> state){
+double DomainExtractor::computeReward(std::vector<double> state,bool inCollision){
   std::vector<double> robotPos;
   std::vector<double> objectPos;
   double reward = -1;
   //Extract Robot position
   bool graspable=false;
   double norm = computeNorm(state,graspable);
-  if(graspable){
-    if(Utils::isEqual(state[m_agentDim-1],1)){
-      reward = 500;
-    }else{
-      //reward = 50;
+  if(inCollision){
+    double colReward =  m_config["domain_model"]["reward"]["collision"].isNull()?
+			-50:m_config["domain_model"]["reward"]["collision"].asDouble();
+    reward = -norm+colReward;
+  }else{
+    if(graspable){
+      if(Utils::isEqual(state[m_agentDim-1],1)){
+	reward = m_config["domain_model"]["reward"]["max"].isNull()?
+			500:m_config["domain_model"]["reward"]["max"].asDouble();
+      }else{
+	//reward = 50;
+	reward = -norm;
+      }
+    }
+    else{
       reward = -norm;
     }
-  }
-  else{
-    reward = -norm;
   }
   return reward;
 }

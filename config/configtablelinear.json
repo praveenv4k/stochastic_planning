@@ -205,7 +205,8 @@
   "elbow":{
     "enabled":true,
     "range":[120,60],
-    "length":30
+    "length":30,
+    "radius":3,
   },
   "armcontrol": {
     "arm": "left"

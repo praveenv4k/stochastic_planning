@@ -24,17 +24,21 @@ private:
   AbstractSpaceDiscretizerPtr getSpaceDiscretizer(Json::Value config);
   void generateTables();
   void generateDDLFile(std::string& filePath);
-  double computeReward(std::vector<double> state);
+  double computeReward(std::vector<double> state,bool inCollision);
   double computeNorm(std::vector<double> state,bool& graspable);
+  bool isInCollision(Container<double> robot,Container<double> object,Container<double> elbow);
 private:
   Json::Value m_config;
   StateIndexMap m_stateIndexMap;
   StateIndexMap m_actionIndexMap;
   TransitionMap m_transitionMap;
+  CollisionMap m_collisionMap;
   RewardMap m_rewardMap;
   size_t m_agentDim;
   size_t m_objectDim;
   bool farGrasp;
+  bool elbowEnabled;
+  double elbowRadius;
 };
 
 #endif
