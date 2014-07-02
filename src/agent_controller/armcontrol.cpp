@@ -133,8 +133,8 @@ void ArmControl::loop()
 		      set_cube_position(worldPos);
 		      yarp::os::Time::delay(0.5);
 #else
-		      //iArm->goToPose(robotPos,arm_ctx->init_orient);
-		      iArm->goToPosition(robotPos);
+		      iArm->goToPose(robotPos,arm_ctx->init_orient);
+		      //iArm->goToPosition(robotPos);
 		      if(!iArm->waitMotionDone()){
 			std::cout << "Wait motion done failed!" << std::endl;
 		      }

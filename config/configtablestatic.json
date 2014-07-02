@@ -161,9 +161,9 @@
     "name": "ball",
     "radius": 3,
     "initialPos": [
-      10,
+      0,
       53,
-      45
+      40
     ],
     "color": [
       0,
@@ -184,20 +184,20 @@
         "center": [
           0,
           53,
-          45
+          40
         ],
         "radius": 10
       },
       "linear": {
         "start": [
-          10,
+          0,
           53,
-          45
+          40
         ],
         "end": [
-          -6,
+          10,
           53,
-          45
+          40
         ]
       }
     }
@@ -221,7 +221,7 @@
   },
   "planner": {},
   "simulator":{
-    "policy_path": "../tests/20140702/test3_static/",
-    "start_state": 602
+    "policy_path": "../tests/20140702/test4_static/",
+    "start_state": 10
   }
 }
