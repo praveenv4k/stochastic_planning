@@ -126,6 +126,7 @@ public:
       fhout.resize(xDim);
       
       objPosition.resize(3);
+      noisyObjPosition.resize(3);
       robotPosition.resize(4);
       augState.resize(7);
       mult = 1;
@@ -200,6 +201,7 @@ private:
     std::queue<yarp::sig::Vector> posQueue;
     
     yarp::sig::Vector objPosition;
+    yarp::sig::Vector noisyObjPosition;
     yarp::sig::Vector robotPosition;
     yarp::sig::Vector augState;
     int action;

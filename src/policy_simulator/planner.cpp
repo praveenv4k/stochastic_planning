@@ -39,6 +39,9 @@ void Planner::loop()
      objPosition[0] = objCmd->get(0).asDouble();
      objPosition[1] = objCmd->get(1).asDouble();
      objPosition[2] = objCmd->get(2).asDouble();
+     noisyObjPosition[0] = objCmd->get(3).asDouble();
+     noisyObjPosition[1] = objCmd->get(4).asDouble();
+     noisyObjPosition[2] = objCmd->get(5).asDouble();
    }
    Bottle* cmd = plannerCmdPort.read(false);
    if(cmd)
@@ -168,10 +171,17 @@ bool Planner::has_reached(yarp::sig::Vector& augState,double graspThreshold){
   if(augState.size()==7){
     Vector robot,object;
     robot.resize(3);object.resize(3);
+#if 0
     for(int i=0;i<3;i++){
       robot[i]=augState[i];
       object[i]=augState[i+4];
     }
+#else
+    for(int i=0;i<3;i++){
+      robot[i]=augState[i];
+      object[i]=noisyObjPosition[i];
+    }
+#endif
     object[1]+=radius;
     dist = Planner::computeL2norm<Vector>(robot,object);
     cout << "Distance Threshold : (" << robot.toString(-1,1) << "),(" <<object.toString(-1,1) << ") :" << dist << std::endl;
