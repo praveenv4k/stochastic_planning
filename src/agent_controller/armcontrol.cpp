@@ -434,7 +434,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   
   ctx->ddCart = armDriver;
   ctx->iCartCtrl = iArm;
-    
+  
   // set trajectory time
   iArm->setTrajTime(1.0);
 
@@ -452,7 +452,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   // send the request for dofs reconfiguration
   iArm->setDOF(newDof,curDof);
 
-#if 1
+#if 0
   // Dont bend more than 15 degrees
   double min, max;
   iArm->getLimits(0,&min,&max);
@@ -462,6 +462,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   iArm->setLimits(2,-15,15);
   iArm->setLimits(1,-15,15);
 #endif
+
 
   //Set joint reference speeds
   int axes;
