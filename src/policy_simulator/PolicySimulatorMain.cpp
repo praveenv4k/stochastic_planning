@@ -38,6 +38,46 @@ public:
     {
       delete planner;        
     }
+    
+    bool checkModelCheckerFileGen(){
+      bool ret=false;
+      root = Config::instance()->root;
+      std::string policy_folder = root["simulator"]["policy_path"].asString();
+      
+      if(!policy_folder.empty()){
+	
+	std::string actionFile = policy_folder+"action.txt";
+	std::string statesFile = policy_folder+"states.txt";
+	std::string policyMap = policy_folder+"policymap.txt";
+	std::string collision = policy_folder+"collision.txt"; 
+	std::string modelcheck = policy_folder+"modelcheck.txt";
+	
+	{
+	  ElapsedTime elapsed("Reading Actions Map");
+	  planner->read_actions(actionFile);
+	}
+	{
+	  ElapsedTime elapsed("Reading States Map");
+	  planner->read_states(statesFile);
+	}
+	{
+	  ElapsedTime elapsed("Reading Policy map");
+	  planner->read_policy_map(policyMap);
+	}
+	{
+	  ElapsedTime elapsed("Read Collision Map");
+	  planner->read_collision(collision);
+	}
+	{
+	  ElapsedTime elapsed("Generate model checker file");
+	  planner->generateModelCheckerFile(modelcheck);
+	}
+	return true;
+      }
+      else{
+	return false;
+      }
+    }
 
     bool configure(ResourceFinder &rf)
     {
@@ -125,7 +165,7 @@ public:
 
 int main(int argc, char *argv[])
 {   
-#if 1
+#if 0
   // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 
@@ -135,8 +175,11 @@ int main(int argc, char *argv[])
         fprintf(stdout,"Error: yarp server does not seem available\n");
         return -1;
     }
-#endif
     PolicySimulatorModule module;
     ResourceFinder rf;
     return module.runModule(rf);
+#else
+    PolicySimulatorModule module;
+    return module.checkModelCheckerFileGen();
+#endif
 }

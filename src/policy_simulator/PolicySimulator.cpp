@@ -719,7 +719,7 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
   }
   
   std::vector<Container<double> > poses;
-  if(ptr->getAllPoses(Config::instance()->root["object"]["trajectory"]["samples"].asInt(),poses)){
+  if(!ptr->getAllPoses(Config::instance()->root["object"]["trajectory"]["samples"].asInt(),poses)){
     std::cout << "Cannot retrieve the traj samples" << std::endl;
     return ret;
   }
@@ -733,6 +733,12 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
     std::fstream checkerStream;
     checkerStream.open(filePath.c_str(),std::fstream::out);
     if(checkerStream.good()){
+      
+      checkerStream << "dtmc" << std::endl; 
+      checkerStream << "module grasp" << std::endl; 
+      checkerStream << "s: [0.." << m_States->size()-1 << "] init 0;"<<std::endl;
+      checkerStream << "f: bool init false;" << std::endl;
+      
       for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
 	std::vector<double> objectPos;
 	std::vector<double> robotPos;
@@ -753,7 +759,9 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
 	std::map<std::vector<double>,double> noisyObjectPoses;
 	int matchingPose=-1;
 	for(size_t i=0;i<poses.size();i++){
+	  //std::cout << poses[i] << "; " << objectPos << std::endl;
 	  if(Utils::areEqual(poses[i],objectPos)){
+	    matchingPose=i;
 	    break;
 	  }
 	}
@@ -787,20 +795,23 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
 	  return ret;
 	}
 	
-	checkerStream << "[]s=" << it->first << " -> ";
+	checkerStream << "[] s = " << it->first << " -> ";
 	int plus=0;
 	for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){
 	  std::vector<double> augmentedSpace = Utils::concatenate(robotPos,iter->first);
 	  StateIndexMap::iterator found = m_StateIndexMap.find(augmentedSpace);
 	  if(found!=m_StateIndexMap.end()){
 	    if(plus>0){
-	      checkerStream << "+";
+	      checkerStream << " + ";
 	    }
 	    int nextState = found->second;
-	    checkerStream << iter->second << ":s'=" << nextState;
+	    checkerStream << iter->second << " : (s' = " << nextState << ")";
 	    bool collision = m_CollisionMap[nextState];
 	    if(collision){
-	      checkerStream << "& f=true ";
+	      checkerStream << " & (f' = true) ";
+	    }
+	    else{
+	      checkerStream << " & (f' = false) ";
 	    }
 	  }
 	  plus++;
@@ -808,7 +819,16 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
 	checkerStream << std::endl;
       }
     }
+    checkerStream << "endmodule" << std::endl; 
+    checkerStream << "rewards \"steps\"" << std::endl;
+    checkerStream << "     [] true : 1 ;" << std::endl;
+    checkerStream << "endrewards" << std::endl;
+    checkerStream << "rewards \"bad\"" << std::endl;
+    checkerStream << "     f=true : 1 ;" << std::endl;
+    checkerStream << "endrewards" << std::endl;
+
   }
+
   return ret;
 }
 
