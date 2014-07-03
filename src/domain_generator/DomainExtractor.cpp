@@ -61,6 +61,33 @@ void DomainExtractor::generate(){
     std::string checker("collision.txt");
     generateCollisionMapFile(checker);
   }
+  
+  {
+    std::cout << "Generating the good/bad states" << std::endl;
+    ElapsedTime elapse(std::string("Generating the good/bad states File"));
+    std::string sink("sinkstates.txt");
+    std::fstream outStream;
+    outStream.open(sink.c_str(),std::fstream::out);
+    if(outStream.good()){
+      int start=0;
+      for(std::map<int,bool>::iterator it= m_badStates.begin();it!=m_badStates.end();it++){
+	if(start>0){
+	  outStream << " ";
+	}
+	outStream << it->first;
+	start++;
+      }
+      outStream << std::endl;
+      start=0;
+      for(std::map<int,bool>::iterator it= m_goodStates.begin();it!=m_goodStates.end();it++){
+	if(start>0){
+	  outStream << " ";
+	}
+	outStream << it->first;
+	start++;
+      }
+    }
+  }
 }
 
 void DomainExtractor::generateCollisionMapFile(std::string& filePath){
@@ -232,30 +259,59 @@ void DomainExtractor::generateTables(){
   if(m_stateIndexMap.size()==0 || m_actionIndexMap.size()==0){
     std::cout << "State/Action map empty. call createStateSpaceMap" << std::endl;
   }
-    
+  
+  double maxReward = m_config["domain_model"]["reward"]["max"].isNull()?
+			500:m_config["domain_model"]["reward"]["max"].asDouble();
+			
   for(StateIndexMap::iterator it=m_stateIndexMap.begin();it!=m_stateIndexMap.end();it++){
     bool collision = m_collisionMap[it->second];
-    m_rewardMap[it->second] = computeReward(it->first,collision);
+    double reward = computeReward(it->first,collision);
+    m_rewardMap[it->second] = reward;
     for(StateIndexMap::iterator ait=m_actionIndexMap.begin();ait!=m_actionIndexMap.end();ait++){
       int id = ait->second;
       std::vector<double> val = ait->first;
       std::vector<double> state = it->first;
       std::vector<double> temp = state;
-      for(size_t j=0;j<val.size()-1;j++){
-	temp[j]+=val[j];
-      }
-      temp[val.size()-1]=val[val.size()-1];
-      //std::cout << temp << std::endl;
-      StateIndexMap::iterator found = m_stateIndexMap.find(temp);
-      if(found!=m_stateIndexMap.end()){
+// Sink States
+      if(collision){
 	std::vector<int> nextState;
-	nextState.push_back(found->second);
+	int nxtStateId = m_stateIndexMap[state];
+	nextState.push_back(nxtStateId);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	
+	std::map<int,bool>::iterator bIt = m_badStates.find(nxtStateId);
+	if(bIt==m_badStates.end()){
+	  m_badStates.insert(std::pair<int,bool>(nxtStateId,true));
+	}
       }
+      else if(Utils::isEqual(maxReward,reward)){
+	std::vector<int> nextState;
+	int nxtStateId = m_stateIndexMap[state];
+	nextState.push_back(nxtStateId);
+	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	
+	std::map<int,bool>::iterator bIt = m_goodStates.find(nxtStateId);
+	if(bIt==m_goodStates.end()){
+	  m_goodStates.insert(std::pair<int,bool>(nxtStateId,true));
+	}
+      }
+//////////////
       else{
-	std::vector<int> nextState;
-	nextState.push_back(m_stateIndexMap[state]);
-	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	for(size_t j=0;j<val.size()-1;j++){
+	  temp[j]+=val[j];
+	}
+	temp[val.size()-1]=val[val.size()-1];
+	StateIndexMap::iterator found = m_stateIndexMap.find(temp);
+	if(found!=m_stateIndexMap.end()){
+	  std::vector<int> nextState;
+	  nextState.push_back(found->second);
+	  m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	}
+	else{
+	  std::vector<int> nextState;
+	  nextState.push_back(m_stateIndexMap[state]);
+	  m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	}
       }
     }
   }

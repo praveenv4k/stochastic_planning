@@ -124,6 +124,8 @@ private:
   bool farGrasp;
   bool elbowEnabled;
   double elbowRadius;
+  std::map<int,bool> m_goodStates;
+  std::map<int,bool> m_badStates;
 };
 
 #endif

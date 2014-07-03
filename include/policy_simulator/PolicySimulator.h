@@ -259,6 +259,13 @@ public:
      **/
     bool read_policy(std::string domain_file, std::string policy_file);
     /**
+     * @brief Read the sink states file
+     *
+     * @param sink_file Sink states information path
+     * @return bool
+     **/
+    bool read_sink_states(std::string sink_file);
+    /**
      * @brief Parse state and action from string
      *
      * @param str String containing action index and action vector
@@ -331,6 +338,13 @@ public:
     * @return bool
     **/
     bool generateModelCheckerFile(std::string& checkerFile);
+    /**
+    * @brief Generate the DTMC file
+    *
+    * @param DTMC File Output file name
+    * @return bool
+    **/
+    bool generateDtmcFile(std::string& filePath);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
@@ -356,6 +370,7 @@ private:
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;
     CollisionMap m_CollisionMap;
+    CollisionMap m_SinkMap;
     PolicyMap m_PolicyMap;
 #ifdef VECTOR_PTR_MAP
     VectorIndexMapPtr m_VectorMap;
