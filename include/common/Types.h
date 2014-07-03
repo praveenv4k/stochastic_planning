@@ -129,6 +129,10 @@ typedef boost::unordered_map<int,double> RewardMap;
  **/
 typedef boost::unordered_map<int,bool> CollisionMap;
 /**
+ * @brief Policy map (s,a)
+ **/
+typedef boost::unordered_map<int,int> PolicyMap;
+/**
  * @brief Transition Matrix map
  **/
 typedef boost::unordered_map<StateActionTuple, std::vector<int>,StateActionHash,StateActionEqualTo > TransitionMap;

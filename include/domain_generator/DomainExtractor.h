@@ -81,6 +81,13 @@ private:
    **/
   void generateDDLFile(std::string& filePath);
   /**
+   * @brief Generates the Collision mapping file
+   *
+   * @param filePath File path
+   * @return void
+   **/
+  void generateCollisionMapFile(std::string& filePath);
+  /**
    * @brief Computes the reward given the augmented state space
    *
    * @param state Augmented State

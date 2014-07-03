@@ -1,5 +1,5 @@
 
-#include "planner.h"
+#include "PolicySimulator.h"
 
 using namespace std;
 using namespace yarp::os;
@@ -10,10 +10,22 @@ using namespace yarp::math;
 #include <math.h>
 #include <fstream>
 #include "Config.h"
+#include "Trajectory.h"
+
+#include <boost/math/distributions.hpp>
+
+using boost::math::normal;
+
+#include <iostream>
+  using std::cout; using std::endl; using std::left; using std::showpoint; using std::noshowpoint;
+#include <iomanip>
+  using std::setw; using std::setprecision;
+#include <limits>
+  using std::numeric_limits;
 
 #define DEBUG_TRACE_ON 1
 
-void Planner::loop()
+void PolicySimulator::loop()
 {
   if(first){
     first=false;
@@ -163,7 +175,7 @@ void Planner::loop()
    }
 }
 
-bool Planner::has_reached(yarp::sig::Vector& augState,double graspThreshold){
+bool PolicySimulator::has_reached(yarp::sig::Vector& augState,double graspThreshold){
   bool ret=false;
   if(augState.size()==7){
     Vector robot,object;
@@ -180,7 +192,7 @@ bool Planner::has_reached(yarp::sig::Vector& augState,double graspThreshold){
     }
 #endif
     object[1]+=radius;
-    dist = Planner::computeL2norm<Vector>(robot,object);
+    dist = PolicySimulator::computeL2norm<Vector>(robot,object);
     cout << "Distance Threshold : (" << robot.toString(-1,1) << "),(" <<object.toString(-1,1) << ") :" << dist << std::endl;
     if(dist < graspThreshold /*&& augState[3]>0*/){
       cout << "Reached close to object!" << std::endl;
@@ -190,7 +202,7 @@ bool Planner::has_reached(yarp::sig::Vector& augState,double graspThreshold){
   return ret;
 }
 
-bool Planner::open(yarp::os::ResourceFinder &rf)
+bool PolicySimulator::open(yarp::os::ResourceFinder &rf)
 {   
     bool ret=true;   
     ret = plannerCmdPort.open("/planner/cmd/in");
@@ -255,20 +267,20 @@ bool Planner::open(yarp::os::ResourceFinder &rf)
     return ret;
 }
 
-bool Planner::close()
+bool PolicySimulator::close()
 {
     plannerCmdPort.close();
     plannerStatusPort.close();
     return true;
 }
 
-bool Planner::interrupt()
+bool PolicySimulator::interrupt()
 {
     plannerCmdPort.interrupt();
     return true;
 }
 
-bool Planner::read_states(std::string states_file){
+bool PolicySimulator::read_states(std::string states_file){
   bool bret = false;
   if(!states_file.empty()){
     std::ifstream fs(states_file.c_str(),std::ifstream::in);
@@ -306,7 +318,7 @@ bool Planner::read_states(std::string states_file){
   return bret;
 }
 
-bool Planner::read_actions(std::string actions_file){
+bool PolicySimulator::read_actions(std::string actions_file){
   bool bret = false;
   if(!actions_file.empty()){
     std::ifstream fs(actions_file.c_str(),std::ifstream::in);
@@ -329,7 +341,51 @@ bool Planner::read_actions(std::string actions_file){
   return bret;
 }
 
-bool Planner::read_policy(std::string domain_file, std::string policy_file){
+bool PolicySimulator::read_collision(std::string collision_file){
+  bool bret = false;
+  if(!collision_file.empty()){
+    std::ifstream fs(collision_file.c_str(),std::ifstream::in);
+    string str;
+    while(std::getline(fs,str)){
+      std::vector<double> vec;
+      if(!str.empty()){
+	if(parse_state_action(str,vec)){
+	  if(vec.size()==2){
+	    m_CollisionMap.insert(std::pair<int,bool>((int)vec[0],(bool)vec[1]));
+	  }
+	}
+      }
+    }
+    bret = true;
+  }
+  std::cout << "Number of States in Collision map file: " << m_CollisionMap.size() <<std::endl;
+  return bret;
+}
+
+
+bool PolicySimulator::read_policy_map(std::string policy_map_file){
+  bool bret = false;
+  if(!policy_map_file.empty()){
+    std::ifstream fs(policy_map_file.c_str(),std::ifstream::in);
+    string str;
+    while(std::getline(fs,str)){
+      std::vector<double> vec;
+      if(!str.empty()){
+	if(parse_state_action(str,vec)){
+	  if(vec.size()>=2){
+	    m_PolicyMap.insert(std::pair<int,int>((int)vec[1],(int)vec[0]));
+	  }
+	}
+      }
+    }
+    bret = true;
+  }
+  std::cout << "Number of States in Collision map file: " << m_CollisionMap.size() <<std::endl;
+  return bret;
+}
+
+
+bool PolicySimulator::read_policy(std::string domain_file, std::string policy_file){
   try
     {
       SolverParams* p = &GlobalResource::getInstance()->solverParams;
@@ -411,7 +467,7 @@ bool Planner::read_policy(std::string domain_file, std::string policy_file){
     return 0;
 }
 
-bool Planner::initialize_plan(){
+bool PolicySimulator::initialize_plan(){
   engine->setup(problem,policy,solverParams);
   DEBUG_TRACE(cout << "runFor" << endl; );
   DEBUG_TRACE(cout << "iters " << iters << endl; );
@@ -472,7 +528,7 @@ bool Planner::initialize_plan(){
   return true;
 }
 
-int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expReward)
+int PolicySimulator::runFor(int iters, ofstream* streamOut, double& reward, double& expReward)
 { 
   //double mult=1;
   CPTimer lapTimer;
@@ -637,9 +693,123 @@ int Planner::runFor(int iters, ofstream* streamOut, double& reward, double& expR
 	}
 
     }
-
-
     return firstAction;
+}
+
+bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
+  bool ret=false;
+  if(m_States->size()==0 || m_Actions->size()==0 || m_CollisionMap.size()==0 || m_PolicyMap.size()==0){
+    std::cout << "State/Action/Collision/Policy map empty. Check if corresponding files are read" << std::endl;
+  }
+  
+  normal s;
+  int step = 1.; // in z 
+  int range = 2; // min and max z = -range to +range.
+  std::vector<double> prob;prob.resize(2*range+1);   
+  for (int z = -range; z < range + step; z += step)
+  {
+    prob[z+range]=pdf(s,z);
+  }
+  
+  TrajectoryDiscretizerPtr ptr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);;
+  
+  if(ptr==NULL){
+    std::cout << "Cannot retrieve the traj ptr" << std::endl;
+    return ret;
+  }
+  
+  std::vector<Container<double> > poses;
+  if(ptr->getAllPoses(Config::instance()->root["object"]["trajectory"]["samples"].asInt(),poses)){
+    std::cout << "Cannot retrieve the traj samples" << std::endl;
+    return ret;
+  }
+  
+  if(poses.size() < 5){
+    std::cout << "Too few samples in the trajectory" << std::endl;
+    return ret;
+  }
+  
+  if(!filePath.empty()){
+    std::fstream checkerStream;
+    checkerStream.open(filePath.c_str(),std::fstream::out);
+    if(checkerStream.good()){
+      for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
+	std::vector<double> objectPos;
+	std::vector<double> robotPos;
+	for(size_t i=0;i<4;i++){
+	  robotPos.push_back(it->second->operator[](i));
+	}
+	for(size_t i=4;i<it->second->size();i++){
+	  objectPos.push_back(it->second->operator[](i));
+	}
+	int bestAction = m_PolicyMap[it->first];
+	VectorPtr action = m_Actions->operator[](bestAction);
+	if(action!=NULL){
+	  for(size_t i=0;i<3;i++){
+	    robotPos[i]+=action->operator[](i);
+	  }
+	  robotPos[3]=action->operator[](3);
+	}
+	std::map<std::vector<double>,double> noisyObjectPoses;
+	int matchingPose=-1;
+	for(size_t i=0;i<poses.size();i++){
+	  if(Utils::areEqual(poses[i],objectPos)){
+	    break;
+	  }
+	}
+	if(matchingPose!=-1){
+	  double sum=0;
+	  for (int z = -range; z < range + step; z += step)
+	  {
+	    int id=matchingPose+z;
+	    if(id >=0 && id < poses.size()){
+	      double p=prob[z+range];
+	      sum+=p;
+	    }
+	  }
+	  if(sum>0){
+	    for (int z = -range; z < range + step; z += step)
+	    {
+	      int id=matchingPose+z;
+	      if(id >=0 && id < poses.size()){
+		double p=prob[z+range];
+		p/=sum;
+		noisyObjectPoses.insert(std::pair<std::vector<double>,double>(poses[id],p));
+	      }
+	    }
+	  }else{
+	    std::cout << "No matching id" << std::endl;
+	    return ret;
+	  }
+	}
+	else{
+	  std::cout << "Domain mismatch" << std::endl;
+	  return ret;
+	}
+	
+	checkerStream << "[]s=" << it->first << " -> ";
+	int plus=0;
+	for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){
+	  std::vector<double> augmentedSpace = Utils::concatenate(robotPos,iter->first);
+	  StateIndexMap::iterator found = m_StateIndexMap.find(augmentedSpace);
+	  if(found!=m_StateIndexMap.end()){
+	    if(plus>0){
+	      checkerStream << "+";
+	    }
+	    int nextState = found->second;
+	    checkerStream << iter->second << ":s'=" << nextState;
+	    bool collision = m_CollisionMap[nextState];
+	    if(collision){
+	      checkerStream << "& f=true ";
+	    }
+	  }
+	  plus++;
+	}
+	checkerStream << std::endl;
+      }
+    }
+  }
+  return ret;
 }
 
 

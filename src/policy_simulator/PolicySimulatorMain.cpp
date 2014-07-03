@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 
-#include "planner.h"
+#include "PolicySimulator.h"
 #include <json/json.h>
 #include "Config.h"
 #include "ElapsedTime.h"
@@ -23,18 +23,18 @@ using namespace yarp::dev;
 using namespace yarp::sig;
 using namespace yarp::math;
 
-class PlannerModule: public RFModule
+class PolicySimulatorModule: public RFModule
 {
-   Planner* planner;
+   PolicySimulator* planner;
    Json::Value root;
 public:
 
-    PlannerModule()
+    PolicySimulatorModule()
     {
-      planner = new Planner();
+      planner = new PolicySimulator();
     }
 
-    ~PlannerModule()
+    ~PolicySimulatorModule()
     {
       delete planner;        
     }
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 #endif
-    PlannerModule module;
+    PolicySimulatorModule module;
     ResourceFinder rf;
     return module.runModule(rf);
 }

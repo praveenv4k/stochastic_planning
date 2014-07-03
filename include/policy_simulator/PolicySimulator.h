@@ -143,7 +143,7 @@ struct VectorIndexEqualTo
 /**
  * @brief Policy Executor class
  **/
-class Planner
+class PolicySimulator
 {
    
 public:
@@ -152,7 +152,7 @@ public:
    * @brief Constructor
    *
    **/
-  Planner()
+    PolicySimulator()
     {
       first = true;
       sent=false;
@@ -222,14 +222,34 @@ public:
      * @return bool
      **/
     bool interrupt();
-    bool read_states(std::string states_file);
     /**
      * @brief Read the states index mapping from file
      *
      * @param states_file State index map file
      * @return bool - true on success,fakse otherwise
      **/
+    bool read_states(std::string states_file);
+    /**
+     * @brief Read the collision index mapping from file
+     *
+     * @param collision_file Collision index map file
+     * @return bool - true on success,fakse otherwise
+     **/
+    bool read_collision(std::string collision_file);
+    /**
+     * @brief Read the action index mapping from file
+     *
+     * @param actions_file Action index map file
+     * @return bool - true on success,fakse otherwise
+     **/
     bool read_actions(std::string actions_file);
+    /**
+     * @brief Read the Policy mapping (S->A) from file
+     *
+     * @param policy_map_file Policy map file (action,state,value)
+     * @return bool - true on success,fakse otherwise
+     **/
+    bool read_policy_map(std::string policy_map_file);
     /**
      * @brief Read the policy file
      *
@@ -304,6 +324,13 @@ public:
      * @return bool - true if reached , false otherwise
      **/
     bool has_reached(yarp::sig::Vector& augState,double graspThreshold);
+    /**
+    * @brief Generate the model checker file
+    *
+    * @param checkerFile Output file name
+    * @return bool
+    **/
+    bool generateModelCheckerFile(std::string& checkerFile);
 private:
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
@@ -328,6 +355,8 @@ private:
     double radius;
     IndexVectorMapPtr m_States;
     IndexVectorMapPtr m_Actions;
+    CollisionMap m_CollisionMap;
+    PolicyMap m_PolicyMap;
 #ifdef VECTOR_PTR_MAP
     VectorIndexMapPtr m_VectorMap;
 #else

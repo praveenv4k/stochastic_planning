@@ -29,7 +29,7 @@
 using namespace Eigen;
 using namespace yarp::dev;
 
-#define SPOOF 0
+#define SPOOF 1
 
 /**
  * @brief Context of a Robot Part

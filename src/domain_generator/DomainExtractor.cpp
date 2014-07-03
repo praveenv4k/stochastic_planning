@@ -54,6 +54,25 @@ void DomainExtractor::generate(){
     std::string ddlFile("domain.pomdp");
     generateDDLFile(ddlFile);
   }
+  
+  {
+    std::cout << "Generating Collision map file" << std::endl;
+    ElapsedTime elapse(std::string("Generating the collision map File"));
+    std::string checker("collision.txt");
+    generateCollisionMapFile(checker);
+  }
+}
+
+void DomainExtractor::generateCollisionMapFile(std::string& filePath){
+  if(m_collisionMap.size()>0){
+    std::fstream outStream;
+    outStream.open(filePath.c_str(),std::fstream::out);
+    if(outStream.good()){
+      for(CollisionMap::iterator it=m_collisionMap.begin();it!=m_collisionMap.end();it++){
+	outStream << it->first << " " <<  it->second << std::endl;
+      }
+    }
+  }
 }
 
 void DomainExtractor::generateDDLFile(std::string& filePath){
@@ -259,7 +278,6 @@ double DomainExtractor::computeNorm(std::vector<double> state,bool& graspable){
   graspable = (norm <= distThres);
   return norm;
 }
-
 
 double DomainExtractor::computeReward(std::vector<double> state,bool inCollision){
   std::vector<double> robotPos;

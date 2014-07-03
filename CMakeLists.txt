@@ -63,8 +63,8 @@ add_executable(object_controller
 add_executable(policy_simulator 
                src/jsoncpp-src-0.6.0-rc2/jsoncpp.cpp 
                src/common/Config.cpp 
-               src/policy_simulator/planner.cpp 
-               src/policy_simulator/StochasticPlannerMain.cpp)
+               src/policy_simulator/PolicySimulator.cpp 
+               src/policy_simulator/PolicySimulatorMain.cpp)
 
 TARGET_LINK_LIBRARIES(robot_controller ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 TARGET_LINK_LIBRARIES(object_controller ${YARP_LIBRARIES} ${ICUB_LIBRARIES})

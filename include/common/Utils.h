@@ -105,6 +105,22 @@ public:
     return fabs(a-b)<=threshold;
   }
   
+  /**
+   * @brief Check equality of two vectors of doubles
+   *
+   * @param a Vector 1
+   * @param b Vector 2
+   * @param threshold Threshold value Defaults to 1e-6.
+   * @return bool - True if equal,false otherwise
+   **/
+  static bool areEqual(std::vector<double> a,std::vector<double> b, double threshold=EPSILON){
+    bool equal=true;
+    for(size_t i=0;i<a.size();i++){
+      equal &= isEqual(a[i],b[i],threshold);
+    }
+    return equal;
+  }
+  
   template <typename T>
   /**
    * @brief Convert a JSON value to vector
@@ -142,12 +158,12 @@ public:
    * @param b Vector 2
    * @return :vector< double, std::allocator< double > > - Concatenated vector
    **/
-  static std::vector<double> concatenate(std::vector<double>& a,std::vector<double>& b){
+  static std::vector<double> concatenate(const std::vector<double>& a,const std::vector<double>& b){
     std::vector<double> ret;
-    for(std::vector<double>::iterator it= a.begin();it!=a.end();it++){
+    for(std::vector<double>::const_iterator it= a.begin();it!=a.end();it++){
       ret.push_back(*it);
     }
-    for(std::vector<double>::iterator it= b.begin();it!=b.end();it++){
+    for(std::vector<double>::const_iterator it= b.begin();it!=b.end();it++){
       ret.push_back(*it);
     }
     return ret;
