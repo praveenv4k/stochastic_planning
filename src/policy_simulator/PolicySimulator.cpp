@@ -384,6 +384,31 @@ bool PolicySimulator::read_policy_map(std::string policy_map_file){
   return bret;
 }
 
+bool PolicySimulator::read_sink_states(std::string sink_file){
+  bool bret = false;
+  if(!sink_file.empty()){
+    std::ifstream fs(sink_file.c_str(),std::ifstream::in);
+    string str;
+    int no=0;
+    while(std::getline(fs,str)){
+      std::vector<double> vec;
+      if(!str.empty()){
+	if(parse_state_action(str,vec)){
+	  bool bad = no==0;
+	  for(size_t i=0;i<vec.size();i++){
+	    m_SinkMap.insert(std::pair<int,bool>((int)vec[i],bad));
+	    cout << vec[i] << " " << bad << std::endl;
+	  }
+	}
+      }
+      no++;
+    }
+    bret = true;
+  }
+  std::cout << "Number of States in Sink map file: " << m_SinkMap.size() <<std::endl;
+  return bret;
+}
+
 
 bool PolicySimulator::read_policy(std::string domain_file, std::string policy_file){
   try
@@ -740,83 +765,98 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
       checkerStream << "f: bool init false;" << std::endl;
       
       for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
-	std::vector<double> objectPos;
-	std::vector<double> robotPos;
-	for(size_t i=0;i<4;i++){
-	  robotPos.push_back(it->second->operator[](i));
-	}
-	for(size_t i=4;i<it->second->size();i++){
-	  objectPos.push_back(it->second->operator[](i));
-	}
-	int bestAction = m_PolicyMap[it->first];
-	VectorPtr action = m_Actions->operator[](bestAction);
-	if(action!=NULL){
-	  for(size_t i=0;i<3;i++){
-	    robotPos[i]+=action->operator[](i);
+	int stateIndex = it->first;
+	
+	CollisionMap::iterator sinkState = m_SinkMap.find(stateIndex);
+	if(sinkState!=m_SinkMap.end()){
+	  checkerStream << "[] s = " << stateIndex << " -> ";
+	  checkerStream << 1 << " : (s' = " << stateIndex << ")";
+	  if(sinkState->second){
+	    checkerStream << " & (f' = true) ;";
 	  }
-	  robotPos[3]=action->operator[](3);
-	}
-	std::map<std::vector<double>,double> noisyObjectPoses;
-	int matchingPose=-1;
-	for(size_t i=0;i<poses.size();i++){
-	  //std::cout << poses[i] << "; " << objectPos << std::endl;
-	  if(Utils::areEqual(poses[i],objectPos)){
-	    matchingPose=i;
-	    break;
+	  else{
+	    checkerStream << " & (f' = false) ;";
 	  }
-	}
-	if(matchingPose!=-1){
-	  double sum=0;
-	  for (int z = -range; z < range + step; z += step)
-	  {
-	    int id=matchingPose+z;
-	    if(id >=0 && id < poses.size()){
-	      double p=prob[z+range];
-	      sum+=p;
+	  checkerStream << std::endl;
+	}else{
+	  std::vector<double> objectPos;
+	  std::vector<double> robotPos;
+	  for(size_t i=0;i<4;i++){
+	    robotPos.push_back(it->second->operator[](i));
+	  }
+	  for(size_t i=4;i<it->second->size();i++){
+	    objectPos.push_back(it->second->operator[](i));
+	  }
+	  int bestAction = m_PolicyMap[it->first];
+	  VectorPtr action = m_Actions->operator[](bestAction);
+	  if(action!=NULL){
+	    for(size_t i=0;i<3;i++){
+	      robotPos[i]+=action->operator[](i);
+	    }
+	    robotPos[3]=action->operator[](3);
+	  }
+	  std::map<std::vector<double>,double> noisyObjectPoses;
+	  int matchingPose=-1;
+	  for(size_t i=0;i<poses.size();i++){
+	    //std::cout << poses[i] << "; " << objectPos << std::endl;
+	    if(Utils::areEqual(poses[i],objectPos)){
+	      matchingPose=i;
+	      break;
 	    }
 	  }
-	  if(sum>0){
+	  if(matchingPose!=-1){
+	    double sum=0;
 	    for (int z = -range; z < range + step; z += step)
 	    {
 	      int id=matchingPose+z;
 	      if(id >=0 && id < poses.size()){
 		double p=prob[z+range];
-		p/=sum;
-		noisyObjectPoses.insert(std::pair<std::vector<double>,double>(poses[id],p));
+		sum+=p;
 	      }
 	    }
-	  }else{
-	    std::cout << "No matching id" << std::endl;
+	    if(sum>0){
+	      for (int z = -range; z < range + step; z += step)
+	      {
+		int id=matchingPose+z;
+		if(id >=0 && id < poses.size()){
+		  double p=prob[z+range];
+		  p/=sum;
+		  noisyObjectPoses.insert(std::pair<std::vector<double>,double>(poses[id],p));
+		}
+	      }
+	    }else{
+	      std::cout << "No matching id" << std::endl;
+	      return ret;
+	    }
+	  }
+	  else{
+	    std::cout << "Domain mismatch" << std::endl;
 	    return ret;
 	  }
-	}
-	else{
-	  std::cout << "Domain mismatch" << std::endl;
-	  return ret;
-	}
-	
-	checkerStream << "[] s = " << it->first << " -> ";
-	int plus=0;
-	for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){
-	  std::vector<double> augmentedSpace = Utils::concatenate(robotPos,iter->first);
-	  StateIndexMap::iterator found = m_StateIndexMap.find(augmentedSpace);
-	  if(found!=m_StateIndexMap.end()){
-	    if(plus>0){
-	      checkerStream << " + ";
+	  
+	  checkerStream << "[] s = " << it->first << " -> ";
+	  int plus=0;
+	  for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){
+	    std::vector<double> augmentedSpace = Utils::concatenate(robotPos,iter->first);
+	    StateIndexMap::iterator found = m_StateIndexMap.find(augmentedSpace);
+	    if(found!=m_StateIndexMap.end()){
+	      if(plus>0){
+		checkerStream << " + ";
+	      }
+	      int nextState = found->second;
+	      checkerStream << iter->second << " : (s' = " << nextState << ")";
+	      bool collision = m_CollisionMap[nextState];
+	      if(collision){
+		checkerStream << " & (f' = true) ";
+	      }
+	      else{
+		checkerStream << " & (f' = false) ";
+	      }
 	    }
-	    int nextState = found->second;
-	    checkerStream << iter->second << " : (s' = " << nextState << ")";
-	    bool collision = m_CollisionMap[nextState];
-	    if(collision){
-	      checkerStream << " & (f' = true) ";
-	    }
-	    else{
-	      checkerStream << " & (f' = false) ";
-	    }
+	    plus++;
 	  }
-	  plus++;
+	  checkerStream << " ;" << std::endl;
 	}
-	checkerStream << std::endl;
       }
     }
     checkerStream << "endmodule" << std::endl; 
@@ -832,4 +872,143 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
   return ret;
 }
 
+bool PolicySimulator::generateDtmcFile(std::string& filePath){
+  bool ret=false;
+  if(m_States->size()==0 || m_Actions->size()==0 || m_CollisionMap.size()==0 || m_PolicyMap.size()==0){
+    std::cout << "State/Action/Collision/Policy map empty. Check if corresponding files are read" << std::endl;
+  }
+  
+  normal s;
+  int step = 1.; // in z 
+  int range = 2; // min and max z = -range to +range.
+  std::vector<double> prob;prob.resize(2*range+1);   
+  for (int z = -range; z < range + step; z += step)
+  {
+    prob[z+range]=pdf(s,z);
+  }
+  
+  TrajectoryDiscretizerPtr ptr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);;
+  
+  if(ptr==NULL){
+    std::cout << "Cannot retrieve the traj ptr" << std::endl;
+    return ret;
+  }
+  
+  std::vector<Container<double> > poses;
+  if(!ptr->getAllPoses(Config::instance()->root["object"]["trajectory"]["samples"].asInt(),poses)){
+    std::cout << "Cannot retrieve the traj samples" << std::endl;
+    return ret;
+  }
+  
+  if(poses.size() < 5){
+    std::cout << "Too few samples in the trajectory" << std::endl;
+    return ret;
+  }
+  
+  if(!filePath.empty()){
+    std::fstream checkerStream;
+    checkerStream.open(filePath.c_str(),std::fstream::out);
+    if(checkerStream.good()){
+      
+      checkerStream << "STATES " << m_States->size() << std::endl;
+      std::map<StateActionTuple,double> dtmcMap;
+      
+      for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
+	int stateIndex = it->first;
+	
+	CollisionMap::iterator sinkState = m_SinkMap.find(stateIndex);
+	if(sinkState!=m_SinkMap.end()){
+	  dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,stateIndex),1));
+	}else{
+	  std::vector<double> objectPos;
+	  std::vector<double> robotPos;
+	  for(size_t i=0;i<4;i++){
+	    robotPos.push_back(it->second->operator[](i));
+	  }
+	  for(size_t i=4;i<it->second->size();i++){
+	    objectPos.push_back(it->second->operator[](i));
+	  }
+	  int bestAction = m_PolicyMap[it->first];
+	  VectorPtr action = m_Actions->operator[](bestAction);
+	  if(action!=NULL){
+	    for(size_t i=0;i<3;i++){
+	      robotPos[i]+=action->operator[](i);
+	    }
+	    robotPos[3]=action->operator[](3);
+	  }
+	  std::map<std::vector<double>,double> noisyObjectPoses;
+	  int matchingPose=-1;
+	  for(size_t i=0;i<poses.size();i++){
+	    //std::cout << poses[i] << "; " << objectPos << std::endl;
+	    if(Utils::areEqual(poses[i],objectPos)){
+	      matchingPose=i;
+	      break;
+	    }
+	  }
+	  if(matchingPose!=-1){
+	    double sum=0;
+	    for (int z = -range; z < range + step; z += step)
+	    {
+	      int id=matchingPose+z;
+	      if(id >=0 && id < poses.size()){
+		double p=prob[z+range];
+		sum+=p;
+	      }
+	    }
+	    if(sum>0){
+	      for (int z = -range; z < range + step; z += step)
+	      {
+		int id=matchingPose+z;
+		if(id >=0 && id < poses.size()){
+		  double p=prob[z+range];
+		  p/=sum;
+		  noisyObjectPoses.insert(std::pair<std::vector<double>,double>(poses[id],p));
+		}
+	      }
+	    }else{
+	      std::cout << "No matching id" << std::endl;
+	      return ret;
+	    }
+	  }
+	  else{
+	    std::cout << "Domain mismatch" << std::endl;
+	    return ret;
+	  }
+	  
+	  checkerStream << "[] s = " << it->first << " -> ";
+	  int plus=0;
+	  for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){
+	    std::vector<double> augmentedSpace = Utils::concatenate(robotPos,iter->first);
+	    StateIndexMap::iterator found = m_StateIndexMap.find(augmentedSpace);
+	    if(found!=m_StateIndexMap.end()){
+	      if(plus>0){
+		checkerStream << " + ";
+	      }
+	      int nextState = found->second;
+	      checkerStream << iter->second << " : (s' = " << nextState << ")";
+	      bool collision = m_CollisionMap[nextState];
+	      if(collision){
+		checkerStream << " & (f' = true) ";
+	      }
+	      else{
+		checkerStream << " & (f' = false) ";
+	      }
+	    }
+	    plus++;
+	  }
+	  checkerStream << " ;" << std::endl;
+	}
+      }
+    }
+    checkerStream << "endmodule" << std::endl; 
+    checkerStream << "rewards \"steps\"" << std::endl;
+    checkerStream << "     [] true : 1 ;" << std::endl;
+    checkerStream << "endrewards" << std::endl;
+    checkerStream << "rewards \"bad\"" << std::endl;
+    checkerStream << "     f=true : 1 ;" << std::endl;
+    checkerStream << "endrewards" << std::endl;
 
+  }
+
+  return ret;
+}

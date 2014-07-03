@@ -61,6 +61,33 @@ void DomainExtractor::generate(){
     std::string checker("collision.txt");
     generateCollisionMapFile(checker);
   }
+  
+  {
+    std::cout << "Generating the good/bad states" << std::endl;
+    ElapsedTime elapse(std::string("Generating the good/bad states File"));
+    std::string sink("sinkstates.txt");
+    std::fstream outStream;
+    outStream.open(sink.c_str(),std::fstream::out);
+    if(outStream.good()){
+      int start=0;
+      for(std::map<int,bool>::iterator it= m_badStates.begin();it!=m_badStates.end();it++){
+	if(start>0){
+	  outStream << " ";
+	}
+	outStream << it->first;
+	start++;
+      }
+      outStream << std::endl;
+      start=0;
+      for(std::map<int,bool>::iterator it= m_goodStates.begin();it!=m_goodStates.end();it++){
+	if(start>0){
+	  outStream << " ";
+	}
+	outStream << it->first;
+	start++;
+      }
+    }
+  }
 }
 
 void DomainExtractor::generateCollisionMapFile(std::string& filePath){
@@ -248,13 +275,25 @@ void DomainExtractor::generateTables(){
 // Sink States
       if(collision){
 	std::vector<int> nextState;
-	nextState.push_back(m_stateIndexMap[state]);
+	int nxtStateId = m_stateIndexMap[state];
+	nextState.push_back(nxtStateId);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	
+	std::map<int,bool>::iterator bIt = m_badStates.find(nxtStateId);
+	if(bIt==m_badStates.end()){
+	  m_badStates.insert(std::pair<int,bool>(nxtStateId,true));
+	}
       }
       else if(Utils::isEqual(maxReward,reward)){
 	std::vector<int> nextState;
-	nextState.push_back(m_stateIndexMap[state]);
+	int nxtStateId = m_stateIndexMap[state];
+	nextState.push_back(nxtStateId);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	
+	std::map<int,bool>::iterator bIt = m_goodStates.find(nxtStateId);
+	if(bIt==m_goodStates.end()){
+	  m_goodStates.insert(std::pair<int,bool>(nxtStateId,true));
+	}
       }
 //////////////
       else{

@@ -51,6 +51,7 @@ public:
 	std::string policyMap = policy_folder+"policymap.txt";
 	std::string collision = policy_folder+"collision.txt"; 
 	std::string modelcheck = policy_folder+"modelcheck.txt";
+	std::string sinkFile = policy_folder+"sinkstates.txt";
 	
 	{
 	  ElapsedTime elapsed("Reading Actions Map");
@@ -67,6 +68,10 @@ public:
 	{
 	  ElapsedTime elapsed("Read Collision Map");
 	  planner->read_collision(collision);
+	}
+	{
+	  ElapsedTime elapsed("Read Sink states File");
+	  planner->read_sink_states(sinkFile);
 	}
 	{
 	  ElapsedTime elapsed("Generate model checker file");
