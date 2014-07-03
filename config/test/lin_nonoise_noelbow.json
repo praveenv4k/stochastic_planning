@@ -1,0 +1,227 @@
+{
+  "robot": {
+    "name": "icubSim",
+    "unit": {
+      "angle": "deg",
+      "distance": "mm"
+    },
+    "parts": {
+      "right_arm": {
+        "enabled": false,
+        "init_pose": [
+          -15,
+          98,
+          30,
+          20,
+          0,
+          0,
+          0,
+          60,
+          90,
+          60,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ],
+        "open_hand": [
+          90,
+          60,
+          10,
+          10,
+          10,
+          10,
+          10,
+          10
+        ],
+        "close_hand": [
+          90,
+          45,
+          10,
+          30,
+          45,
+          30,
+          60,
+          90
+        ]
+      },
+      "left_arm": {
+        "enabled": true,
+        "init_pose": [
+          -25,
+          20,
+          0,
+          50,
+          80,
+          -10,
+          0,
+          60,
+          10,
+          60,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "init_pos": [
+          0,
+          0.6,
+          0.35
+        ],
+        "open_hand": [
+          10,
+          60,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "close_hand": [
+          90,
+          45,
+          10,
+          30,
+          45,
+          30,
+          60,
+          90
+        ],
+        "joint_speed": 100
+      },
+      "torso": {
+        "enabled": true,
+        "init_pose": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "grasp": {
+      "orientation": [
+        0,
+        0,
+        0
+      ],
+      "distThreshold": 2,
+      "farGrasp": true
+    },
+    "ss": {
+      "discretizer": "uniform",
+      "dim": 4,
+      "min": [
+        -13,
+        57,
+        22,
+        0
+      ],
+      "max": [
+        13,
+        60,
+        48,
+        1
+      ],
+      "step": [
+        2,
+        2,
+        2,
+        1
+      ]
+    },
+    "action": {
+      "discretizer": "uniform",
+      "dim": 4,
+      "min": [
+        -2,
+        -2,
+        -2,
+        0
+      ],
+      "max": [
+        2,
+        2,
+        2,
+        1
+      ],
+      "step": [
+        4,
+        4,
+        4,
+        1
+      ]
+    }
+  },
+  "object": {
+    "name": "ball",
+    "radius": 3,
+    "initialPos": [
+      -10,
+      53,
+      35
+    ],
+    "color": [
+      0,
+      1,
+      0
+    ],
+    "trajectory": {
+      "dim": 3,
+      "type": "linear",
+      "step": 0.3141592,
+      "samples": 9,
+      "noise": {
+	"enabled" : false,
+        "mean": 0,
+        "sigma": 3
+      },
+      "circular": {
+        "center": [
+          0,
+          53,
+          35
+        ],
+        "radius": 10
+      },
+      "linear": {
+        "start": [
+          -10,
+          53,
+          35
+        ],
+        "end": [
+          6,
+          53,
+          35
+        ]
+      }
+    }
+  },
+  "elbow":{
+    "enabled":false,
+    "range":[120,60],
+    "length":30,
+    "radius":2
+  },
+  "armcontrol": {
+    "arm": "left"
+  },
+  "objectcontrol": {},
+  "domain_model":{
+    "reward":{
+      "scheme": "l2norm",
+      "max" :  500,
+      "collision" : -50
+    }
+  },
+  "planner": {},
+  "simulator":{
+    "policy_path": "../tests/20140703/NN_NE/",
+    "start_state": 10574
+  }
+}
