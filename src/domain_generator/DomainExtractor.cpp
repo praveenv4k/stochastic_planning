@@ -232,30 +232,47 @@ void DomainExtractor::generateTables(){
   if(m_stateIndexMap.size()==0 || m_actionIndexMap.size()==0){
     std::cout << "State/Action map empty. call createStateSpaceMap" << std::endl;
   }
-    
+  
+  double maxReward = m_config["domain_model"]["reward"]["max"].isNull()?
+			500:m_config["domain_model"]["reward"]["max"].asDouble();
+			
   for(StateIndexMap::iterator it=m_stateIndexMap.begin();it!=m_stateIndexMap.end();it++){
     bool collision = m_collisionMap[it->second];
-    m_rewardMap[it->second] = computeReward(it->first,collision);
+    double reward = computeReward(it->first,collision);
+    m_rewardMap[it->second] = reward;
     for(StateIndexMap::iterator ait=m_actionIndexMap.begin();ait!=m_actionIndexMap.end();ait++){
       int id = ait->second;
       std::vector<double> val = ait->first;
       std::vector<double> state = it->first;
       std::vector<double> temp = state;
-      for(size_t j=0;j<val.size()-1;j++){
-	temp[j]+=val[j];
-      }
-      temp[val.size()-1]=val[val.size()-1];
-      //std::cout << temp << std::endl;
-      StateIndexMap::iterator found = m_stateIndexMap.find(temp);
-      if(found!=m_stateIndexMap.end()){
-	std::vector<int> nextState;
-	nextState.push_back(found->second);
-	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
-      }
-      else{
+// Sink States
+      if(collision){
 	std::vector<int> nextState;
 	nextState.push_back(m_stateIndexMap[state]);
 	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+      }
+      else if(Utils::isEqual(maxReward,reward)){
+	std::vector<int> nextState;
+	nextState.push_back(m_stateIndexMap[state]);
+	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+      }
+//////////////
+      else{
+	for(size_t j=0;j<val.size()-1;j++){
+	  temp[j]+=val[j];
+	}
+	temp[val.size()-1]=val[val.size()-1];
+	StateIndexMap::iterator found = m_stateIndexMap.find(temp);
+	if(found!=m_stateIndexMap.end()){
+	  std::vector<int> nextState;
+	  nextState.push_back(found->second);
+	  m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	}
+	else{
+	  std::vector<int> nextState;
+	  nextState.push_back(m_stateIndexMap[state]);
+	  m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	}
       }
     }
   }
