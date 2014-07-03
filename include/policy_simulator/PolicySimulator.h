@@ -57,6 +57,10 @@
 
 #include "ElapsedTime.h"
 
+
+#define USE_LOOP2 1
+
+
 using namespace momdp;
 
 using namespace std;
@@ -216,6 +220,7 @@ public:
      * @return void
      **/
     void loop(); 
+    void loop2();
     /**
      * @brief Thread interrupt
      *

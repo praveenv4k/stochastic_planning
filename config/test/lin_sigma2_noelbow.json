@@ -221,7 +221,7 @@
   },
   "planner": {},
   "simulator":{
-    "policy_path": "../tests/20140701/test1_linear/",
-    "start_state": 10575
+    "policy_path": "../tests/20140701/N2_NE/",
+    "start_state": 10574
   }
 }

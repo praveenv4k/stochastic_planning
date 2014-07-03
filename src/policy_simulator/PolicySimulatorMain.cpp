@@ -101,7 +101,7 @@ public:
 	std::string statesFile = policy_folder+"states.txt";
 	std::string domainFile = policy_folder+"domain.pomdpx";
 	std::string policyFile = policy_folder+"domain.policy";
-	
+	std::string policyMap = policy_folder+"policymap.txt";
 	{
 	  ElapsedTime elapsed("Reading Actions Map");
 	  planner->read_actions(actionFile);
@@ -110,6 +110,12 @@ public:
 	  ElapsedTime elapsed("Reading States Map");
 	  planner->read_states(statesFile);
 	}
+#if USE_LOOP2
+	{
+	  ElapsedTime elapsed("Reading Policy map");
+	  planner->read_policy_map(policyMap);
+	}
+#else
 	{
 	  ElapsedTime elapsed("Reading Policy File");
 	  planner->read_policy(domainFile,policyFile);
@@ -118,6 +124,7 @@ public:
 	  ElapsedTime elapsed("Policy initialization");
 	  planner->initialize_plan();
 	}
+#endif
       }
       else{
 	return false;
@@ -154,7 +161,11 @@ public:
     
     bool updateModule()
     { 
+#if USE_LOOP2
+	planner->loop2();
+#else
         planner->loop();
+#endif
         return true; 
     }
 

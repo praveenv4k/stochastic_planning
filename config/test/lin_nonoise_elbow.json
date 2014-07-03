@@ -221,7 +221,7 @@
   },
   "planner": {},
   "simulator":{
-    "policy_path": "../tests/20140703/NN_EL2/",
+    "policy_path": "../tests/20140703/NN_EL/",
     "start_state": 10574
   }
 }

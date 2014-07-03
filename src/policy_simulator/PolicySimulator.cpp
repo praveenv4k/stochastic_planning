@@ -42,7 +42,6 @@ void PolicySimulator::loop()
       planobjStsPort.writeStrict();
       execStop = true;
       m_ElaspedTime->pause();
-      //m_ElaspedTime->printElasped();
       std::cout << "Target Reached : Exec stop" << std::endl;
     }
   }
@@ -175,6 +174,138 @@ void PolicySimulator::loop()
    }
 }
 
+void PolicySimulator::loop2()
+{
+  if(first){
+    first=false;
+    Bottle &status = planobjStsPort.prepare();
+    status.clear();
+    status.addDouble(1);
+    planobjStsPort.writeStrict(); 
+  }else{
+    if(reached&&!execStop){
+      Bottle &status = planobjStsPort.prepare();
+      status.clear();
+      status.addDouble(0);
+      planobjStsPort.writeStrict();
+      execStop = true;
+      m_ElaspedTime->pause();
+      std::cout << "Target Reached : Exec stop" << std::endl;
+    }
+  }
+  
+   Bottle* objCmd = planobjCmdPort.read(false);
+   if(objCmd){
+     objPosition[0] = objCmd->get(0).asDouble();
+     objPosition[1] = objCmd->get(1).asDouble();
+     objPosition[2] = objCmd->get(2).asDouble();
+     noisyObjPosition[0] = objCmd->get(3).asDouble()*100;
+     noisyObjPosition[1] = objCmd->get(4).asDouble()*100;
+     noisyObjPosition[2] = objCmd->get(5).asDouble()*100;
+   }
+   
+   Bottle* cmd = plannerCmdPort.read(false);
+   if(cmd)
+   {
+     bool send = false;
+     double command = cmd->get(0).asDouble();
+     for(size_t i=0;i<4;i++){
+      robotPosition[i] = cmd->get(i+1).asDouble();
+     }
+     for(int i=0;i<4;i++){
+       augState[i]=round(robotPosition[i]*100);
+     }
+     for(int i=4;i<7;i++){
+       augState[i]=round(objPosition[i-4]*100);
+     }
+     if(command == 1){
+       if(sent == true){
+	 posQueue.pop();
+	 sent = false;
+	 
+	 std::vector<double> val;
+	 for(size_t i=0;i<augState.size();i++){
+	   val.push_back(augState[i]);
+	   std::cout << val[i] << " ";
+	 }
+	 
+	 bool reach = has_reached(augState,graspThreshold);
+	 if(reach){
+	   reached = reach;
+	 }else{
+	  StateIndexMap::iterator found = m_StateIndexMap.find(val);
+	  if(found!=m_StateIndexMap.end()){
+	    int state = found->second;
+	    cout << " Found State : " << state << std::endl; 
+	    PolicyMap::iterator actfound = m_PolicyMap.find(state);
+	    if(actfound!=m_PolicyMap.end()){
+	      int action = actfound->second;
+	      cout << " Found Action : " << action << std::endl; 
+	      IndexVectorMap::iterator actVector = m_Actions->find(action);
+	      if(actVector!=m_Actions->end()){
+		VectorPtr aVec = actVector->second;
+		if(aVec!=NULL){
+		  cout << " Found Action vector : " << aVec->toString(-1,1) << std::endl; 
+		  Vector v1;
+		  v1.resize(4);
+		  v1[0]= (aVec->operator[](0)+augState[0])/100;
+		  v1[1]= (aVec->operator[](1)+augState[1])/100;
+		  v1[2]= (aVec->operator[](2)+augState[2])/100;
+		  v1[3]=1;
+		  posQueue.push(v1);
+		  send = true;
+		  
+		  cout << " Current State : " << state;
+		  cout << " Best Action : " << action  << std::endl;
+		}
+	      }
+	      else{
+		  cout << " Action not found " << action  << std::endl;
+	      }
+	    }else{
+	      cout << " Next Action not found for state " << state  << std::endl;
+	    }
+	  }else{
+	    std::cout << "Augmented state (" << val << ") not found!" << std::endl;
+	  }
+	}
+     }else if(command == 10){
+       if(sent==true){
+        }else{
+	}
+	if(!reached){
+	  reached = has_reached(augState,graspThreshold);
+	}
+     }else if(command == 100){
+     }
+
+     if(send || firstSend){
+       if(firstSend) firstSend=false;
+       if(posQueue.size()>0){
+	 Vector& v = posQueue.front();
+	 double x=v[0];
+	 double y=v[1];
+	 double z=v[2];  
+	 double trigger=v[3];
+	 
+	 Bottle &status = plannerStatusPort.prepare();
+	 status.clear();
+	 status.addDouble(x);
+	 status.addDouble(y);
+	 status.addDouble(z);
+	 status.addDouble(trigger);
+	 plannerStatusPort.writeStrict();  
+	 std::cout << "Target : " << v.toString() << std::endl;
+	 printf("Move request sent\n");
+	 sent=true;
+       }
+     }
+     
+     }
+   }
+}
+
+
 bool PolicySimulator::has_reached(yarp::sig::Vector& augState,double graspThreshold){
   bool ret=false;
   if(augState.size()==7){
@@ -210,7 +341,15 @@ bool PolicySimulator::open(yarp::os::ResourceFinder &rf)
     ret &= planobjCmdPort.open("/planobj/cmd/in");
     ret &= planobjStsPort.open("/planobj/status/out"); 
     {
-      VectorPtr v=m_States->operator[](currBelSt->sval);
+      int startState;
+#if USE_LOOP2
+      if(!Config::instance()->root["simulator"]["start_state"].isNull()){
+      startState = Config::instance()->root["simulator"]["start_state"].asInt();
+    }
+#else
+      startState = currBelSt->sval;
+#endif
+      VectorPtr v=m_States->operator[](startState);
       Vector v1;
       v1.resize(4);
       v1[0]= v->operator[](0)/100;
