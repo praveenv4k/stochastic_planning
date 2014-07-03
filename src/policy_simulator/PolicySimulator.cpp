@@ -911,14 +911,15 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath){
     if(checkerStream.good()){
       
       checkerStream << "STATES " << m_States->size() << std::endl;
-      std::map<StateActionTuple,double> dtmcMap;
+      DtmcMap dtmcMap;
       
       for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
 	int stateIndex = it->first;
 	
 	CollisionMap::iterator sinkState = m_SinkMap.find(stateIndex);
 	if(sinkState!=m_SinkMap.end()){
-	  dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,stateIndex),1));
+	  dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,stateIndex),1.0));
+	  //dtmcMap[StateActionTuple(stateIndex,stateIndex)]=1.0;
 	}else{
 	  std::vector<double> objectPos;
 	  std::vector<double> robotPos;
@@ -975,39 +976,25 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath){
 	    return ret;
 	  }
 	  
-	  checkerStream << "[] s = " << it->first << " -> ";
 	  int plus=0;
 	  for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){
 	    std::vector<double> augmentedSpace = Utils::concatenate(robotPos,iter->first);
 	    StateIndexMap::iterator found = m_StateIndexMap.find(augmentedSpace);
 	    if(found!=m_StateIndexMap.end()){
-	      if(plus>0){
-		checkerStream << " + ";
-	      }
 	      int nextState = found->second;
-	      checkerStream << iter->second << " : (s' = " << nextState << ")";
-	      bool collision = m_CollisionMap[nextState];
-	      if(collision){
-		checkerStream << " & (f' = true) ";
-	      }
-	      else{
-		checkerStream << " & (f' = false) ";
-	      }
+	      double tprob = iter->second;
+	      dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,nextState),tprob));
 	    }
-	    plus++;
 	  }
-	  checkerStream << " ;" << std::endl;
 	}
       }
+      checkerStream << "TRANSITIONS " << dtmcMap.size() << std::endl;
+      checkerStream << "INITIAL " << 1 << std::endl;
+      checkerStream << "TARGET " << 2 << std::endl;
+      for(DtmcMap::iterator pIt=dtmcMap.begin();pIt!=dtmcMap.end();pIt++){
+	checkerStream << pIt->first.get<0>()+1 << " " << pIt->first.get<1>()+1 << " " << pIt->second << std::endl;
+      }
     }
-    checkerStream << "endmodule" << std::endl; 
-    checkerStream << "rewards \"steps\"" << std::endl;
-    checkerStream << "     [] true : 1 ;" << std::endl;
-    checkerStream << "endrewards" << std::endl;
-    checkerStream << "rewards \"bad\"" << std::endl;
-    checkerStream << "     f=true : 1 ;" << std::endl;
-    checkerStream << "endrewards" << std::endl;
-
   }
 
   return ret;

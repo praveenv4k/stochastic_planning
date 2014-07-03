@@ -52,6 +52,7 @@ public:
 	std::string collision = policy_folder+"collision.txt"; 
 	std::string modelcheck = policy_folder+"modelcheck.txt";
 	std::string sinkFile = policy_folder+"sinkstates.txt";
+	std::string dtmcFile = policy_folder+"dtmc.dtmc";
 	
 	{
 	  ElapsedTime elapsed("Reading Actions Map");
@@ -76,6 +77,10 @@ public:
 	{
 	  ElapsedTime elapsed("Generate model checker file");
 	  planner->generateModelCheckerFile(modelcheck);
+	}
+	{
+	  ElapsedTime elapsed("Generate DTMC file");
+	  planner->generateDtmcFile(dtmcFile);
 	}
 	return true;
       }
@@ -170,7 +175,7 @@ public:
 
 int main(int argc, char *argv[])
 {   
-#if 0
+#if 1
   // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 

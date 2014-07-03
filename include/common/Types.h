@@ -137,6 +137,10 @@ typedef boost::unordered_map<int,int> PolicyMap;
  **/
 typedef boost::unordered_map<StateActionTuple, std::vector<int>,StateActionHash,StateActionEqualTo > TransitionMap;
 /**
+ * @brief DTMC map
+ **/
+typedef boost::unordered_map<StateActionTuple, double,StateActionHash,StateActionEqualTo > DtmcMap;
+/**
  * @brief State Index Map
  **/
 typedef boost::unordered_map<std::vector<double>,int,StateIndexHash,StateIndexEqualTo> StateIndexMap;
