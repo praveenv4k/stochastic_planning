@@ -11,6 +11,7 @@ using namespace yarp::math;
 #include <fstream>
 #include "Config.h"
 #include "Trajectory.h"
+#include <algorithm>
 
 #include <boost/math/distributions.hpp>
 
@@ -862,13 +863,13 @@ int PolicySimulator::runFor(int iters, ofstream* streamOut, double& reward, doub
     return firstAction;
 }
 
-bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
+bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean,double sigma){
   bool ret=false;
   if(m_States->size()==0 || m_Actions->size()==0 || m_CollisionMap.size()==0 || m_PolicyMap.size()==0){
     std::cout << "State/Action/Collision/Policy map empty. Check if corresponding files are read" << std::endl;
   }
   
-  normal s;
+  normal s(mean,sigma);
   int step = 1.; // in z 
   int range = 2; // min and max z = -range to +range.
   std::vector<double> prob;prob.resize(2*range+1);   
@@ -1013,13 +1014,13 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath){
   return ret;
 }
 
-bool PolicySimulator::generateDtmcFile(std::string& filePath){
+bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double sigma){
   bool ret=false;
   if(m_States->size()==0 || m_Actions->size()==0 || m_CollisionMap.size()==0 || m_PolicyMap.size()==0){
     std::cout << "State/Action/Collision/Policy map empty. Check if corresponding files are read" << std::endl;
   }
   
-  normal s;
+  normal s(mean,sigma);
   int step = 1.; // in z 
   int range = 2; // min and max z = -range to +range.
   std::vector<double> prob;prob.resize(2*range+1);   
@@ -1131,12 +1132,26 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath){
       }
       checkerStream << "TRANSITIONS " << dtmcMap.size() << std::endl;
       checkerStream << "INITIAL " << 1 << std::endl;
-      checkerStream << "TARGET " << 2 << std::endl;
+      checkerStream << "TARGET " << 1629 << std::endl << std::endl;
+      
+      std::vector<StateActionTuple> dtmcVector;
       for(DtmcMap::iterator pIt=dtmcMap.begin();pIt!=dtmcMap.end();pIt++){
-	checkerStream << pIt->first.get<0>()+1 << " " << pIt->first.get<1>()+1 << " " << pIt->second << std::endl;
+	//checkerStream << pIt->first.get<0>()+1 << " " << pIt->first.get<1>()+1 << " " << pIt->second << std::endl;
+	dtmcVector.push_back(pIt->first);
+      }
+      std::sort(dtmcVector.begin(),dtmcVector.end(),tupleAscending);
+      for(std::vector<StateActionTuple>::iterator dIt=dtmcVector.begin();dIt!=dtmcVector.end();dIt++){
+	DtmcMap::iterator found = dtmcMap.find(*dIt);
+	if(found!=dtmcMap.end()){
+	  checkerStream << found->first.get<0>()+1 << " " << found->first.get<1>()+1 << " " << found->second << std::endl;
+	}
       }
     }
   }
 
   return ret;
+}
+
+bool PolicySimulator::sortAscending(StateActionTuple& a,StateActionTuple& b){
+  return a.get<0>() < b.get<0>();
 }

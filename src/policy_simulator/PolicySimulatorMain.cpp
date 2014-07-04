@@ -76,11 +76,42 @@ public:
 	}
 	{
 	  ElapsedTime elapsed("Generate model checker file");
-	  planner->generateModelCheckerFile(modelcheck);
+	  
+	  double mean=0,sigma=1;
+	  std::string modelcheckTemp = modelcheck+"01";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
+	  mean=0,sigma=3;
+	  modelcheckTemp = modelcheck+"03";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
+	  mean=1,sigma=1;
+	  modelcheckTemp = modelcheck+"11";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
+	  mean=2,sigma=1;
+	  modelcheckTemp = modelcheck+"21";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	}
 	{
 	  ElapsedTime elapsed("Generate DTMC file");
-	  planner->generateDtmcFile(dtmcFile);
+	  //planner->generateDtmcFile(dtmcFile);
+	  
+	  double mean=0,sigma=1;
+	  std::string dtmcFileTemp = dtmcFile+"01";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=0,sigma=3;
+	  dtmcFileTemp = dtmcFile+"03";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=1,sigma=1;
+	  dtmcFileTemp = dtmcFile+"11";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=2,sigma=1;
+	  dtmcFileTemp = dtmcFile+"21";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	}
 	return true;
       }
@@ -186,7 +217,7 @@ public:
 
 int main(int argc, char *argv[])
 {   
-#if 1
+#if 0
   // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 

@@ -144,6 +144,13 @@ struct VectorIndexEqualTo
     }
 };
 
+struct TupleAscending {
+  bool operator() (const StateActionTuple& a,const StateActionTuple& b) 
+  { 
+    return (a.get<0>() < b.get<0>());
+  }
+};
+
 /**
  * @brief Policy Executor class
  **/
@@ -343,15 +350,20 @@ public:
     * @param checkerFile Output file name
     * @return bool
     **/
-    bool generateModelCheckerFile(std::string& checkerFile);
+    bool generateModelCheckerFile(std::string& checkerFile,double mean,double sigma);
     /**
     * @brief Generate the DTMC file
     *
     * @param DTMC File Output file name
     * @return bool
     **/
-    bool generateDtmcFile(std::string& filePath);
+    bool generateDtmcFile(std::string& filePath,double mean,double sigma);
+    
+    
+    bool sortAscending(StateActionTuple& a,StateActionTuple& b);
 private:
+    TupleAscending tupleAscending;
+  
     yarp::os::BufferedPort<yarp::os::Bottle> plannerCmdPort;
     yarp::os::BufferedPort<yarp::os::Bottle> plannerStatusPort;
     yarp::os::BufferedPort<yarp::os::Bottle> planobjCmdPort;
