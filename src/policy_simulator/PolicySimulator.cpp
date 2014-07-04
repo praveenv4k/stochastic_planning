@@ -1050,9 +1050,13 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
   if(!filePath.empty()){
     std::fstream checkerStream;
     checkerStream.open(filePath.c_str(),std::fstream::out);
+    int initialState = m_States->size();
+    int startState = 10574;
+    int safeState = m_States->size()+1;
+    int unSafeState = m_States->size()+2;
     if(checkerStream.good()){
       
-      checkerStream << "STATES " << m_States->size() << std::endl;
+      checkerStream << "STATES " << m_States->size()+3 << std::endl;
       DtmcMap dtmcMap;
       
       for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
@@ -1060,8 +1064,11 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
 	
 	CollisionMap::iterator sinkState = m_SinkMap.find(stateIndex);
 	if(sinkState!=m_SinkMap.end()){
-	  dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,stateIndex),1.0));
-	  //dtmcMap[StateActionTuple(stateIndex,stateIndex)]=1.0;
+	  //dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,stateIndex),1.0));
+	  if(sinkState->second)
+	    dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,unSafeState),1.0));
+	  else
+	    dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,safeState),1.0));
 	}else{
 	  std::vector<double> objectPos;
 	  std::vector<double> robotPos;
@@ -1130,9 +1137,9 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
 	  }
 	}
       }
-      checkerStream << "TRANSITIONS " << dtmcMap.size() << std::endl;
-      checkerStream << "INITIAL " << 1 << std::endl;
-      checkerStream << "TARGET " << 1629 << std::endl << std::endl;
+      checkerStream << "TRANSITIONS " << dtmcMap.size()+3 << std::endl;
+      checkerStream << "INITIAL " << initialState+1 << std::endl;
+      checkerStream << "TARGET " << safeState+1 << std::endl << std::endl;
       
       std::vector<StateActionTuple> dtmcVector;
       for(DtmcMap::iterator pIt=dtmcMap.begin();pIt!=dtmcMap.end();pIt++){
@@ -1146,6 +1153,9 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
 	  checkerStream << found->first.get<0>()+1 << " " << found->first.get<1>()+1 << " " << found->second << std::endl;
 	}
       }
+      checkerStream << m_States->size()+1 << " " << startState+1 << " " << 1 << std::endl;
+      checkerStream << safeState+1 << " " << safeState+1 << " " << 1 << std::endl;
+      checkerStream << unSafeState+1 << " " << unSafeState+1 << " " << 1 << std::endl;
     }
   }
 

@@ -50,9 +50,9 @@ public:
 	std::string statesFile = policy_folder+"states.txt";
 	std::string policyMap = policy_folder+"policymap.txt";
 	std::string collision = policy_folder+"collision.txt"; 
-	std::string modelcheck = policy_folder+"modelcheck.txt";
+	std::string modelcheck = policy_folder+"modelcheck";
 	std::string sinkFile = policy_folder+"sinkstates.txt";
-	std::string dtmcFile = policy_folder+"dtmc.dtmc";
+	std::string dtmcFile = policy_folder+"dtmc";
 	
 	{
 	  ElapsedTime elapsed("Reading Actions Map");
@@ -78,19 +78,19 @@ public:
 	  ElapsedTime elapsed("Generate model checker file");
 	  
 	  double mean=0,sigma=1;
-	  std::string modelcheckTemp = modelcheck+"01";
+	  std::string modelcheckTemp = modelcheck+"01.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	  
 	  mean=0,sigma=3;
-	  modelcheckTemp = modelcheck+"03";
+	  modelcheckTemp = modelcheck+"03.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	  
 	  mean=1,sigma=1;
-	  modelcheckTemp = modelcheck+"11";
+	  modelcheckTemp = modelcheck+"11.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	  
 	  mean=2,sigma=1;
-	  modelcheckTemp = modelcheck+"21";
+	  modelcheckTemp = modelcheck+"21.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	}
 	{
@@ -98,19 +98,19 @@ public:
 	  //planner->generateDtmcFile(dtmcFile);
 	  
 	  double mean=0,sigma=1;
-	  std::string dtmcFileTemp = dtmcFile+"01";
+	  std::string dtmcFileTemp = dtmcFile+"01.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	  
 	  mean=0,sigma=3;
-	  dtmcFileTemp = dtmcFile+"03";
+	  dtmcFileTemp = dtmcFile+"03.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	  
 	  mean=1,sigma=1;
-	  dtmcFileTemp = dtmcFile+"11";
+	  dtmcFileTemp = dtmcFile+"11.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	  
 	  mean=2,sigma=1;
-	  dtmcFileTemp = dtmcFile+"21";
+	  dtmcFileTemp = dtmcFile+"21.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	}
 	return true;
