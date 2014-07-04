@@ -136,7 +136,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
     m_currElbowPosition = m_elbowPoses[0]/100;
   }
   
-  m_stop = false;
+  //m_stop = false;
   
   std::cout << "Object constructed" << std::endl;
 }
@@ -186,7 +186,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   else
     str = "world mk ssph ";
   Vector rad;
-  rad.push_back(m_radius/2); //TODO
+  rad.push_back(m_radius); //TODO
   str = str + string(rad.toString().c_str());
   stringstream ss;
   ss << m_currPosition;
@@ -265,7 +265,7 @@ void ObjectController::loop(){
       move_obj.addDouble(vec[1]); 
       move_obj.addDouble(vec[2]);
       outputStatePort.write(move_obj,reply); 
-      cout << move_obj.toString() << std::endl;
+      //cout << move_obj.toString() << std::endl;
       if(m_elbowEnabled && m_elbowPoses.size()>0){
 	string str;
 	str = "world set ssph 1";
@@ -275,7 +275,7 @@ void ObjectController::loop(){
 	move_elb.addDouble(m_currElbowPosition[1]); 
 	move_elb.addDouble(m_currElbowPosition[2]);
 	outputStatePort.write(move_elb,reply); 
-	cout << move_elb.toString() << std::endl;
+	//cout << move_elb.toString() << std::endl;
       }
     }
   }

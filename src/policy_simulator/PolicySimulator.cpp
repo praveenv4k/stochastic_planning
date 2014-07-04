@@ -190,7 +190,7 @@ void PolicySimulator::loop2()
       planobjStsPort.writeStrict();
       execStop = true;
       m_ElaspedTime->pause();
-      std::cout << "Target Reached : Exec stop" << std::endl;
+      std::cout << "Target Reached : Steps : " << numSteps << std::endl;
     }
   }
   
@@ -207,6 +207,7 @@ void PolicySimulator::loop2()
    Bottle* cmd = plannerCmdPort.read(false);
    if(cmd)
    {
+     //cout << "Received something " << cmd->toString() << std::endl;
      bool send = false;
      double command = cmd->get(0).asDouble();
      for(size_t i=0;i<4;i++){
@@ -269,6 +270,7 @@ void PolicySimulator::loop2()
 	    std::cout << "Augmented state (" << val << ") not found!" << std::endl;
 	  }
 	}
+       }
      }else if(command == 10){
        if(sent==true){
         }else{
@@ -298,10 +300,11 @@ void PolicySimulator::loop2()
 	 std::cout << "Target : " << v.toString() << std::endl;
 	 printf("Move request sent\n");
 	 sent=true;
+	 numSteps++;
        }
      }
      
-     }
+     //}
    }
 }
 
@@ -356,6 +359,7 @@ bool PolicySimulator::open(yarp::os::ResourceFinder &rf)
       v1[1]= v->operator[](1)/100;
       v1[2]= v->operator[](2)/100;
       v1[3]= 1;
+      cout << "First position " << v1.toString(-1,1) << std::endl;
       posQueue.push(v1);
     }
 #if 0

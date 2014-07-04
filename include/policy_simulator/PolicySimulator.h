@@ -198,6 +198,7 @@ public:
       execStop=false;
       
       m_ElaspedTime= boost::shared_ptr<ElapsedTime>(new ElapsedTime("Policy Execution Time"));
+      numSteps=0;
     }
 
     /**
@@ -419,6 +420,7 @@ private:
     double t1;
     bool sent;   
     
+    int numSteps;
     boost::shared_ptr<ElapsedTime> m_ElaspedTime;
 };
 
