@@ -77,8 +77,12 @@ public:
 	{
 	  ElapsedTime elapsed("Generate model checker file");
 	  
-	  double mean=0,sigma=1;
-	  std::string modelcheckTemp = modelcheck+"01.nm";
+	  double mean=0,sigma=0.01;
+	  std::string modelcheckTemp = modelcheck+"00.nm";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
+	  mean=0,sigma=1;
+	  modelcheckTemp = modelcheck+"01.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	  
  	  mean=0,sigma=2;
@@ -95,6 +99,10 @@ public:
 	  
 	  mean=2,sigma=1;
 	  modelcheckTemp = modelcheck+"21.nm";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
+	  mean=-1,sigma=1;
+	  modelcheckTemp = modelcheck+"-11.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	}
 	{
@@ -123,6 +131,10 @@ public:
 	  
 	  mean=2,sigma=1;
 	  dtmcFileTemp = dtmcFile+"21.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=-1,sigma=1;
+	  dtmcFileTemp = dtmcFile+"-11.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	}
 	return true;

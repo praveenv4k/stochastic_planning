@@ -990,13 +990,15 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
 		checkerStream << " + ";
 	      }
 	      int nextState = found->second;
-	      checkerStream << iter->second << " : (s' = " << nextState << ")";
-	      bool collision = m_CollisionMap[nextState];
-	      if(collision){
-		checkerStream << " & (f' = true) ";
-	      }
-	      else{
-		checkerStream << " & (f' = false) ";
+	      if(!Utils::isEqual(0,iter->second)){
+		checkerStream << iter->second << " : (s' = " << nextState << ")";
+		bool collision = m_CollisionMap[nextState];
+		if(collision){
+		  checkerStream << " & (f' = true) ";
+		}
+		else{
+		  checkerStream << " & (f' = false) ";
+		}
 	      }
 	    }else{
 	      //TODO - no outgoing states case - safe sink
@@ -1157,7 +1159,7 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
       }
       checkerStream << "TRANSITIONS " << dtmcMap.size()+3 << std::endl;
       checkerStream << "INITIAL " << initialState+1 << std::endl;
-      checkerStream << "TARGET " << safeState+1 << std::endl << std::endl;
+      checkerStream << "TARGET " << unSafeState+1 << std::endl << std::endl;
       
       std::vector<StateActionTuple> dtmcVector;
       for(DtmcMap::iterator pIt=dtmcMap.begin();pIt!=dtmcMap.end();pIt++){
@@ -1168,7 +1170,9 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
       for(std::vector<StateActionTuple>::iterator dIt=dtmcVector.begin();dIt!=dtmcVector.end();dIt++){
 	DtmcMap::iterator found = dtmcMap.find(*dIt);
 	if(found!=dtmcMap.end()){
-	  checkerStream << found->first.get<0>()+1 << " " << found->first.get<1>()+1 << " " << found->second << std::endl;
+	  if(!Utils::isEqual(found->second,0)){
+	    checkerStream << found->first.get<0>()+1 << " " << found->first.get<1>()+1 << " " << found->second << std::endl;
+	  }
 	}
       }
       checkerStream << m_States->size()+1 << " " << startState+1 << " " << 1 << std::endl;
