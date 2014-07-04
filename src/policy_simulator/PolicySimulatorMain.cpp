@@ -81,6 +81,10 @@ public:
 	  std::string modelcheckTemp = modelcheck+"01.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	  
+ 	  mean=0,sigma=2;
+	  modelcheckTemp = modelcheck+"02.nm";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
 	  mean=0,sigma=3;
 	  modelcheckTemp = modelcheck+"03.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
@@ -97,8 +101,16 @@ public:
 	  ElapsedTime elapsed("Generate DTMC file");
 	  //planner->generateDtmcFile(dtmcFile);
 	  
-	  double mean=0,sigma=1;
-	  std::string dtmcFileTemp = dtmcFile+"01.dtmc";
+	  double mean=0,sigma=0.01;
+	  std::string dtmcFileTemp = dtmcFile+"00.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=0,sigma=1;
+	  dtmcFileTemp = dtmcFile+"01.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=0,sigma=2;
+	  dtmcFileTemp = dtmcFile+"02.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	  
 	  mean=0,sigma=3;

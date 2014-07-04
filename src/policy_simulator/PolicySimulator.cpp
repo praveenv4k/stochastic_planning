@@ -899,11 +899,13 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
   if(!filePath.empty()){
     std::fstream checkerStream;
     checkerStream.open(filePath.c_str(),std::fstream::out);
+    int safeState = m_States->size();
+    int unSafeState = m_States->size()+1;
     if(checkerStream.good()){
       
       checkerStream << "dtmc" << std::endl; 
       checkerStream << "module grasp" << std::endl; 
-      checkerStream << "s: [0.." << m_States->size()-1 << "] init 0;"<<std::endl;
+      checkerStream << "s: [0.." << m_States->size()+1 << "] init 0;"<<std::endl;
       checkerStream << "f: bool init false;" << std::endl;
       
       for(IndexVectorMap::iterator it=m_States->begin();it!=m_States->end();it++){
@@ -912,11 +914,13 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
 	CollisionMap::iterator sinkState = m_SinkMap.find(stateIndex);
 	if(sinkState!=m_SinkMap.end()){
 	  checkerStream << "[] s = " << stateIndex << " -> ";
-	  checkerStream << 1 << " : (s' = " << stateIndex << ")";
+	  //checkerStream << 1 << " : (s' = " << stateIndex << ")";
 	  if(sinkState->second){
-	    checkerStream << " & (f' = true) ;";
+	    checkerStream << 1 << " : (s' = " << unSafeState << ")";
+	    checkerStream << " & (f' = false) ;";
 	  }
 	  else{
+	    checkerStream << 1 << " : (s' = " << safeState << ")";
 	    checkerStream << " & (f' = false) ;";
 	  }
 	  checkerStream << std::endl;
@@ -994,12 +998,23 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
 	      else{
 		checkerStream << " & (f' = false) ";
 	      }
+	    }else{
+	      //TODO - no outgoing states case - safe sink
+// 	      checkerStream << 1 << " : (s' = " << stateIndex << ")";
+// 	      checkerStream << " & (f' = false) ";
+              checkerStream << 1 << " : (s' = " << safeState << ")";
+	      checkerStream << " & (f' = false) ";
+	      break;
 	    }
 	    plus++;
 	  }
 	  checkerStream << " ;" << std::endl;
 	}
       }
+      checkerStream << "[] s = " << safeState << " -> " 
+		      << 1 << " : (s' = " << safeState << ")" << " & (f' = false) ;" << std::endl;
+      checkerStream << "[] s = " << unSafeState << " -> " 
+		      << 1 << " : (s' = " << unSafeState << ")" << " & (f' = true) ;" << std::endl;
     }
     checkerStream << "endmodule" << std::endl; 
     checkerStream << "rewards \"steps\"" << std::endl;
@@ -1133,6 +1148,9 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
 	      int nextState = found->second;
 	      double tprob = iter->second;
 	      dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,nextState),tprob));
+	    }else{
+	      //TODO - no outgoing states case
+	      dtmcMap.insert(std::pair<StateActionTuple,double>(StateActionTuple(stateIndex,safeState),1.0));
 	    }
 	  }
 	}
