@@ -131,7 +131,7 @@ void ArmControl::loop()
 
 #if SPOOF
 		      set_cube_position(worldPos);
-		      yarp::os::Time::delay(0.5);
+		      yarp::os::Time::delay(1);
 #else
 		      iArm->goToPose(robotPos,arm_ctx->init_orient);
 		      //iArm->goToPosition(robotPos);

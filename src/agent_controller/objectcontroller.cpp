@@ -120,7 +120,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   }
   
    
-  m_multiple=20;
+  m_multiple=10;
   m_currmult=0;
   m_stop = true;
 
@@ -189,7 +189,9 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
   rad.push_back(m_radius); //TODO
   str = str + string(rad.toString().c_str());
   stringstream ss;
-  ss << m_currPosition;
+  Container<double> pos =m_currPosition;
+  pos[1]+=0.004;
+  ss << pos;
   str = str + " " + ss.str();
   str = str + " 0 1 0";
   std::cout << str << std::endl;

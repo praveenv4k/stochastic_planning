@@ -303,8 +303,6 @@ void PolicySimulator::loop2()
 	 numSteps++;
        }
      }
-     
-     //}
    }
 }
 
