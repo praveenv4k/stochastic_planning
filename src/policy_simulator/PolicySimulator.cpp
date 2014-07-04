@@ -869,7 +869,8 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
     std::cout << "State/Action/Collision/Policy map empty. Check if corresponding files are read" << std::endl;
   }
   
-  normal s(mean,sigma);
+  //normal s(mean,sigma);
+  normal s(0,sigma);
   int step = 1.; // in z 
   int range = 2; // min and max z = -range to +range.
   std::vector<double> prob;prob.resize(2*range+1);   
@@ -950,7 +951,11 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
 	      break;
 	    }
 	  }
-	  if(matchingPose!=-1){
+	  
+	  //test	    
+	  matchingPose+=(int)mean;
+	  
+	  //if(matchingPose!=-1){
 	    double sum=0;
 	    for (int z = -range; z < range + step; z += step)
 	    {
@@ -971,14 +976,14 @@ bool PolicySimulator::generateModelCheckerFile(std::string& filePath,double mean
 		}
 	      }
 	    }else{
-	      std::cout << "No matching id" << std::endl;
-	      return ret;
+// 	      std::cout << "No matching id" << std::endl;
+// 	      return ret;
 	    }
-	  }
-	  else{
-	    std::cout << "Domain mismatch" << std::endl;
-	    return ret;
-	  }
+// 	  }
+// 	  else{
+// 	    std::cout << "Domain mismatch" << std::endl;
+// 	    return ret;
+// 	  }
 	  
 	  checkerStream << "[] s = " << it->first << " -> ";
 	  int plus=0;
@@ -1037,7 +1042,7 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
     std::cout << "State/Action/Collision/Policy map empty. Check if corresponding files are read" << std::endl;
   }
   
-  normal s(mean,sigma);
+  normal s(0,sigma);
   int step = 1.; // in z 
   int range = 2; // min and max z = -range to +range.
   std::vector<double> prob;prob.resize(2*range+1);   
@@ -1112,11 +1117,16 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
 	      break;
 	    }
 	  }
-	  if(matchingPose!=-1){
+	  	    
+	  //test	    
+	  matchingPose+=(int)mean;
+	  
+	  //if(matchingPose!=-1){	    
 	    double sum=0;
 	    for (int z = -range; z < range + step; z += step)
 	    {
 	      int id=matchingPose+z;
+	      id = (poses.size()+id)%poses.size();
 	      if(id >=0 && id < poses.size()){
 		double p=prob[z+range];
 		sum+=p;
@@ -1133,14 +1143,14 @@ bool PolicySimulator::generateDtmcFile(std::string& filePath,double mean,double 
 		}
 	      }
 	    }else{
-	      std::cout << "No matching id" << std::endl;
-	      return ret;
+// 	      std::cout << "No matching id" << std::endl;
+// 	      return ret;
 	    }
-	  }
-	  else{
-	    std::cout << "Domain mismatch" << std::endl;
-	    return ret;
-	  }
+// 	  }
+// 	  else{
+// 	    std::cout << "Domain mismatch" << std::endl;
+// 	    return ret;
+// 	  }
 	  
 	  int plus=0;
 	  for(std::map<std::vector<double>,double>::iterator iter=noisyObjectPoses.begin();iter!=noisyObjectPoses.end();iter++){

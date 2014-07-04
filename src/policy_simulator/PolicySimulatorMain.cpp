@@ -104,6 +104,10 @@ public:
 	  mean=-1,sigma=1;
 	  modelcheckTemp = modelcheck+"-11.nm";
 	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
+	  
+	  mean=-2,sigma=1;
+	  modelcheckTemp = modelcheck+"-21.nm";
+	  planner->generateModelCheckerFile(modelcheckTemp,mean,sigma);
 	}
 	{
 	  ElapsedTime elapsed("Generate DTMC file");
@@ -135,6 +139,30 @@ public:
 	  
 	  mean=-1,sigma=1;
 	  dtmcFileTemp = dtmcFile+"-11.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=-2,sigma=1;
+	  dtmcFileTemp = dtmcFile+"-21.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=2,sigma=0.01;
+	  dtmcFileTemp = dtmcFile+"20.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=3,sigma=0.01;
+	  dtmcFileTemp = dtmcFile+"30.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=-3,sigma=0.01;
+	  dtmcFileTemp = dtmcFile+"Minus30.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=6,sigma=1;
+	  dtmcFileTemp = dtmcFile+"61.dtmc";
+	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
+	  
+	  mean=-6,sigma=1;
+	  dtmcFileTemp = dtmcFile+"-61.dtmc";
 	  planner->generateDtmcFile(dtmcFileTemp,mean,sigma);
 	}
 	return true;
