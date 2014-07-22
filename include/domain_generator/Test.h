@@ -11,6 +11,8 @@
 #include "GoalBasedSpaceDiscretizer.h"
 #include "Combinator.h"
 #include <boost/math/distributions.hpp>
+#include "Types.h"
+#include "POMDPFileGenerator.h"
 
 using boost::math::normal;
 
@@ -194,6 +196,250 @@ public:
     std::cout.precision(6); // default
   }
   
+  static AbstractSpaceDiscretizerPtr getSpaceDiscretizer(Json::Value config){
+  AbstractSpaceDiscretizerPtr ptr;
+  if(!config.isNull()){
+    Json::Value disc = config["discretizer"];
+    if(!disc.isNull()){
+      std::string name = disc.asString();
+      if(name == "uniform"){
+	Container<double> min,max,step;
+	Utils::valueToVector(config["min"],min);
+	Utils::valueToVector(config["max"],max);
+	Utils::valueToVector(config["step"],step);
+	ptr = AbstractSpaceDiscretizerPtr(new UniformSpaceDiscretizer<double>(min,max,step));
+      }
+      else if(name == "goal"){
+	Json::Value object = Config::instance()->root["object"];
+        TrajectoryDiscretizerPtr trajPtr=TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(object["trajectory"]);
+	ptr = AbstractSpaceDiscretizerPtr(new GoalBasedSpaceDiscretizer(trajPtr,object));
+      }
+    }
+  }
+  return ptr;
+}
+  
+  static void testWriteStateActionSpace(){
+    std::fstream tstream;
+    tstream.open("testtrans.txt",std::fstream::out);
+    {
+      std::fstream stream;
+      std::fstream rstream;
+      stream.open("teststates.txt",std::fstream::out);
+      rstream.open("testreward.txt",std::fstream::out);
+      Json::Value robot = Config::instance()->root["robot"];
+      Json::Value ss = robot["ss"];
+      Container<double> min,max,step;
+      Utils::valueToVector(ss["min"],min);
+      Utils::valueToVector(ss["max"],max);
+      Utils::valueToVector(ss["step"],step);
+      double distThres = robot["grasp"]["distThreshold"].asDouble();
+      
+      TrajectoryDiscretizerPtr pTrajDisc = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);
+      
+      double delta = Config::instance()->root["object"]["trajectory"]["step"].asDouble();
+      TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
+	
+      std::vector<Container<double> > poses;
+      int numPoints=Config::instance()->root["object"]["trajectory"]["samples"].asInt();
+      if(!pTraj->getAllPoses(numPoints,poses)){
+      std::cout << "Cannot get requested number of Points" << std::endl; 
+      }
+      
+      AbstractSpaceDiscretizerPtr discretizer =  getSpaceDiscretizer(ss);
+      
+      std::cout << "State Space size: " << discretizer->size() << std::endl;
+      
+      int index=0;
+      for(size_t i=0;i<discretizer->size();i++){
+	int id = discretizer->operator()();
+	Container<double> val = discretizer->getValueAtIndex(id);
+	for(int objId=0; objId<numPoints;objId++){
+	  Container<double> pose = poses[objId];
+	  std::vector<double> robotPos = val;
+	  robotPos.pop_back();
+	  
+	  bool graspable=false;
+	  std::vector<double> ss = Utils::concatenate(val,pose);
+
+	  double diff = robotPos[0]-pose[0];
+	  double norm = diff*diff;
+	  if(norm == 0){
+	    norm = 500;
+	  }
+	  else{
+	    norm = (-norm-5);
+	  }
+	  bool write=true;
+	  if(write){
+	    stream << index << " " <<  val << " " << pose  << " " << norm << std::endl;
+	    //R: * :0 : * -26.4267
+	    rstream << "R: * :" << index  << " : * " << norm << std::endl;
+	    for(int act=0;act<4;act++){
+	      //T: 1 : 241 : 241 1
+	      tstream << "T: " << act << " : " << index  <<  " : " << index << " " << 1 << std::endl;
+	    }
+	    tstream << std::endl;
+	    index++;
+	  }
+	}
+      }
+    }
+    {
+      std::fstream stream;
+      stream.open("testactions.txt",std::fstream::out);
+      Json::Value robot = Config::instance()->root["robot"];
+      Json::Value action = robot["action"];
+      Container<double> min,max,step;
+      Utils::valueToVector(action["min"],min);
+      Utils::valueToVector(action["max"],max);
+      Utils::valueToVector(action["step"],step);
+      
+      AbstractSpaceDiscretizerPtr discretizer=getSpaceDiscretizer(action);
+      std::cout << "Action Space size: " << discretizer->size() << std::endl;
+	
+      for(size_t i=0;i<discretizer->size();i++){
+	int id = discretizer->operator()();
+	Container<double> val = discretizer->getValueAtIndex(id);
+	stream << id << " " << val << std::endl;
+      }
+    }
+  }
+  
+  
+  static void createStateSpaceMap(StateIndexMap& m_stateIndexMap){
+  Json::Value robot = Config::instance()->root["robot"];
+  Json::Value ss = robot["ss"];
+  Container<double> min,max,step;
+  Utils::valueToVector(ss["min"],min);
+  Utils::valueToVector(ss["max"],max);
+  Utils::valueToVector(ss["step"],step);
+  double distThres = robot["grasp"]["distThreshold"].asDouble();
+  
+  TrajectoryDiscretizerPtr pTrajDisc = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);
+  
+  double delta = Config::instance()->root["object"]["trajectory"]["step"].asDouble();
+  TrajectoryPtr pTraj(new Trajectory(delta,pTrajDisc));
+    
+  std::vector<Container<double> > poses;
+  int numPoints=Config::instance()->root["object"]["trajectory"]["samples"].asInt();
+  if(!pTraj->getAllPoses(numPoints,poses)){
+   std::cout << "Cannot get requested number of Points" << std::endl; 
+  }
+    
+  AbstractSpaceDiscretizerPtr discretizer=getSpaceDiscretizer(ss);
+  
+  std::cout << "State Space size: " << discretizer->size() << std::endl;
+  
+  int index=0;
+  for(size_t i=0;i<discretizer->size();i++){
+    int id = discretizer->operator()();
+    Container<double> val = discretizer->getValueAtIndex(id);
+    for(int objId=0; objId<numPoints;objId++){
+      Container<double> pose = poses[objId];
+      
+      Container<double> robotPos;
+      //Extract Robot position
+      for(size_t posId=0;posId<val.size()-1;posId++){
+	robotPos.push_back(val[posId]);
+      }
+      
+      bool graspable=false;
+      std::vector<double> ss = Utils::concatenate(val,pose);
+      
+      
+      m_stateIndexMap[ss]=index++;
+    }
+  }
+  std::cout << m_stateIndexMap.size() <<std::endl;
+}
+
+static void createActionSpaceMap(StateIndexMap& m_actionIndexMap){
+  Json::Value robot = Config::instance()->root["robot"];
+  Json::Value action = robot["action"];
+  Container<double> min,max,step;
+  Utils::valueToVector(action["min"],min);
+  Utils::valueToVector(action["max"],max);
+  Utils::valueToVector(action["step"],step);
+  
+  AbstractSpaceDiscretizerPtr discretizer = getSpaceDiscretizer(action);  
+  for(size_t i=0;i<discretizer->size();i++){
+    int id = discretizer->operator()();
+    Container<double> val = discretizer->getValueAtIndex(id);
+    m_actionIndexMap[val]=id;
+  }
+}
+
+static void generateTables(StateIndexMap& m_stateIndexMap,StateIndexMap& m_actionIndexMap,TransitionMap& m_transitionMap,RewardMap& m_rewardMap){
+  if(m_stateIndexMap.size()==0 || m_actionIndexMap.size()==0){
+    std::cout << "State/Action map empty. call createStateSpaceMap" << std::endl;
+  }
+  
+  double maxReward = Config::instance()->root["domain_model"]["reward"]["max"].isNull()?
+			500:Config::instance()->root["domain_model"]["reward"]["max"].asDouble();
+			
+  for(StateIndexMap::iterator it=m_stateIndexMap.begin();it!=m_stateIndexMap.end();it++){
+    double diff = it->first[0]-it->first[1];
+    double norm = diff*diff;
+    if(norm == 0){
+      norm = 500;
+    }
+    else{
+      norm = (-norm-5);
+    }
+    double reward = norm;
+    m_rewardMap[it->second] = reward;
+    for(StateIndexMap::iterator ait=m_actionIndexMap.begin();ait!=m_actionIndexMap.end();ait++){
+      int id = ait->second;
+      std::vector<double> val = ait->first;
+      std::vector<double> state = it->first;
+      std::vector<double> temp = state;
+      if(Utils::isEqual(maxReward,reward)){
+	std::vector<int> nextState;
+	int nxtStateId = m_stateIndexMap[state];
+	nextState.push_back(nxtStateId);
+	m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+      }
+      else{
+// 	for(size_t j=0;j<val.size()-1;j++){
+// 	  temp[j]+=val[j];
+// 	}
+	if(it->first[0]==1 ||it->first[0]==2){
+	  if(ait->second==0){
+	    temp[0]+=1;
+	  }else if(ait->second==1){
+	    temp[0]-=1;
+	  }
+	}else if(it->first[0]==3){
+	  if(ait->second==1){
+	    temp[0]-=1;
+	  }else if(ait->second==2){
+	    temp[0]+=1;
+	  }
+	}else{
+	  if(ait->second==2){
+	    temp[0]+=1;
+	  }else if(ait->second==3){
+	    temp[0]-=1;
+	  }
+	}
+	//temp[val.size()-1]=val[val.size()-1];
+	StateIndexMap::iterator found = m_stateIndexMap.find(temp);
+	if(found!=m_stateIndexMap.end()){
+	  std::vector<int> nextState;
+	  nextState.push_back(found->second);
+	  m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	}
+	else{
+	  std::vector<int> nextState;
+	  nextState.push_back(m_stateIndexMap[state]);
+	  m_transitionMap[StateActionTuple(it->second,id)]=nextState;
+	}
+      }
+    }
+  }
+}
+  
   /**
    * @brief Master test method
    *
@@ -213,6 +459,16 @@ public:
     testGoalBasedDiscretizer();
     testPointDistance();
     testNormalDistribution();
+    testWriteStateActionSpace();
+    StateIndexMap states,actions;
+    RewardMap reward;
+    TransitionMap transition;
+    createStateSpaceMap(states);
+    createActionSpaceMap(actions);
+    generateTables(states,actions,transition,reward);
+    std::string ddlFile("domain.pomdp");
+    POMDPFileGenerator gen(states,actions,transition,reward);
+    gen.generate(ddlFile);
     std::cout << "************** End Test *****************" << std::endl;
   }
 };

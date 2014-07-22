@@ -29,7 +29,7 @@
 using namespace Eigen;
 using namespace yarp::dev;
 
-#define SPOOF 1
+//#define SPOOF 1
 
 /**
  * @brief Context of a Robot Part
@@ -173,6 +173,9 @@ public:
   std::cout << v1 << std::endl;
   std::cout << v2 << std::endl;
   std::cout << v3 << std::endl;
+  
+      m_joints.resize(19);
+
 //     T =
 // 
 //          0   -1.0000         0         0
@@ -203,6 +206,7 @@ public:
    * @return void
    **/
   void loop(); 
+  void loop2();
   /**
    * @brief Interrupt the control thread
    *
@@ -267,6 +271,7 @@ private:
   yarp::sig::Matrix mat2;  
   Matrix4d tf1;
   Matrix4d tf2;
+  yarp::sig::Vector m_joints;
 };
 
    

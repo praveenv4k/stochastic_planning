@@ -229,6 +229,7 @@ public:
      **/
     void loop(); 
     void loop2();
+    void loop3();
     /**
      * @brief Thread interrupt
      *
@@ -361,6 +362,9 @@ public:
     
     
     bool sortAscending(StateActionTuple& a,StateActionTuple& b);
+    
+    void construct_maps();
+    bool has_reached2(yarp::sig::Vector& augState);
 private:
     TupleAscending tupleAscending;
   
@@ -434,6 +438,12 @@ private:
     
     int numSteps;
     boost::shared_ptr<ElapsedTime> m_ElaspedTime;
+    
+    std::map<int,std::vector<double> > m_jointStates;
+    std::map<int, std::vector<double> > m_nextStates;
+    StateIndexMap m_jointIndexMap;
+    StateIndexMap m_objectIndexMap;
+    std::map<int,int> m_finalStates;
 };
 
    

@@ -28,6 +28,8 @@ using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
 
+#define FAIL_PROOF 1
+
 
 ObjectController::ObjectController(const double period)//:RateThread(int(period*1000))
 {
@@ -94,7 +96,9 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   TrajectoryDiscretizerPtr trajPtr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(trajConfig);
   if(trajPtr!=NULL){
     if(trajPtr->getAllPoses(m_numPoints,m_objPoses)){
-      
+      for(int j=0;j<m_numPoints;j++){
+	std::cout << m_objPoses[j] << std::endl;
+      }
       if(m_noiseEnabled){
 	TrajectoryDiscretizer::getNoisyPoses(m_Mean,m_Sigma,m_objPoses,m_noisyObjPoses);
       }else{
@@ -120,7 +124,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   }
   
    
-  m_multiple=5;
+  m_multiple=22;
   m_currmult=0;
   m_stop = true;
 
@@ -182,7 +186,7 @@ bool ObjectController::open(yarp::os::ResourceFinder &rf){
 #endif
   
   if(!m_static)
-    str = "world mk sph ";
+    str = "world mk ssph ";
   else
     str = "world mk ssph ";
   Vector rad;
@@ -254,7 +258,7 @@ void ObjectController::loop(){
       if(m_static)
 	str = "world set ssph 1";
       else
-	str = "world set sph 1";
+	str = "world set ssph 1";
       
       Bottle move_obj(str); 
       
@@ -305,9 +309,9 @@ bool ObjectController::interrupt(){
 }
 
 Container<double> ObjectController::getNextPosition(){
-  if(m_currStep==m_numPoints || m_currStep>=m_objPoses.size() || m_currStep < 0){
-    m_currStep=m_numPoints-1;
-    //m_currStep=0;
+  if(m_currStep==m_numPoints || m_currStep>=m_objPoses.size()){// || m_currStep < 0){
+    //m_currStep=m_numPoints-1;
+    m_currStep=0;
   }
   
 //   double dx = m_objPoses[m_currStep][0]/100;
@@ -328,6 +332,7 @@ Container<double> ObjectController::getNextPosition(){
     m_currElbowPosition = m_elbowPoses[m_currStep]/100;
   }
   
-  m_currStep--;
+  m_currStep++;
+  m_currPosition[1]-=0.005;
   return m_currPosition;
 }

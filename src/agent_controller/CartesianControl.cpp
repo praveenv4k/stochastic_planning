@@ -260,7 +260,7 @@ public:
     
     bool updateModule()
     { 
-        armControl->loop();
+        armControl->loop2();
         return true; 
     }
 

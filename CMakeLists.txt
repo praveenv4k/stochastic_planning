@@ -6,7 +6,7 @@ SET(PROJECTNAME stochastic_planning)
 # Initialize the project
 project(${PROJECTNAME})
 
-add_definitions(-DJSON_IS_AMALGAMATION)
+add_definitions(-DJSON_IS_AMALGAMATION -DCMAKE_BUILD_TYPE=Debug)
 
 # add include directories
 # Find the yarp packages
