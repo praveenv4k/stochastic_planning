@@ -142,6 +142,7 @@ void DomainExtractor::writeStateSpace(std::ostream& stream){
       
       bool graspable=false;
       std::vector<double> ss = Utils::concatenate(val,pose);
+
       double norm = computeNorm(ss,graspable);      
       bool write=false;
       if(val[m_agentDim-1]>0){

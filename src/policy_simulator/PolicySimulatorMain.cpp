@@ -40,6 +40,7 @@ public:
     }
     
     bool checkModelCheckerFileGen(){
+      
       bool ret=false;
       root = Config::instance()->root;
       std::string policy_folder = root["simulator"]["policy_path"].asString();
@@ -66,6 +67,12 @@ public:
 	  ElapsedTime elapsed("Reading Policy map");
 	  planner->read_policy_map(policyMap);
 	}
+	{
+	  ElapsedTime elapsed("Construct Maps");
+	  planner->construct_maps();
+	}
+	return true;
+	
 	{
 	  ElapsedTime elapsed("Read Collision Map");
 	  planner->read_collision(collision);
@@ -198,6 +205,10 @@ public:
 	  ElapsedTime elapsed("Reading Policy map");
 	  planner->read_policy_map(policyMap);
 	}
+	{
+	  ElapsedTime elapsed("Construct Maps");
+	  planner->construct_maps();
+	}
 #else
 	{
 	  ElapsedTime elapsed("Reading Policy File");
@@ -245,7 +256,7 @@ public:
     bool updateModule()
     { 
 #if USE_LOOP2
-	planner->loop2();
+	planner->loop3();
 #else
         planner->loop();
 #endif
@@ -269,7 +280,7 @@ public:
 
 int main(int argc, char *argv[])
 {   
-#if 0
+#if 1
   // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 

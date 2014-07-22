@@ -307,6 +307,222 @@ void PolicySimulator::loop2()
    }
 }
 
+void PolicySimulator::loop3()
+{
+  if(augState.size()>2){
+    augState.resize(2);
+  }
+  if(first){
+    first=false;
+    Bottle &status = planobjStsPort.prepare();
+    status.clear();
+    status.addDouble(1);
+    planobjStsPort.writeStrict(); 
+  }else{
+    if(reached&&!execStop){
+      Bottle &status = planobjStsPort.prepare();
+      status.clear();
+      status.addDouble(0);
+      planobjStsPort.writeStrict();
+      execStop = true;
+      m_ElaspedTime->pause();
+      std::cout << "Target Reached : Steps : " << numSteps << std::endl;
+    }
+  }
+  
+   Bottle* objCmd = planobjCmdPort.read(false);
+   std::vector<double> objPos;objPos.resize(3);
+   if(objCmd){
+     objPos[0] = objCmd->get(0).asDouble()*100;
+     objPos[1] = objCmd->get(1).asDouble()*100;
+     objPos[2] = objCmd->get(2).asDouble()*100;
+     noisyObjPosition[0] = objCmd->get(3).asDouble()*100;
+     noisyObjPosition[1] = objCmd->get(4).asDouble()*100;
+     noisyObjPosition[2] = objCmd->get(5).asDouble()*100;
+   }
+   
+   Bottle* cmd = plannerCmdPort.read(false);
+   if(cmd)
+   {
+     //cout << "Received something " << cmd->toString() << std::endl;
+     bool send = false;
+     double command = cmd->get(0).asDouble();
+     std::vector<double> robotPos;
+     for(size_t i=0;i<cmd->size()-1;i++){
+      robotPos.push_back(cmd->get(i+1).asDouble());
+     }
+     //cout << "Robot Pos " << robotPos << std::endl;
+     //cout << "Object Pos " << objPos << std::endl;
+     augState[0] = m_jointIndexMap[robotPos];
+     augState[1] = m_objectIndexMap[objPos];
+     if(command == 1){
+       if(sent == true){
+	 posQueue.pop();
+	 sent = false;
+	 
+	 std::vector<double> val;
+	 for(size_t i=0;i<augState.size();i++){
+	   val.push_back(augState[i]);
+	   std::cout << val[i] << " ";
+	 }
+	 
+	 bool reach = has_reached2(augState);
+	 if(reach){
+	   reached = reach;
+	 }else{
+	  StateIndexMap::iterator found = m_StateIndexMap.find(val);
+	  if(found!=m_StateIndexMap.end()){
+	    int state = found->second;
+	    cout << " Found State : " << state << std::endl; 
+	    std::map<int, std::vector<double> >::iterator nextFound = m_nextStates.find(state);
+	    
+	    if(nextFound!=m_nextStates.end()){
+	      cout << " Next state Found : " << nextFound->second << std::endl; 
+	      Vector v1;
+	      for(size_t p=0;p<nextFound->second.size();p++){
+		v1.push_back(nextFound->second[p]);
+	      }
+	      v1.push_back(1);
+	      posQueue.push(v1);
+	      send = true;
+	    }else{
+	      cout << "Next state not found "  << std::endl;
+	    }
+	  }else{
+	    //std::cout << "Augmented state (" << val << ") not found!" << std::endl;
+	  }
+	}
+       }
+     }else if(command == 10){
+       if(sent==true){
+        }else{
+	}
+	if(!reached){
+	  reached = has_reached2(augState);
+	}
+     }else if(command == 100){
+     }
+
+     if(send || firstSend){
+       if(firstSend) firstSend=false;
+       if(posQueue.size()>0){
+	 Vector& v = posQueue.front();
+
+	 Bottle &status = plannerStatusPort.prepare();
+	 status.clear();
+
+	 for(size_t p=0;p<v.length();p++){
+	   status.addDouble(v[p]);
+	 }
+	
+	 plannerStatusPort.writeStrict();  
+	 std::cout << "Target : " << v.toString() << std::endl;
+	 printf("Move request sent\n");
+	 sent=true;
+	 numSteps++;
+       }
+     }
+   }
+}
+
+void PolicySimulator::construct_maps(){
+  Json::Value joints = Config::instance()->root["joint_states"];
+  if(joints.isNull())
+    return;
+  for(int i=0;i<10;i++){
+    stringstream ss;
+    ss << "s" << i+1;
+    Json::Value val = joints[ss.str()];
+    std::vector<double> vec;
+    if(Utils::valueToVector(val,vec)){
+      m_jointStates[i+1]=vec;
+      m_jointIndexMap[vec]=i+1;
+      //std::cout << i+1 << " " << vec << std::endl;
+    }
+  }
+  int finStates = 0;
+  for(StateIndexMap::iterator it=m_StateIndexMap.begin();it!=m_StateIndexMap.end();it++){
+    int action = m_PolicyMap[it->second];
+    int currStateIndex = it->second;
+    int nextState = it->first[0];
+    //std::cout << "State : " << it->second << " Robot: " << it->first[0] << " Action : " << action << std::endl;
+    if(it->first[0]==1 ||it->first[0]==2){
+      if(action==0){
+	nextState+=1;
+      }else if(action==1){
+	nextState-=1;
+      }else{
+	nextState=-1;
+      }
+    }else if(it->first[0]==3){
+      if(action==1){
+	nextState-=1;
+      }else if(action==2){
+	nextState+=1;
+      }else{
+	nextState=-1;
+      }
+    }else{
+      if(action==2){
+	nextState+=1;
+      }else if(action==3){
+	nextState-=1;
+      }else{
+	nextState=-1;
+      }
+    }
+    if(nextState==-1){
+      std::vector<double> final;
+      final.push_back(100);
+      m_nextStates[currStateIndex]=final;
+      m_finalStates[currStateIndex]=1;
+      finStates++;     
+    }else{
+      if(nextState >=1&&nextState<=10){
+	m_nextStates[currStateIndex]=m_jointStates[nextState];
+      }
+      else{
+	std::cout << "Something is wrong!" << std::endl;
+      }
+    }
+  }
+  {
+    TrajectoryDiscretizerPtr ptr = TrajectoryDiscretizerFactory::getTrajectoryDiscretizer(Config::instance()->root["object"]["trajectory"]);;
+  
+    if(ptr==NULL){
+      std::cout << "Cannot retrieve the traj ptr" << std::endl;
+      return;
+    }
+    
+    std::vector<Container<double> > poses;
+    if(!ptr->getAllPoses(Config::instance()->root["object"]["trajectory"]["samples"].asInt(),poses)){
+      std::cout << "Cannot retrieve the traj samples" << std::endl;
+      return;
+    }else{
+      int id=3;
+      for(size_t i=0;i<poses.size();i++){
+	//cout << poses[i] << std::endl;
+	m_objectIndexMap[poses[i]]=id++;
+	cout << m_objectIndexMap[poses[i]] << " " << poses[i] << std::endl;;
+      }
+    }
+  }
+  std::cout << "Size of m_nextStates : " << m_nextStates.size() << " Final : " << finStates << " Joint index map " << m_jointIndexMap.size() 
+            << " Object index map " << m_objectIndexMap.size() << std::endl;
+}
+
+bool PolicySimulator::has_reached2(yarp::sig::Vector& augSt){
+  std::vector<double> val;
+  for(size_t i=0;i<augSt.size();i++){
+    val.push_back(augSt[i]);
+  }
+  StateIndexMap::iterator found = m_StateIndexMap.find(val);
+  if(found!=m_StateIndexMap.end()){
+    std::map<int,int>::iterator finState = m_finalStates.find(found->second);
+    return finState!=m_finalStates.end();
+  }
+  return false;
+}
 
 bool PolicySimulator::has_reached(yarp::sig::Vector& augState,double graspThreshold){
   bool ret=false;
@@ -351,13 +567,14 @@ bool PolicySimulator::open(yarp::os::ResourceFinder &rf)
 #else
       startState = currBelSt->sval;
 #endif
+      
       VectorPtr v=m_States->operator[](startState);
       Vector v1;
-      v1.resize(4);
-      v1[0]= v->operator[](0)/100;
-      v1[1]= v->operator[](1)/100;
-      v1[2]= v->operator[](2)/100;
-      v1[3]= 1;
+      std::vector<double> firstJoint = m_jointStates[1];
+      for(size_t  p=0;p<firstJoint.size();p++){
+	v1.push_back(firstJoint[p]);
+      }
+      v1.push_back(1);
       cout << "First position " << v1.toString(-1,1) << std::endl;
       posQueue.push(v1);
     }

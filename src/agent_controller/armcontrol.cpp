@@ -222,6 +222,85 @@ void ArmControl::loop()
 #endif
 }
 
+void ArmControl::loop2()
+{  
+   std::map<std::string,boost::shared_ptr<PartContext> >::iterator it;
+   it=partCtxMap.find(Config::instance()->root["armcontrol"]["arm"].asString());
+   if(it!=partCtxMap.end()){
+     boost::shared_ptr<ArmContext> arm_ctx = boost::dynamic_pointer_cast<ArmContext>(it->second);
+     if(arm_ctx!=NULL){
+        Bottle* cmd = armCmdPort.read(false);
+	yarp::dev::ICartesianControl* iArm=arm_ctx->iCartCtrl;
+	if(arm_ctx->status==MOVING){
+	if(arm_ctx->graspStatus == GRASPING || arm_ctx->graspStatus==RELEASING){
+	  std::cout << "Grasp Check! " << std::endl;
+	  bool done;
+	  if(arm_ctx->iPosCtrl->checkMotionDone(&done)){
+	    if(done){
+	      if(arm_ctx->graspStatus==GRASPING){
+		std::cout << "Grasp Complete! " << std::endl;
+		arm_ctx->graspStatus= GRASPED;
+	      }
+	      else if(arm_ctx->graspStatus==RELEASING){
+		std::cout << "Open Complete! " << std::endl;
+		arm_ctx->graspStatus= RELEASED;
+	      }
+	    }
+	  }
+	}else{
+	  arm_ctx->status = arm_ctx->action;
+	}
+	}
+	else{
+	  if(cmd){
+	    if(cmd->size() == 20){
+	      //std::cout << "Received something: " << cmd->toString() << std::endl;
+	      double trigger = cmd->get(19).asDouble();
+	      if(trigger > 0){
+		for(size_t p=0;p<cmd->size()-1;p++){
+		  m_joints[p]=cmd->get(p).asDouble();
+		}
+		yarp::sig::Vector torso;torso.resize(3);
+		yarp::sig::Vector arm;arm.resize(16);
+		for(size_t p=0;p<3;p++){
+		  torso[p]=cmd->get(p).asDouble();
+		}
+		for(size_t p=3;p<cmd->size()-1;p++){
+		  arm[p-3]=cmd->get(p).asDouble();
+		}
+		move_joints(partCtxMap["torso"]->iPosCtrl,torso);
+		move_joints(arm_ctx->iPosCtrl,arm);
+		//arm_ctx->curr_world_position = worldPos;
+		arm_ctx->status = MOVING;
+		arm_ctx->action = REACHED;
+	        actionTime = yarp::os::Time::now();
+	      }
+	    }
+	  }
+	}
+
+      Bottle &portStatus = armStatusPort.prepare();
+      portStatus.clear();
+      if(arm_ctx->status == REACHED){
+	arm_ctx->status = IDLE;
+	portStatus.addDouble(1.0);
+	//printf("Reached\n");
+      }else if(arm_ctx->status == IDLE){
+	portStatus.addDouble(10.0);
+	//printf("Idle\n");
+      }else if(arm_ctx->status == MOVING){
+	portStatus.addDouble(100.0);
+	//printf("Moving\n");
+      }
+      for(size_t p=0;p<m_joints.length();p++){
+	portStatus.addDouble(m_joints[p]);
+      }
+      //cout << portStatus.toString() << std::endl;
+      armStatusPort.writeStrict();
+     }
+   }
+}
+
 bool ArmControl::robot_to_world(const yarp::sig::Vector& robot,yarp::sig::Vector& world){
   if(robot.size()==3){
     Vector4d v1;
@@ -357,6 +436,7 @@ bool ArmControl::open()
 #else
     initialize_robot();
     
+#if 0
     // Move the robot to fixed initial position after the configuration is done.
     std::map<std::string,boost::shared_ptr<PartContext> >::iterator it;
     it=partCtxMap.find(Config::instance()->root["armcontrol"]["arm"].asString());
@@ -382,6 +462,8 @@ bool ArmControl::open()
 	}
       }
     }
+#endif
+
 #endif
     
     bool ret=true;   
@@ -648,6 +730,11 @@ bool ArmControl::move_joints(IPositionControl* posCtrl, yarp::sig::Vector &qd,bo
   std::cout << "Move joints : " << qd.toString() << std::endl;
     bool done = false;
     if(qd.size()>0){
+      yarp::sig::Vector speeds;
+      for(size_t p=0;p<qd.size();p++){
+	speeds.push_back(30);
+      }
+      posCtrl->setRefSpeeds(speeds.data());
       posCtrl->positionMove(qd.data());
       if(bSync){
 	do{
