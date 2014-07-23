@@ -133,7 +133,7 @@ void ArmControl::loop()
 		      set_cube_position(worldPos);
 		      yarp::os::Time::delay(1);
 #else
-		      iArm->goToPose(robotPos,arm_ctx->init_orient);
+		      iArm->goToPoseSync(robotPos,arm_ctx->init_orient);
 		      //iArm->goToPosition(robotPos);
 		      if(!iArm->waitMotionDone()){
 			std::cout << "Wait motion done failed!" << std::endl;
@@ -565,6 +565,7 @@ bool ArmControl::configure_arm(std::string& robotName, boost::shared_ptr<ArmCont
   std::cout << "DOFs = " << curDof.toString() << " and new: "
       << newDof.toString() << " \n";
   iArm->setTrackingMode(false);
+  iArm->setPosePriority("orientation");
   return true;
 }
 
