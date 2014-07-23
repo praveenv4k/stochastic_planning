@@ -269,7 +269,7 @@ public:
 
 int main(int argc, char *argv[])
 {   
-#if 0
+#if 1
   // we need to initialize the drivers list 
     YARP_REGISTER_DEVICES(icubmod)
 

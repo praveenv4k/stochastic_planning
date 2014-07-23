@@ -120,7 +120,7 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   }
   
    
-  m_multiple=5;
+  m_multiple=10;
   m_currmult=0;
   m_stop = true;
 
@@ -288,15 +288,9 @@ void ObjectController::loop(){
   status.addDouble(m_exactPosition[0]);
   status.addDouble(m_exactPosition[1]);
   status.addDouble(m_exactPosition[2]);
-#if FAIL_PROOF
   status.addDouble(m_currPosition[0]);
   status.addDouble(m_currPosition[1]);
   status.addDouble(m_currPosition[2]);
-#else
-  status.addDouble(m_exactPosition[0]);
-  status.addDouble(m_exactPosition[1]);
-  status.addDouble(m_exactPosition[2]);
-#endif
   objectStatusPort.write();
 }
 
@@ -305,29 +299,16 @@ bool ObjectController::interrupt(){
 }
 
 Container<double> ObjectController::getNextPosition(){
-  if(m_currStep==m_numPoints || m_currStep>=m_objPoses.size() || m_currStep < 0){
-    m_currStep=m_numPoints-1;
-    //m_currStep=0;
+  if(m_currStep==m_numPoints || m_currStep>=m_objPoses.size()){
+    m_currStep=0;
   }
   
-//   double dx = m_objPoses[m_currStep][0]/100;
-//   double dy = m_objPoses[m_currStep][1]/100;
-//   double dz = m_objPoses[m_currStep][2]/100;
-//   m_currPosition[0] = dx;
-//   m_currPosition[1] = dy;
-//   m_currPosition[2] = dz;
-  
   m_currPosition = m_noisyObjPoses[m_currStep]/100;
-#if FAIL_PROOF
   m_exactPosition = m_objPoses[m_currStep]/100;
-#else
-  int randPos = rand()%(m_numPoints-1);
-  m_exactPosition = m_objPoses[randPos]/100;
-#endif
   if(m_elbowEnabled && m_elbowPoses.size()>0){
     m_currElbowPosition = m_elbowPoses[m_currStep]/100;
   }
   
-  m_currStep--;
+  m_currStep++;
   return m_currPosition;
 }
