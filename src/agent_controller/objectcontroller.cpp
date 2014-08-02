@@ -34,6 +34,7 @@ using namespace yarp::sig;
 ObjectController::ObjectController(const double period)//:RateThread(int(period*1000))
 {
   Json::Value objectConfig = Config::instance()->root["object"];
+  Json::Value objectControl = Config::instance()->root["objectcontrol"];
   Json::Value trajConfig = objectConfig["trajectory"];
   Json::Value elbowConfig = Config::instance()->root["elbow"];
   
@@ -68,6 +69,26 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
   m_numPoints=objectConfig["trajectory"]["samples"].asInt();
   if(m_numPoints==0){
     m_numPoints=1;
+  }
+  
+  m_periodMin=objectControl["period"]["min"].asInt();
+  if(m_periodMin==0){
+    m_periodMin=5;
+  }
+  
+  m_periodMean=objectControl["period"]["mean"].asInt();
+  if(m_periodMean==0){
+    m_periodMean=0;
+  }
+  
+  m_periodSigma=objectControl["period"]["sigma"].asInt();
+  if(m_periodSigma==0){
+    m_periodSigma=3;
+  }
+  
+  m_periodScale=objectControl["period"]["scale"].asInt();
+  if(m_periodScale==0){
+    m_periodScale=3;
   }
   
   m_radius=objectConfig["radius"].asDouble();
@@ -123,11 +144,15 @@ ObjectController::ObjectController(const double period)//:RateThread(int(period*
     }
   }
   
-   
+#if 0   
   m_multiple=10;
   m_currmult=0;
   m_stop = true;
-
+#else
+  m_multiple=1;
+  m_currmult=0;
+  m_stop = false;
+#endif
   if(m_noisyObjPoses.size()>0){
     m_currPosition = m_noisyObjPoses[0]/100;
     m_exactPosition = m_objPoses[0]/100;
@@ -271,7 +296,7 @@ void ObjectController::loop(){
       move_obj.addDouble(vec[1]); 
       move_obj.addDouble(vec[2]);
       outputStatePort.write(move_obj,reply); 
-      //cout << move_obj.toString() << std::endl;
+      cout << move_obj.toString() << std::endl;
       if(m_elbowEnabled && m_elbowPoses.size()>0){
 	string str;
 	str = "world set ssph 1";

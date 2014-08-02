@@ -66,6 +66,36 @@ public:
      * @return bool - Success.Failure
      **/
     bool interrupt();
+    /**
+     * @brief Get number of points in the trajectory
+     *
+     * @return int Trajectory samples
+     **/
+    int getNumPoints() const {return m_numPoints; }
+    /**
+     * @brief Get minimum period
+     *
+     * @return int Minimum period
+     **/
+    int getPeriodMin() const {return m_periodMin; }
+    /**
+     * @brief Get mean of the period
+     *
+     * @return int Mean of the period
+     **/
+    int getPeriodMean() const {return m_periodMean; }
+    /**
+     * @brief Get standard deviation of the period
+     *
+     * @return int Standard deviation of the period
+     **/
+    int getPeriodSigma() const {return m_periodSigma; }
+    /**
+     * @brief Get the scaling factor of the period
+     *
+     * @return int Period scaling facotr
+     **/
+    int getPeriodScale() const {return m_periodScale; }
 private:
     ObjectController(const ObjectController& other)//:RateThread(10)
     {
@@ -91,6 +121,11 @@ private:
     double m_Mean;
     double m_Sigma;
     int m_Period;
+    
+    int m_periodMin;
+    int m_periodMean;
+    int m_periodSigma;
+    int m_periodScale;
     
     double startTime;
     double xc,yc,zc,radius;

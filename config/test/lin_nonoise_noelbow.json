@@ -211,7 +211,14 @@
   "armcontrol": {
     "arm": "left"
   },
-  "objectcontrol": {},
+  "objectcontrol": {
+    "period":{
+      "min": 10,
+      "mean" : 0,
+      "sigma" : 1,
+      "scale" : 20
+    }
+  },
   "domain_model":{
     "reward":{
       "scheme": "l2norm",
